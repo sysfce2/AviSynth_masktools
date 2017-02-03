@@ -17,11 +17,6 @@ enum Directions {
     Square = 7
 };
 
-#ifdef __INTEL_COMPILER
-    #define XXPAND_LOCAL_STORE
-#endif
-
-
 template<Operator op>
 void generic_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight)
 {
@@ -85,20 +80,20 @@ extern "C" static MT_FORCEINLINE __m128i limit_down_sse2(__m128i source, __m128i
 }
 
 
-template<Border borderMode, Limit limit, decltype(simd_load_epi128) load, decltype(simd_store_epi128) store>
+template<Border borderMode, Limit limit, MemoryMode mem_mode>
 static MT_FORCEINLINE void process_line_xxflate(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const __m128i &maxDeviation, int width) {
     auto zero = _mm_setzero_si128();
     for ( int x = 0; x < width; x+=16 ) {
-        auto up_left = load_one_to_left<borderMode == Border::Left, load>(pSrcp+x);
-        auto up_center = load(reinterpret_cast<const __m128i*>(pSrcp + x));
-        auto up_right = load_one_to_right<borderMode == Border::Right, load>(pSrcp+x);
+        auto up_left = load_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_center = simd_load_si128<mem_mode>(pSrcp + x);
+        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
         
-        auto middle_left = load_one_to_left<borderMode == Border::Left, load>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode == Border::Right, load>(pSrc+x);
+        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
         
-        auto down_left = load_one_to_left<borderMode == Border::Left, load>(pSrcn+x);
-        auto down_center = load(reinterpret_cast<const __m128i*>(pSrcn + x));
-        auto down_right = load_one_to_right<borderMode == Border::Right, load>(pSrcn+x);
+        auto down_left = load_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_center = simd_load_si128<mem_mode>(pSrcn + x);
+        auto down_right = load_one_to_right<borderMode, mem_mode>(pSrcn+x);
 
         auto up_left_lo = _mm_unpacklo_epi8(up_left, zero);
         auto up_left_hi = _mm_unpackhi_epi8(up_left, zero);
@@ -145,97 +140,187 @@ static MT_FORCEINLINE void process_line_xxflate(Byte *pDst, const Byte *pSrcp, c
 
         auto result = _mm_packus_epi16(sum_lo, sum_hi);
 
-        auto middle_center = load(reinterpret_cast<const __m128i*>(pSrc + x));
+        auto middle_center = simd_load_si128<mem_mode>(pSrc + x);
         
         result = limit(middle_center, result, maxDeviation);
 
-        store(reinterpret_cast<__m128i*>(pDst+x), result);
+        simd_store_si128<mem_mode>(pDst+x, result);
     }
 }
 
+template<Border borderMode, decltype(_mm_max_epu8) op, Limit limit, MemoryMode mem_mode>
+static MT_FORCEINLINE void process_line_xxpand_both(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const __m128i &maxDeviation, int width) {
+    for (int x = 0; x < width; x += 16) {
+        __m128i up_center = simd_load_si128<mem_mode>(pSrcp+x);
+        __m128i middle_center = simd_load_si128<mem_mode>(pSrc+x);
+        __m128i down_center = simd_load_si128<mem_mode>(pSrcn+x);
+        __m128i middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
+        __m128i middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-template<Directions directions, Border borderMode, decltype(_mm_max_epu8) op, Limit limit, decltype(simd_load_epi128) load, decltype(simd_store_epi128) store>
-static MT_FORCEINLINE __m128i process_block_xxpand(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const __m128i &maxDeviation) {
-    __m128i up_left, up_center, up_right, middle_left, middle_right, down_left, down_center, down_right;
-
-    if (directions == Directions::Square) {
-        up_left = load_one_to_left<borderMode == Border::Left, load>(pSrcp);
-        up_right = load_one_to_right<borderMode == Border::Right, load>(pSrcp);
-        down_left = load_one_to_left<borderMode == Border::Left, load>(pSrcn);
-        down_right = load_one_to_right<borderMode == Border::Right, load>(pSrcn);
-    }
-
-    if (directions & Directions::Vertical) {
-        up_center = load(reinterpret_cast<const __m128i*>(pSrcp));
-        down_center = load(reinterpret_cast<const __m128i*>(pSrcn));
-    }
-
-    if (directions & Directions::Horizontal) {
-        middle_left = load_one_to_left<borderMode == Border::Left, load>(pSrc);
-        middle_right = load_one_to_right<borderMode == Border::Right, load>(pSrc);
-    }
-
-    __m128i acc;
-    if (directions == Directions::Square) {
-        acc = op(up_left, up_center);
-        acc = op(acc, up_right);
-        acc = op(acc, middle_left);
+        __m128i acc = op(up_center, middle_left);
         acc = op(acc, middle_right);
-        acc = op(acc, down_left);
         acc = op(acc, down_center);
-        acc = op(acc, down_right);
-    } else if (directions == Directions::Horizontal) {
-        acc = op(middle_left, middle_right);
-    } else if (directions == Directions::Vertical) {
-        acc = op(up_center, down_center); 
-    } else  if (directions == Directions::Both) {
-        acc = op(up_center, middle_left);
-        acc = op(acc, middle_right); 
-        acc = op(acc, down_center); 
+
+        __m128i result = limit(middle_center, acc, maxDeviation);
+        simd_store_si128<mem_mode>(pDst+x, result);
     }
-
-    auto middle_center = load(reinterpret_cast<const __m128i*>(pSrc));
-
-    auto result = limit(middle_center, acc, maxDeviation);
-#ifdef XXPAND_LOCAL_STORE
-    store(reinterpret_cast<__m128i*>(pDst), result);
-#else
-    UNUSED(pDst);
-#endif
-    return result;
 }
 
-/*
- * This whole loop unrolling thing is needed to make vc110 generate less awful code (use more registers).
- * ICC is much more efficient if store is called from the same function and a bit more efficient without loop unrolling.
- * vc110 generates faster code if store is used outside of the function with unrolling.
- * Please remove this when vc++ gets better.
- */
-template<Directions directions, Border borderMode, decltype(_mm_max_epu8) op, Limit limit, decltype(simd_load_epi128) load, decltype(simd_store_epi128) store>
-static MT_FORCEINLINE void process_line_xxpand(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const __m128i &maxDeviation, int width) {
-    if (width <= 16) {
-        auto result = process_block_xxpand<directions, borderMode, op, limit, load, store>(pDst, pSrcp, pSrc, pSrcn, maxDeviation);
-#ifndef XXPAND_LOCAL_STORE
-        store(reinterpret_cast<__m128i*>(pDst), result);
-#endif
-        return;
-    }
-    int x;
-    for (x = 0; x < width; x+=32) {
-        auto result_t1 = process_block_xxpand<directions, borderMode, op, limit, load, store>(pDst+x, pSrcp+x, pSrc+x, pSrcn+x, maxDeviation);
-        auto result_t2 = process_block_xxpand<directions, borderMode, op, limit, load, store>(pDst+x+16, pSrcp+x+16, pSrc+x+16, pSrcn+x+16, maxDeviation);
-#ifndef XXPAND_LOCAL_STORE
-        store(reinterpret_cast<__m128i*>(pDst+x), result_t1);
-        store(reinterpret_cast<__m128i*>(pDst+x+16), result_t2);
-#endif
-    }
-    if ((x - 16) < width) {
-        auto result = process_block_xxpand<directions, borderMode, op, limit, load, store>(pDst+x-16, pSrcp+x-16, pSrc+x-16, pSrcn+x-16, maxDeviation);
-#ifndef XXPAND_LOCAL_STORE
-        store(reinterpret_cast<__m128i*>(pDst+x-16), result);
-#endif
+/* Vertical mt_xxpand */
+
+template<decltype(_mm_max_epu8) op, Limit limit, MemoryMode mem_mode>
+static MT_FORCEINLINE void process_line_xxpand_vertical(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const __m128i &maxDeviation, int width) {
+    for (int x = 0; x < width; x += 16) {
+        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
+        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
+        auto middle_center = simd_load_si128<mem_mode>(pSrc+x);
+        auto acc = op(up_center, down_center);
+        auto result = limit(middle_center, acc, maxDeviation);
+        simd_store_si128<mem_mode>(pDst+x, result);
     }
 }
+
+template<decltype(_mm_max_epu8) op, Limit limit, MemoryMode mem_mode>
+static void xxpand_sse2_vertical(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight) {
+    const Byte *pSrcp = pSrc - nSrcPitch;
+    const Byte *pSrcn = pSrc + nSrcPitch;
+
+    UNUSED(nCoordinates); UNUSED(pCoordinates);
+    auto max_dev_v = _mm_set1_epi8(Byte(nMaxDeviation));
+    int mod16_width = nWidth / 16 * 16;
+    bool not_mod16 = nWidth != mod16_width;
+   
+    process_line_xxpand_vertical<op, limit, mem_mode>(pDst, pSrc, pSrc, pSrcn, max_dev_v, mod16_width);
+
+    if (not_mod16) {
+        process_line_xxpand_vertical<op, limit, MemoryMode::SSE2_UNALIGNED>(pDst + nWidth - 16, pSrc+nWidth-16, pSrc+nWidth-16, pSrcn+nWidth-16, max_dev_v, 16);
+    }
+
+    pDst += nDstPitch;
+    pSrcp += nSrcPitch;
+    pSrc += nSrcPitch;
+    pSrcn += nSrcPitch;
+
+    for (int y = 1; y < nHeight-1; y++)
+    {
+        process_line_xxpand_vertical<op, limit, mem_mode>(pDst, pSrcp, pSrc, pSrcn, max_dev_v, mod16_width);
+
+        if (not_mod16) {
+            process_line_xxpand_vertical<op, limit, MemoryMode::SSE2_UNALIGNED>(pDst + nWidth - 16, pSrcp+nWidth - 16, pSrc+nWidth - 16, pSrcn+nWidth - 16, max_dev_v, 16);
+        }
+
+        pDst += nDstPitch;
+        pSrcp += nSrcPitch;
+        pSrc += nSrcPitch;
+        pSrcn += nSrcPitch;
+    }
+    
+    process_line_xxpand_vertical<op, limit, mem_mode>(pDst, pSrcp, pSrc, pSrc, max_dev_v, mod16_width);
+
+    if (not_mod16) {
+        process_line_xxpand_vertical<op, limit, MemoryMode::SSE2_UNALIGNED>(pDst + nWidth - 16, pSrcp+nWidth - 16, pSrc+nWidth - 16, pSrc+nWidth - 16, max_dev_v, 16);
+    }
+}
+
+
+/* Horizontal mt_xxpand */
+
+extern "C" static MT_FORCEINLINE Byte expand_c_horizontal_core(Byte left, Byte center, Byte right, Byte max_dev) {
+    Byte ma = left;
+
+    if (center > ma) ma = center;
+    if (right > ma) ma = right;
+    
+    if (ma - center > max_dev) ma = center + max_dev;
+    return static_cast<Byte>(ma);
+}
+
+extern "C" static MT_FORCEINLINE Byte inpand_c_horizontal_core(Byte left, Byte center, Byte right, Byte max_dev) {
+    Byte mi = left;
+
+    if (center < mi) mi = center;
+    if (right < mi) mi = right;
+
+    if (center - mi > max_dev) mi = center - max_dev;
+    return static_cast<Byte>(mi);
+}
+
+//this implemented in a somewhat retarded way to allow pDst and pSrc be the same pointer (used in 3x3 expand)
+template<decltype(_mm_max_epu8) op, Limit limit, MemoryMode mem_mode, decltype(expand_c_horizontal_core) c_core>
+static void xxpand_sse2_horizontal(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight) {
+    UNUSED(nCoordinates); UNUSED(pCoordinates);
+
+    int mod16_width = (nWidth / 16) * 16;
+    int sse_loop_limit = nWidth == mod16_width ? mod16_width - 16 : mod16_width;
+    
+    Byte max_dev = Byte(nMaxDeviation);
+    __m128i max_dev_v = _mm_set1_epi8(max_dev);
+    __m128i left_mask = _mm_set_epi32(0, 0, 0, 0xFF);
+#pragma warning(disable: 4309)
+    __m128i right_mask = _mm_set_epi8(0xFF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+#pragma warning(default: 4309)
+
+    __m128i left;
+
+    for (int y = 0; y < nHeight; ++y) {
+        //left border
+        __m128i center = simd_load_si128<mem_mode>(pSrc);
+        __m128i right = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(pSrc+1);
+        left = _mm_or_si128(_mm_and_si128(center, left_mask), _mm_slli_si128(center, 1));
+
+        __m128i result = op(left, right);
+        result = limit(center, result, max_dev_v);
+
+        left = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(pSrc+15);
+        simd_store_si128<mem_mode>(pDst, result);
+
+        //main processing loop
+        for (int x = 16; x < sse_loop_limit; x += 16) {
+            center = simd_load_si128<mem_mode>(pSrc+x);
+            right = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(pSrc+x+1);
+
+            result = op(left, right);
+            result = limit(center, result, max_dev_v);
+
+            left = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(pSrc+x+15);
+
+            simd_store_si128<mem_mode>(pDst+x, result);
+        }
+
+        //right border
+        if (mod16_width == nWidth) {
+            center = simd_load_si128<mem_mode>(pSrc+mod16_width-16);
+            right = _mm_or_si128(_mm_and_si128(center, right_mask), _mm_srli_si128(center, 1));
+
+            result = op(left, right);
+            result = limit(center, result, max_dev_v);
+
+            simd_store_si128<mem_mode>(pDst+mod16_width-16, result);
+        } else { //some stuff left
+             Byte l = _mm_cvtsi128_si32(left) & 0xFF;
+
+             int x;
+             for (x = mod16_width; x < nWidth-1; ++x) {
+                 Byte temp = c_core(l, pSrc[x], pSrc[x+1], max_dev);
+                 l = pSrc[x];
+                 pDst[x] = temp;
+             }
+             pDst[x] = c_core(l, pSrc[x], pSrc[x], max_dev);
+        }
+        pSrc += nSrcPitch;
+        pDst += nDstPitch;
+    }
+}
+
+/* Square mt_xxpand */
+
+template<decltype(_mm_max_epu8) op, Limit limit, MemoryMode mem_mode, decltype(expand_c_horizontal_core) c_core>
+static void xxpand_sse2_square(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight) {
+    xxpand_sse2_vertical<op, limit, mem_mode>(pDst, nDstPitch, pSrc, nSrcPitch, nMaxDeviation, pCoordinates, nCoordinates, nWidth, nHeight);
+    xxpand_sse2_horizontal<op, limit, mem_mode, c_core>(pDst, nDstPitch, pDst, nDstPitch, nMaxDeviation, pCoordinates, nCoordinates, nWidth, nHeight);
+}
+
+
 template<ProcessLineSse2 process_line_left, ProcessLineSse2 process_line, ProcessLineSse2 process_line_right>
 static void generic_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight) {
     const Byte *pSrcp = pSrc - nSrcPitch;
@@ -243,11 +328,11 @@ static void generic_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrd
 
     UNUSED(nCoordinates); UNUSED(pCoordinates);
     auto max_dev_v = _mm_set1_epi8(Byte(nMaxDeviation));
-    int sse2_width = (nWidth - 1 - 16) / 16 * 16 + 16;
+    int mod16_width = (nWidth - 1 - 16) / 16 * 16 + 16;
     /* top-left */
     process_line_left(pDst, pSrc, pSrc, pSrcn, max_dev_v, 16);
     /* top */
-    process_line(pDst + 16, pSrc+16, pSrc+16, pSrcn+16, max_dev_v, sse2_width - 16);
+    process_line(pDst + 16, pSrc+16, pSrc+16, pSrcn+16, max_dev_v, mod16_width - 16);
 
     /* top-right */
     process_line_right(pDst + nWidth - 16, pSrc + nWidth - 16, pSrc + nWidth - 16, pSrcn + nWidth - 16, max_dev_v, 16);
@@ -262,7 +347,7 @@ static void generic_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrd
         /* left */
         process_line_left(pDst, pSrcp, pSrc, pSrcn, max_dev_v, 16);
         /* center */
-        process_line(pDst + 16, pSrcp+16, pSrc+16, pSrcn+16, max_dev_v, sse2_width - 16);
+        process_line(pDst + 16, pSrcp+16, pSrc+16, pSrcn+16, max_dev_v, mod16_width - 16);
         /* right */
         process_line_right(pDst + nWidth - 16, pSrcp + nWidth - 16, pSrc + nWidth - 16, pSrcn + nWidth - 16, max_dev_v, 16);
 
@@ -275,7 +360,7 @@ static void generic_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrd
     /* bottom-left */
     process_line_left(pDst, pSrcp, pSrc, pSrc, max_dev_v, 16);
     /* bottom */
-    process_line(pDst + 16, pSrcp+16, pSrc+16, pSrc+16, max_dev_v, sse2_width - 16);
+    process_line(pDst + 16, pSrcp+16, pSrc+16, pSrc+16, max_dev_v, mod16_width - 16);
     /* bottom-right */
     process_line_right(pDst + nWidth - 16, pSrcp + nWidth - 16, pSrc + nWidth - 16, pSrc + nWidth - 16, max_dev_v, 16);
 }

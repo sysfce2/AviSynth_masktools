@@ -15,14 +15,14 @@ class Lutspa : public MaskTools::Filter
    Byte *luts[3];
 
 protected:
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane)
-   {
-      UNUSED(n);
-      lut_c( dst, dst.pitch(), dst.width(), dst.height(), luts[nPlane] );
-   }
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    {
+        UNUSED(n); UNUSED(frames); UNUSED(constraints);
+        Functions::copy_plane(dst.data(), dst.pitch(), luts[nPlane], dst.width(), dst.width(), dst.height());
+    }
 
 public:
-   Lutspa(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
+   Lutspa(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::CHILD)
    {
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
       bool is_relative = parameters["relative"].toBool();
@@ -30,12 +30,12 @@ public:
       
       if (parameters["mode"].is_defined())
       {
-         if (parameters["mode"].toString() == "absolute") is_relative = false, is_biased = false;
-         else if (parameters["mode"].toString() == "relative inclusive") is_relative = true, is_biased = false;
-         else if (parameters["mode"].toString() == "relative closed") is_relative = true, is_biased = false;
-         else if (parameters["mode"].toString() == "relative exclusive") is_relative = true, is_biased = true;
-         else if (parameters["mode"].toString() == "relative opened") is_relative = true, is_biased = true;
-         else if (parameters["mode"].toString() == "relative") is_relative = true, is_biased = true;
+          if (parameters["mode"].toString() == "absolute") is_relative = false, is_biased = false;
+          else if (parameters["mode"].toString() == "relative inclusive") is_relative = true, is_biased = false;
+          else if (parameters["mode"].toString() == "relative closed") is_relative = true, is_biased = false;
+          else if (parameters["mode"].toString() == "relative exclusive") is_relative = true, is_biased = true;
+          else if (parameters["mode"].toString() == "relative opened") is_relative = true, is_biased = true;
+          else if (parameters["mode"].toString() == "relative") is_relative = true, is_biased = true;
       }
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
@@ -48,7 +48,7 @@ public:
           if (operators[i] != PROCESS) {
               continue;
           }
-
+          
           if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
               operators[i] = Operator(MEMSET, 0); //for no real reason
               continue;
@@ -69,7 +69,7 @@ public:
             return;
          }
 
-         luts[i] = new Byte[w*h];
+         luts[i] = reinterpret_cast<Byte*>(_aligned_malloc(w*h, 16));
 
          for ( int x = 0; x < w; x++ )
             for ( int y = 0; y < h; y++ )
@@ -79,8 +79,9 @@ public:
 
    ~Lutspa()
    {
-      for ( int i = 0; i < 3; i++ )
-         delete[] luts[i];
+       for (int i = 0; i < 3; i++) {
+           _aligned_free(luts[i]);
+       }
    }
 
    InputConfiguration &input_configuration() const { 

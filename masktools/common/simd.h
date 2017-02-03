@@ -15,39 +15,47 @@ namespace Filtering {
 
 #define USE_MOVPS
 
-extern "C" {
+enum class MemoryMode {
+    SSE2_UNALIGNED,
+    SSE2_ALIGNED
+};
 
-static MT_FORCEINLINE __m128i simd_load_epi128(const __m128i* ptr) {
+
+template<MemoryMode mem_mode, typename T>
+static MT_FORCEINLINE __m128i simd_load_si128(const T* ptr) {
 #ifdef USE_MOVPS
-    return _mm_castps_si128(_mm_load_ps(reinterpret_cast<const float*>(ptr)));
+    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+        return _mm_castps_si128(_mm_load_ps(reinterpret_cast<const float*>(ptr)));
+    } else {
+        return _mm_castps_si128(_mm_loadu_ps(reinterpret_cast<const float*>(ptr)));
+    }
 #else
-    return _mm_load_si128(ptr);
+    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+        return _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
+    } else {
+        return _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
+    }
 #endif
 }
 
-static MT_FORCEINLINE __m128i simd_loadu_epi128(const __m128i* ptr) {
+
+template<MemoryMode mem_mode, typename T>
+static MT_FORCEINLINE void simd_store_si128(T *ptr, __m128i value) {
 #ifdef USE_MOVPS
-    return _mm_castps_si128(_mm_loadu_ps(reinterpret_cast<const float*>(ptr)));
+    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+        _mm_store_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
+    } else {
+        _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
+    }
 #else
-    return _mm_loadu_si128(ptr);
+    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+        _mm_store_si128(reinterpret_cast<__m128i*>(ptr), value);
+    } else {   
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), value);
+    }
 #endif
 }
 
-static MT_FORCEINLINE void simd_store_epi128(__m128i *ptr, __m128i value) {
-#ifdef USE_MOVPS
-    _mm_store_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
-#else
-    _mm_store_si128(ptr, value);
-#endif
-}
-
-static MT_FORCEINLINE void simd_storeu_epi128(__m128i *ptr, __m128i value) {
-#ifdef USE_MOVPS
-    _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
-#else
-    _mm_storeu_si128(ptr, value);
-#endif
-}
 
 static MT_FORCEINLINE int simd_bit_scan_forward(int value) {
 #ifdef __INTEL_COMPILER
@@ -59,7 +67,7 @@ static MT_FORCEINLINE int simd_bit_scan_forward(int value) {
 #endif
 }
 
-};
+
 
 enum class Border {
     Left,
@@ -69,25 +77,25 @@ enum class Border {
 
 #pragma warning(disable: 4309)
 
-template<bool isBorder, decltype(simd_load_epi128) load>
+template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128i load_one_to_left(const Byte *ptr) {
-    if (isBorder) {
+    if (border_mode == Border::Left) {
         auto mask_left = _mm_setr_epi8(0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
-        auto val = load(reinterpret_cast<const __m128i*>(ptr));
+        auto val = simd_load_si128<mem_mode>(ptr);
         return _mm_or_si128(_mm_slli_si128(val, 1), _mm_and_si128(val, mask_left));
     } else {
-        return simd_loadu_epi128(reinterpret_cast<const __m128i*>(ptr - 1));
+        return simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr - 1);
     }
 }
 
-template<bool isBorder, decltype(simd_load_epi128) load>
+template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128i load_one_to_right(const Byte *ptr) {
-    if (isBorder) {
+    if (border_mode == Border::Right) {
         auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF);
-        auto val = load(reinterpret_cast<const __m128i*>(ptr));
+        auto val = simd_load_si128<mem_mode>(ptr);
         return _mm_or_si128(_mm_srli_si128(val, 1), _mm_and_si128(val, mask_right));
     } else {
-        return simd_loadu_epi128(reinterpret_cast<const __m128i*>(ptr + 1));
+        return simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
     }
 }
 
