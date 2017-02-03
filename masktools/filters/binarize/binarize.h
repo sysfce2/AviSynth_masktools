@@ -43,10 +43,6 @@ protected:
        return parameters["mode"].is_defined() && parameters["mode"].toString() == mode;
    }
 
-   bool isMode(const char *mode) {
-       return parameters["mode"].is_defined() && parameters["mode"].toString() == mode;
-   }
-
 public:
    Binarize(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
    {
