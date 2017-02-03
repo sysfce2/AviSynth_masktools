@@ -986,11 +986,7 @@
     <ClCompile Include="..\filters\lut\lutf\lutf.cpp" />
     <ClCompile Include="..\filters\lut\lutxyz\lutxyz.cpp" />
     <ClCompile Include="..\filters\lut\lutsx\lutsx.cpp" />
-<<<<<<< HEAD
-    <ClCompile Include="..\filters\lut\lutspa\lutspa.cpp" />
-=======
     <ClCompile Include="..\filters\merge\merge.cpp" />
->>>>>>> avs-mt
     <ClCompile Include="..\filters\logic\logic.cpp" />
     <ClCompile Include="..\filters\convolution\convolution.cpp" />
     <ClCompile Include="..\filters\morphologic\inpand\inpand16.cpp">
