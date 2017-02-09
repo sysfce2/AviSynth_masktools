@@ -10,11 +10,14 @@ typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrd
 
 Processor merge_c;
 Processor merge_luma_420_c;
+Processor merge_luma_422_c;
 
 extern Processor *merge_sse2;
 extern Processor *merge_asse2;
 extern Processor *merge_luma_420_sse2;
 extern Processor *merge_luma_420_asse2;
+extern Processor *merge_luma_422_sse2;
+extern Processor *merge_luma_422_asse2;
 
 
 class Merge : public MaskTools::Filter
@@ -30,12 +33,14 @@ protected:
     {
         UNUSED(n);
         if (use_luma && (nPlane > 0)) {
-            if (width_ratios[1][C] == 2) {
+            if (!(width_ratios[1][C] == 1 && width_ratios[1][C] == 1)) {
+                // 420 or 422
                 chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                     frames[1].plane(0).data(), frames[1].plane(0).pitch(),
                     dst.width(), dst.height());
             } else {
+              // 444
                 processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                     frames[1].plane(0).data(), frames[1].plane(0).pitch(),
@@ -53,12 +58,23 @@ public:
    Merge(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
       use_luma = parameters["luma"].toBool();
+      bool is420 = width_ratios[1][C] == 2 && height_ratios[1][C] == 2;
+      bool is422 = width_ratios[1][C] == 2 && height_ratios[1][C] == 1;
+      
+      // PF: for greyscale: graceful fallback to chromaless operation
+      if (plane_counts[C] == 1) {
+        use_luma = false;
+        operators[1] = operators[2] = NONE;
+      }
 
       if (use_luma) {
+         // PF: implement use_luma for 422 clips
+          /*
           if ((width_ratios[1][C] != 2 || height_ratios[1][C] != 2) && (width_ratios[1][C] != 1 || height_ratios[1][C] != 1)) {
               error = "\"luma\" is unsupported in 422";
               return;
           }
+          */
           auto c1 = childs[0]->colorspace();
           auto c2 = childs[1]->colorspace();
           if ((width_ratios[1][c1] != width_ratios[1][c2]) || (height_ratios[1][c1] != height_ratios[1][c2])) {
@@ -82,9 +98,18 @@ public:
       processors.push_back( Filtering::Processor<Processor>( merge_asse2, Constraint( CPU_SSE2, 1, 1, 16, 16 ), 2 ) );
 
       /* add the chroma processors */
-      chroma_processors.push_back( Filtering::Processor<Processor>( merge_luma_420_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
-      chroma_processors.push_back( Filtering::Processor<Processor>( merge_luma_420_sse2, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) );
-      chroma_processors.push_back( Filtering::Processor<Processor>( merge_luma_420_asse2, Constraint( CPU_SSE2, 1, 1, 16, 16 ), 2) );
+      // they are used only for 420 and 422
+      if (is420) {
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+      }
+      else { // 422
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+
+      }
    }
 
    InputConfiguration &input_configuration() const { return InPlaceThreeFrame(); }
