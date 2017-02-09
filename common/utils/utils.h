@@ -54,6 +54,38 @@ typedef enum {
    COLORSPACE_YV24,
    COLORSPACE_I444,
 
+   COLORSPACE_Y10,
+   COLORSPACE_YUV420P10,
+   COLORSPACE_YUV422P10,
+   COLORSPACE_YUV444P10,
+
+   COLORSPACE_Y12,
+   COLORSPACE_YUV420P12,
+   COLORSPACE_YUV422P12,
+   COLORSPACE_YUV444P12,
+
+   COLORSPACE_Y14,
+   COLORSPACE_YUV420P14,
+   COLORSPACE_YUV422P14,
+   COLORSPACE_YUV444P14,
+
+   COLORSPACE_Y16,
+   COLORSPACE_YUV420P16,
+   COLORSPACE_YUV422P16,
+   COLORSPACE_YUV444P16,
+
+   COLORSPACE_Y32,
+   COLORSPACE_YUV420PS,
+   COLORSPACE_YUV422PS,
+   COLORSPACE_YUV444PS,
+
+   COLORSPACE_RGBP8,
+   COLORSPACE_RGBP10,
+   COLORSPACE_RGBP12,
+   COLORSPACE_RGBP14,
+   COLORSPACE_RGBP16,
+   COLORSPACE_RGBPS,
+
    COLORSPACE_COUNT,
 
 } Colorspace;
@@ -144,28 +176,61 @@ template<typename T, typename U> T threshold(U x, U mini, U maxi, U bottom = U(m
 }
 
 /* width & height ratios, according to the colorspace */
-static const int plane_counts[COLORSPACE_COUNT] = { 0, 1, 3, 3, 3, 3, 3, 3, };
+static const int plane_counts[COLORSPACE_COUNT] = { 0, 1, 3, 3, 3, 3, 3, 3, 
+1, 3, 3, 3, // 10 bits
+1, 3, 3, 3, // 12 bits
+1, 3, 3, 3, // 14 bits
+1, 3, 3, 3, // 16 bits
+1, 3, 3, 3, // 32 bits/float
+3, 3, 3, 3, 3, 3 // RGB 8,10,12,14,16,32/f
+};
 
 template<Colorspace C> int plane_count() { return plane_counts[C]; }
 
+static const bool planes_isRGB[COLORSPACE_COUNT] = { false, false, false, false, false, false, false, false,
+false, false, false, false, // 10 bits
+false, false, false, false, // 12 bits
+false, false, false, false, // 14 bits
+false, false, false, false, // 16 bits
+false, false, false, false, // 32 bits/float
+true, true, true, true, true, true // RGB 8,10,12,14,16,32/f
+};
+
+template<Colorspace C> int plane_isRGB() { return planes_isRGB[C]; }
+
 static const int width_ratios[3][COLORSPACE_COUNT] =
-{
-   { 0, 1, 1, 1, 1, 1, 1, 1, },
-   { 0, 0, 2, 2, 2, 2, 1, 1, },
-   { 0, 0, 2, 2, 2, 2, 1, 1, }, 
+{ 
+//      8 bits               10          12          14          16          32          RGBP8,10,12,14,16,S
+   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 2, 2, 1, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 2, 2, 1, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1 },
 };
 
 template<Colorspace C> int width_ratio(int nPlane) { return width_ratios[nPlane][C]; }
 
 static const int height_ratios[3][COLORSPACE_COUNT] =
 {
-   { 0, 1, 1, 1, 1, 1, 1, 1, },
-   { 0, 0, 2, 2, 1, 1, 1, 1, },
-   { 0, 0, 2, 2, 1, 1, 1, 1, },
+//      8 bits               10          12          14          16          32          RGBP8,10,12,14,16,S
+   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 1, 1, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 1, 1, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1 },
 };
 
 template<Colorspace C> int height_ratio(int nPlane) { return height_ratios[nPlane][C]; }
 
+/* bit depths, according to the colorspace */
+static const int bit_depths[COLORSPACE_COUNT] = { 0, 8, 8, 8, 8, 8, 8, 8,
+10, 10, 10, 10, // 10 bits
+12, 12, 12, 12, // 12 bits
+14, 14, 14, 14, // 14 bits
+16, 16, 16, 16, // 16 bits
+32, 32, 32, 32, // 32 bits/float
+8, 10, 12, 14, 16, 32 // RGB 8,10,12,14,16,32/f
+};
+
+template<Colorspace C> int bit_depth() { return bit_depths[C]; }
+
+/* not used
 static const int pixel_sizes[3][COLORSPACE_COUNT] = 
 {
    { 0, 1, 1, 1, 1, 1, 1, 1, },
@@ -174,7 +239,7 @@ static const int pixel_sizes[3][COLORSPACE_COUNT] =
 };
 
 template<Colorspace C> int pixel_size(int nPlane) { return pixel_sizes[C][nPlane]; }
-
+*/
 } // namespace Filtering
 
 #endif
