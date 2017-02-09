@@ -142,7 +142,7 @@ public:
         print(LOG_DEBUG, "using cpu flags : 0x%x\n", flags);
 
         /* chroma offsets and box */
-        if (C != COLORSPACE_Y8 && C != COLORSPACE_NONE)
+        if (C != COLORSPACE_Y8 && C != COLORSPACE_Y10 && C != COLORSPACE_Y12 && C != COLORSPACE_Y14 && C != COLORSPACE_Y16 && C != COLORSPACE_Y32 && C != COLORSPACE_NONE)
         {
             nXOffsetUV = nXOffset / width_ratios[1][C];
             nYOffsetUV = nYOffset / height_ratios[1][C];
