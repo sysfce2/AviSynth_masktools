@@ -37,18 +37,29 @@ class Merge16 : public MaskTools::Filter
 
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane)
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
-        if ( use_luma && nPlane ) {
+        if (use_luma && (nPlane > 0)) {
             if (width_ratios[1][C] == 2) {
-                chroma_processors.best_processor( constraints[nPlane] )( dst, dst.pitch(), frames[0].plane(nPlane), frames[0].plane(nPlane).pitch(), frames[1].plane(0), frames[1].plane(0).pitch(), dst.width(), dst.height() );
-            } else {
-                processors.best_processor( constraints[nPlane] )( dst, dst.pitch(), frames[0].plane(nPlane), frames[0].plane(nPlane).pitch(), frames[1].plane(0), frames[1].plane(0).pitch(), dst.width(), dst.height() );
+                chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                    frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                    frames[1].plane(0).data(), frames[1].plane(0).pitch(),
+                    dst.width(), dst.height());
+            }
+            else {
+                processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                    frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                    frames[1].plane(0).data(), frames[1].plane(0).pitch(),
+                    dst.width(), dst.height());
             }
         }
-        else
-            processors.best_processor( constraints[nPlane] )( dst, dst.pitch(), frames[0].plane(nPlane), frames[0].plane(nPlane).pitch(), frames[1].plane(nPlane), frames[1].plane(nPlane).pitch(), dst.width(), dst.height() );
+        else {
+            processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+                dst.width(), dst.height());
+        }
     }
 
 public:

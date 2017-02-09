@@ -20,10 +20,10 @@ class AddDiff16 : public MaskTools::Filter
 
 protected:
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane)
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
    {
       UNUSED(n);
-      processors.best_processor( constraints[nPlane] )( dst, dst.pitch(), frames[0].plane(nPlane), frames[0].plane(nPlane).pitch(), dst.width(), dst.height() );
+      processors.best_processor( constraints[nPlane] )( dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height() );
    }
 
 public:
@@ -37,6 +37,11 @@ public:
             processors.push_back(Filtering::Processor<Processor>(adddiff16_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             processors.push_back(Filtering::Processor<Processor>(adddiff16_interleaved_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
         }
+        /* sample from 8 bit addiff
+        processors.push_back(Filtering::Processor<Processor>(&adddiff_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+        processors.push_back(Filtering::Processor<Processor>(adddiff_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+        processors.push_back(Filtering::Processor<Processor>(adddiff_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
+        */
     }
 
    InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }

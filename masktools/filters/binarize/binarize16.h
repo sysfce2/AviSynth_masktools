@@ -34,10 +34,11 @@ class Binarize16 : public MaskTools::Filter
     ProcessorList<Processor> processors;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane)
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
-        processors.best_processor( constraints[nPlane] )( dst, dst.pitch(), nThreshold, dst.width(), dst.height() );
+        UNUSED(frames);
+        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height());
     }
 
     bool isMode(const char *mode) {

@@ -149,11 +149,11 @@ void binarize_sse2_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshol
 
     for (int j = 0; j < nHeight; ++j) {
         for (int i = 0; i < wMod16; i+=16) {
-            auto src = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pDst+i));
+            auto src = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pDst+i));
 
             auto result = op(src, t, halfrange);
 
-            simd_storeu_epi128(reinterpret_cast<__m128i*>(pDst+i), result);
+            simd_store_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m128i*>(pDst+i), result);
         }
         pDst += nDstPitch;
     }

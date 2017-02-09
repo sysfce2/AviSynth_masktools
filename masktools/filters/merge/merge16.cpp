@@ -253,10 +253,10 @@ template <CpuFlags flags>
 MT_FORCEINLINE static __m128i get_mask_420_interleaved_simd(const Byte *ptr, int pitch, int x) {
     x = x*2;
 
-    auto row1_lo = simd_loadu_epi128(reinterpret_cast<const __m128i*>(ptr+x));
-    auto row1_hi = simd_loadu_epi128(reinterpret_cast<const __m128i*>(ptr+x+16));
-    auto row2_lo = simd_loadu_epi128(reinterpret_cast<const __m128i*>(ptr+pitch+x));
-    auto row2_hi = simd_loadu_epi128(reinterpret_cast<const __m128i*>(ptr+pitch+x+16));
+    auto row1_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+x));
+    auto row1_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+x+16));
+    auto row2_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+pitch+x));
+    auto row2_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+pitch+x+16));
 
     return get_single_mask_value<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
 }
@@ -278,19 +278,19 @@ void merge16_t_interleaved_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
 
     for ( int j = 0; j < nHeight; ++j ) {
         for ( int i = 0; i < wMod16; i+=16 ) {
-            auto dst = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pDst+i));
-            auto src = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pSrc1+i));
+            auto dst = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pDst+i));
+            auto src = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pSrc1+i));
             __m128i mask;
 
             if (mode == MASK420) {
                 mask = get_mask_420_interleaved_simd<flags>(pMask, nMaskPitch, i);
             } else {
-                mask = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pMask+i));
+                mask = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask+i));
             }
 
             auto result = merge_core_simd<flags>(dst, src, mask, ffff, zero);
 
-            simd_storeu_epi128(reinterpret_cast<__m128i*>(pDst+i), result);
+            simd_store_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m128i*>(pDst+i), result);
         }
 
         pDst += nDstPitch;

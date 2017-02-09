@@ -17,11 +17,13 @@ class Lut16 : public MaskTools::Filter
    Processor* processor;
 
 protected:
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane)
-   {
-      UNUSED(n);
-      processor(dst, dst.pitch(), dst.width(), dst.height(), luts[nPlane]);
-   }
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    {
+        UNUSED(n);
+        UNUSED(constraints);
+        UNUSED(frames);
+        processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane]);
+    }
 
 public:
    Lut16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )

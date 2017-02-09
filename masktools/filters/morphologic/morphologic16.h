@@ -21,15 +21,20 @@ protected:
    ProcessorList<StackedProcessor> stackedProcessors;
    ProcessorList<InterleavedProcessor> interleavedProcessors;
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane)
-   {
-      UNUSED(n);
-      if (parameters["stacked"].toBool()) {
-          stackedProcessors.best_processor( constraints[nPlane] )( dst, dst.pitch(), frames[0].plane(nPlane), frames[0].plane(nPlane).pitch(), nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height() / 2 );
-      } else {
-          interleavedProcessors.best_processor( constraints[nPlane] )( reinterpret_cast<Word*>((Byte*)dst), dst.pitch() / 2, reinterpret_cast<const Word*>((const Byte*)(frames[0].plane(nPlane))), frames[0].plane(nPlane).pitch() / 2, nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width() / 2, dst.height() );
-      }
-   }
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    {
+        UNUSED(n);
+        if (parameters["stacked"].toBool()) {
+            stackedProcessors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
+                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
+                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height() / 2);
+        }
+        else {
+            interleavedProcessors.best_processor(constraints[nPlane])(reinterpret_cast<Word*>((Byte*)dst.data()), dst.pitch() / 2, 
+                reinterpret_cast<const Word*>((const Byte*)(frames[0].plane(nPlane).data())), frames[0].plane(nPlane).pitch() / 2, 
+                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width() / 2, dst.height());
+        }
+    }
 
    void FillCoordinates(const String &coordinates)
    {

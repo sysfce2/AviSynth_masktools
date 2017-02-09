@@ -137,12 +137,12 @@ void logic16_interleaved_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
 
     for (int j = 0; j < nHeight; ++j) {
         for (int i = 0; i < wMod16; i+=16) {
-            auto dst = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pDst+i));
-            auto src = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pSrc+i));
+            auto dst = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pDst+i));
+            auto src = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pSrc+i));
 
             auto result = op(dst, src, tDest, tSource);
 
-            simd_storeu_epi128(reinterpret_cast<__m128i*>(pDst+i), result);
+            simd_store_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m128i*>(pDst+i), result);
         }
         pDst += nDstPitch;
         pSrc += nSrcPitch;

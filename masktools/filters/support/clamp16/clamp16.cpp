@@ -109,13 +109,13 @@ void clamp16_interleaved_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLi
 
     for ( int j = 0; j < nHeight; ++j ) {
         for ( int i = 0; i < wMod16; i+=16 ) {
-            auto upper_limit = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pUpLimit+i));
-            auto lower_limit = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pLowLimit+i));
-            auto limited = simd_loadu_epi128(reinterpret_cast<const __m128i*>(pDst+i));
+            auto upper_limit = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pUpLimit+i));
+            auto lower_limit = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pLowLimit+i));
+            auto limited = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pDst+i));
 
             limited = clamp16_core_sse2(limited, upper_limit, lower_limit, overshoot_v, undershoot_v);
 
-            simd_storeu_epi128(reinterpret_cast<__m128i*>(pDst+i), limited);
+            simd_store_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m128i*>(pDst+i), limited);
         }
         pDst += nDstPitch;
         pUpLimit += nUpLimitPitch;
