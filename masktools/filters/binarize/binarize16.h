@@ -8,10 +8,16 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Binari
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight);
 
 #define DEFINE_PROCESSOR(name) \
-extern Processor *binarize_##name##_stacked_c; \
-extern Processor *binarize_##name##_stacked_sse2; \
-extern Processor *binarize_##name##_interleaved_c; \
-extern Processor *binarize_##name##_interleaved_sse2; \
+extern Processor *binarize_##name##_stacked_16_c; \
+extern Processor *binarize_##name##_stacked_16_sse2; \
+extern Processor *binarize_##name##_interleaved_10_c; \
+extern Processor *binarize_##name##_interleaved_10_sse2; \
+extern Processor *binarize_##name##_interleaved_12_c; \
+extern Processor *binarize_##name##_interleaved_12_sse2; \
+extern Processor *binarize_##name##_interleaved_14_c; \
+extern Processor *binarize_##name##_interleaved_14_sse2; \
+extern Processor *binarize_##name##_interleaved_16_c; \
+extern Processor *binarize_##name##_interleaved_16_sse2;
 
 DEFINE_PROCESSOR(upper);
 DEFINE_PROCESSOR(lower);
@@ -46,20 +52,41 @@ protected:
     }
 
 public:
-    Binarize16(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
-    {
-        nThreshold = convert<Word, int>( parameters["threshold"].toInt() );
+  Binarize16(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
+  {
+    if (parameters["threshold"].is_defined()) {
+      nThreshold = convert<Word, int>(parameters["threshold"].toInt());
+    }
+    else {
+      nThreshold = (1 << (bit_depths[C] - 1)); // bit-depth adaptive default value
+    }
+
+    if (bit_depths[C] < 10 || bit_depths[C]>16) {
+      int n = 0;
+    }
 
 #define SET_MODE(mode) \
     if (parameters["stacked"].toBool() == true) { \
-        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
-        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     } else { \
-        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
-        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        switch(bit_depths[C]) { \
+        case 10: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_10_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+                 break; \
+        case 12: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_12_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+                 break; \
+        case 14: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_14_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+                 break; \
+        case 16: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+                 break; \
+        }\
     }
 
-        if (isMode("0 x")) { SET_MODE(0_x); }
+        if (isMode("0 x")) { SET_MODE(0_x); } // e.g. binarize_0_x_10_interleaved_c instead of binarize_0_x_interleaved_c
         else if (isMode("t x")) { SET_MODE(t_x); }
         else if (isMode("x 0")) { SET_MODE(x_0); }
         else if (isMode("x t")) { SET_MODE(x_t); }
@@ -83,12 +110,14 @@ public:
     static Signature filter_signature()
     {
         Signature signature = "mt_binarize16";
+        signature.setValidBitdepth(10,16);
 
         signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(32768, "threshold"));
+        signature.add(Parameter(32768, "threshold")); // PF todo: auto half on bitdepth
         signature.add(Parameter(false, "upper"));
         signature.add(Parameter(String("lower"), "mode"));
         signature.add(Parameter(false, "stacked"));
+        //signature.add(Parameter(16, "bits")); // PF test
 
         return add_defaults( signature );
     }
