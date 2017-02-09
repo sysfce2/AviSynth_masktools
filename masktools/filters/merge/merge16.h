@@ -20,6 +20,7 @@ extern Processor *merge16_luma_420_sse4_1_stacked;
 
 extern Processor *merge16_c_interleaved;
 extern Processor *merge16_luma_420_c_interleaved;
+extern Processor *merge16_luma_422_c_interleaved;
 
 extern Processor *merge16_sse2_interleaved;
 extern Processor *merge16_sse4_1_interleaved;
@@ -27,6 +28,10 @@ extern Processor *merge16_sse4_1_interleaved;
 extern Processor *merge16_luma_420_sse2_interleaved;
 extern Processor *merge16_luma_420_ssse3_interleaved; 
 extern Processor *merge16_luma_420_sse4_1_interleaved;
+
+extern Processor *merge16_luma_422_sse2_interleaved;
+extern Processor *merge16_luma_422_ssse3_interleaved;
+extern Processor *merge16_luma_422_sse4_1_interleaved;
 
 class Merge16 : public MaskTools::Filter
 {
@@ -41,8 +46,9 @@ protected:
     {
         UNUSED(n);
         if (use_luma && (nPlane > 0)) {
-            if (width_ratios[1][C] == 2) {
-                chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+          if (!(width_ratios[1][C] == 1 && width_ratios[1][C] == 1)) {
+            // 420 or 422
+            chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                     frames[1].plane(0).data(), frames[1].plane(0).pitch(),
                     dst.width(), dst.height());
@@ -67,11 +73,22 @@ public:
    {
       use_luma = parameters["luma"].toBool();
 
+      bool is420 = width_ratios[1][C] == 2 && height_ratios[1][C] == 2;
+      bool is422 = width_ratios[1][C] == 2 && height_ratios[1][C] == 1;
+     
+      // PF: for greyscale: graceful fallback to chromaless operation
+      if (plane_counts[C] == 1) {
+        use_luma = false;
+        operators[1] = operators[2] = NONE;
+      }
+
       if (use_luma) {
-          if ((width_ratios[1][C] != 2 || height_ratios[1][C] != 2) && (width_ratios[1][C] != 1 || height_ratios[1][C] != 1)) {
-              error = "\"luma\" is unsupported in 422";
-              return;
-          }
+        /*
+        if ((width_ratios[1][C] != 2 || height_ratios[1][C] != 2) && (width_ratios[1][C] != 1 || height_ratios[1][C] != 1)) {
+        error = "\"luma\" is unsupported in 422";
+        return;
+        }
+        */
           auto c1 = childs[0]->colorspace();
           auto c2 = childs[1]->colorspace();
           if ((width_ratios[1][c1] != width_ratios[1][c2]) || (height_ratios[1][c1] != height_ratios[1][c2])) {
@@ -82,9 +99,18 @@ public:
           /* if "luma" is set, we force the chroma processing. Much more handy */
           operators[1] = operators[2] = PROCESS;
           /* no need to change U/V default processing, because of in place filter */
+      } else if (operators[1] == PROCESS || operators[2] == PROCESS) {
+          auto mask_colorspace = childs[2]->colorspace();
+          if (plane_counts[mask_colorspace] == 1) {
+              error = "Mask cannot be greyscale when chroma mode is PROCESS";
+          }
       }
 
       if (parameters["stacked"].toBool()) {
+          if (is422 && use_luma) {
+            error = "stacked and use_luma on 422 not supported";
+            return;
+          }
           /* add the processors */
           processors.push_back( Filtering::Processor<Processor>( merge16_c_stacked, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
           processors.push_back( Filtering::Processor<Processor>( merge16_sse2_stacked, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) );
@@ -102,10 +128,19 @@ public:
           processors.push_back( Filtering::Processor<Processor>( merge16_sse4_1_interleaved, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 2 ) );
 
           /* add the chroma processors */
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_c_interleaved, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_sse2_interleaved, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) );
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_ssse3_interleaved, Constraint( CPU_SSSE3, 1, 1, 1, 1 ), 2 ) );
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_sse4_1_interleaved, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 3 ) );
+          // used only for 420 and 422
+          if (is420) {
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_c_interleaved, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_sse2_interleaved, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_ssse3_interleaved, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_sse4_1_interleaved, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+          }
+          else { // 422
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_c_interleaved, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_sse2_interleaved, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_ssse3_interleaved, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_sse4_1_interleaved, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+          }
       }
    }
 

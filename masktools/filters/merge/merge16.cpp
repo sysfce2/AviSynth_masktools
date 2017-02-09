@@ -7,6 +7,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge1
 
 enum MaskMode {
     MASK420,
+    MASK422,
     MASK444
 };
 
@@ -45,6 +46,31 @@ MT_FORCEINLINE static __m128i get_single_mask_value(const __m128i &row1_lo, cons
     }
 
     return simd_blend_epi8<flags>(_mm_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0), avg_hi, avg_lo);
+}
+
+template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_single_mask_value_422(const __m128i &row1_lo, const __m128i &row1_hi) {
+  auto row1_lo_sh = _mm_srli_si128(row1_lo, 2);
+  auto row1_hi_sh = _mm_srli_si128(row1_hi, 2);
+
+  auto avg_lo = _mm_avg_epu16(row1_lo, row1_lo_sh);
+  auto avg_hi = _mm_avg_epu16(row1_hi, row1_hi_sh);
+
+  if (flags >= CPU_SSSE3) {
+    avg_lo = _mm_shuffle_epi8(avg_lo, _mm_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0));
+    avg_hi = _mm_shuffle_epi8(avg_hi, _mm_set_epi8(13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  }
+  else {
+    avg_lo = _mm_shufflelo_epi16(avg_lo, _MM_SHUFFLE(3, 3, 2, 0));
+    avg_lo = _mm_shufflehi_epi16(avg_lo, _MM_SHUFFLE(3, 3, 2, 0));
+    avg_lo = _mm_shuffle_epi32(avg_lo, _MM_SHUFFLE(3, 3, 2, 0));
+
+    avg_hi = _mm_shufflelo_epi16(avg_hi, _MM_SHUFFLE(3, 3, 2, 0));
+    avg_hi = _mm_shufflehi_epi16(avg_hi, _MM_SHUFFLE(3, 3, 2, 0));
+    avg_hi = _mm_shuffle_epi32(avg_hi, _MM_SHUFFLE(2, 0, 3, 3));
+  }
+
+  return simd_blend_epi8<flags>(_mm_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0), avg_hi, avg_lo);
 }
 
 template<CpuFlags flags>
@@ -215,6 +241,11 @@ MT_FORCEINLINE static Word get_mask_420_interleaved_c(const Byte *ptr, int pitch
         ((reinterpret_cast<const Word*>(ptr)[x+1] +  reinterpret_cast<const Word*>(ptr+pitch)[x+1] + 1) >> 1) + 1) >> 1;
 }
 
+MT_FORCEINLINE static Word get_mask_422_interleaved_c(const Byte *ptr, int x) {
+  x = x * 2;
+
+  return (reinterpret_cast<const Word*>(ptr)[x] + reinterpret_cast<const Word*>(ptr)[x + 1] + 1) >> 1;
+}
 
 template<MaskMode mode>
 void merge16_t_interleaved_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
@@ -222,14 +253,16 @@ void merge16_t_interleaved_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1,
 {
     for ( int y = 0; y < nHeight; ++y )
     {
-        for ( int x = 0; x < nWidth / 2; ++x ) {
+        for ( int x = 0; x < nWidth / 2; ++x ) { // nWidth/2: interleaved
             Word dst = reinterpret_cast<const Word*>(pDst)[x];
             Word src = reinterpret_cast<const Word*>(pSrc1)[x];
             Word mask;
 
             if (mode == MASK420) {
                 mask = get_mask_420_interleaved_c(pMask, nMaskPitch, x);
-            } else {
+            } else if(mode == MASK422)
+                mask = get_mask_422_interleaved_c(pMask, x);
+            else {
                 mask = reinterpret_cast<const Word*>(pMask)[x];
             }
 
@@ -243,7 +276,7 @@ void merge16_t_interleaved_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1,
         if (mode == MASK420) {
             pMask += nMaskPitch * 2;
         } else {
-            pMask += nMaskPitch;
+            pMask += nMaskPitch; // 422, 444
         }
     }
 }
@@ -261,6 +294,15 @@ MT_FORCEINLINE static __m128i get_mask_420_interleaved_simd(const Byte *ptr, int
     return get_single_mask_value<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
 }
 
+template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_mask_422_interleaved_simd(const Byte *ptr, int x) {
+  x = x * 2;
+
+  auto row1_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + x));
+  auto row1_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + x + 16));
+  
+  return get_single_mask_value_422<flags>(row1_lo, row1_hi);
+}
 
 template <CpuFlags flags, MaskMode mode, Processor merge_c>
 void merge16_t_interleaved_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
@@ -284,7 +326,10 @@ void merge16_t_interleaved_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
 
             if (mode == MASK420) {
                 mask = get_mask_420_interleaved_simd<flags>(pMask, nMaskPitch, i);
-            } else {
+            } else if (mode == MASK422) {
+                mask = get_mask_422_interleaved_simd<flags>(pMask, i);
+              }
+              else {
                 mask = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask+i));
             }
 
@@ -299,7 +344,7 @@ void merge16_t_interleaved_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
         if (mode == MASK420) {
             pMask += nMaskPitch * 2;
         } else {
-            pMask += nMaskPitch;
+            pMask += nMaskPitch; // 422, 444
         }
     }
 
@@ -322,6 +367,7 @@ Processor *merge16_luma_420_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, 
 
 Processor *merge16_c_interleaved = &merge16_t_interleaved_c<MASK444>;
 Processor *merge16_luma_420_c_interleaved = &merge16_t_interleaved_c<MASK420>;
+Processor *merge16_luma_422_c_interleaved = &merge16_t_interleaved_c<MASK422>;
 
 Processor *merge16_sse2_interleaved = merge16_t_interleaved_simd<CPU_SSE2, MASK444, merge16_t_interleaved_c<MASK444>>;
 Processor *merge16_sse4_1_interleaved = merge16_t_interleaved_simd<CPU_SSE4_1, MASK444, merge16_t_interleaved_c<MASK444>>;
@@ -329,5 +375,9 @@ Processor *merge16_sse4_1_interleaved = merge16_t_interleaved_simd<CPU_SSE4_1, M
 Processor *merge16_luma_420_sse2_interleaved = merge16_t_interleaved_simd<CPU_SSE2, MASK420, merge16_t_interleaved_c<MASK420>>;
 Processor *merge16_luma_420_ssse3_interleaved = merge16_t_interleaved_simd<CPU_SSSE3, MASK420, merge16_t_interleaved_c<MASK420>>;
 Processor *merge16_luma_420_sse4_1_interleaved = merge16_t_interleaved_simd<CPU_SSE4_1, MASK420, merge16_t_interleaved_c<MASK420>>;
+
+Processor *merge16_luma_422_sse2_interleaved = merge16_t_interleaved_simd<CPU_SSE2, MASK422, merge16_t_interleaved_c<MASK420>>;
+Processor *merge16_luma_422_ssse3_interleaved = merge16_t_interleaved_simd<CPU_SSSE3, MASK422, merge16_t_interleaved_c<MASK420>>;
+Processor *merge16_luma_422_sse4_1_interleaved = merge16_t_interleaved_simd<CPU_SSE4_1, MASK422, merge16_t_interleaved_c<MASK420>>;
 
 } } } }
