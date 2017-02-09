@@ -3,6 +3,19 @@
 
 /* conditional compilation */
 #ifdef MT_HAVE_BOOST_SPIRIT
+// Hint:
+// http://www.boost.org/doc/libs/1_48_0/libs/spirit/doc/html/spirit/what_s_new/spirit_1_x.html
+// 1.) download full boost 1.62 or newer: boost_1_62_0.7z (537MBytes)
+//     http://www.boost.org/users/download/
+//     Extract to e.g. c:\soft\boost, or to the place what is set in VC++ Directories|Include project properties
+// 2.) Binaries: vc14 for VS2015 both 64 and 32 bit
+//     https://sourceforge.net/projects/boost/files/boost-binaries/1.62.0/
+//     Set library paths for x64 and x32 in VC++ Directories | Library directories project properties
+//     Needed libs:
+//      libboost_date_time-vc140-mt-s-1_62.lib
+//      libboost_thread-vc140-mt-s-1_62.lib
+//      libboost_chrono-vc140-mt-s-1_62.lib
+//      libboost_system-vc140-mt-s-1_62.lib
 #include <boost/spirit/home/classic.hpp>
 
 using namespace boost;
