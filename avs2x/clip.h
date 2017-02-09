@@ -16,15 +16,15 @@
 namespace Filtering { namespace Avisynth2x {
 
 /* plane conversion */
-template<typename T> Plane<T> ConvertTo(const PVideoFrame& frame, int nPlane);
+template<typename T> Plane<T> ConvertTo(const PVideoFrame& frame, int nPlane, int nPixelSize);
 
-template<> static inline Plane<Byte> ConvertTo<Byte>(const PVideoFrame &frame, int nPlane)
+template<> static inline Plane<Byte> ConvertTo<Byte>(const PVideoFrame &frame, int nPlane, int nPixelSize)
 {
-   return Plane<Byte>( frame->GetWritePtr( nPlane ), frame->GetPitch( nPlane ), frame->GetRowSize( nPlane ), frame->GetHeight( nPlane ) );
+   return Plane<Byte>( frame->GetWritePtr( nPlane ), frame->GetPitch( nPlane ), frame->GetRowSize( nPlane ), frame->GetHeight( nPlane ), nPixelSize);
 }
-template<> static inline Plane<const Byte> ConvertTo<const Byte>(const PVideoFrame &frame, int nPlane)
+template<> static inline Plane<const Byte> ConvertTo<const Byte>(const PVideoFrame &frame, int nPlane, int nPixelSize)
 {
-   return Plane<const Byte>( frame->GetReadPtr( nPlane ), frame->GetPitch( nPlane ), frame->GetRowSize( nPlane ), frame->GetHeight( nPlane ) );
+   return Plane<const Byte>( frame->GetReadPtr( nPlane ), frame->GetPitch( nPlane ), frame->GetRowSize( nPlane ), frame->GetHeight( nPlane ), nPixelSize);
 }
 
 #if defined(FILTER_AVS_25)
@@ -58,6 +58,39 @@ Colorspace AVSColorspaceToColorspace(int pixel_type)
    case VideoInfo::CS_YV16: return COLORSPACE_YV16;
    case VideoInfo::CS_YV24: return COLORSPACE_YV24;
    case VideoInfo::CS_Y8  : return COLORSPACE_Y8;
+
+   case VideoInfo::CS_Y10: return COLORSPACE_Y10;
+   case VideoInfo::CS_YUV420P10: return COLORSPACE_YUV420P10;
+   case VideoInfo::CS_YUV422P10: return COLORSPACE_YUV422P10;
+   case VideoInfo::CS_YUV444P10: return COLORSPACE_YUV444P10;
+
+   case VideoInfo::CS_Y12: return COLORSPACE_Y12;
+   case VideoInfo::CS_YUV420P12: return COLORSPACE_YUV420P12;
+   case VideoInfo::CS_YUV422P12: return COLORSPACE_YUV422P12;
+   case VideoInfo::CS_YUV444P12: return COLORSPACE_YUV444P12;
+
+   case VideoInfo::CS_Y14: return COLORSPACE_Y14;
+   case VideoInfo::CS_YUV420P14: return COLORSPACE_YUV420P14;
+   case VideoInfo::CS_YUV422P14: return COLORSPACE_YUV422P14;
+   case VideoInfo::CS_YUV444P14: return COLORSPACE_YUV444P14;
+
+   case VideoInfo::CS_Y16: return COLORSPACE_Y16;
+   case VideoInfo::CS_YUV420P16: return COLORSPACE_YUV420P16;
+   case VideoInfo::CS_YUV422P16: return COLORSPACE_YUV422P16;
+   case VideoInfo::CS_YUV444P16: return COLORSPACE_YUV444P16;
+
+   case VideoInfo::CS_Y32: return COLORSPACE_Y32;
+   case VideoInfo::CS_YUV420PS: return COLORSPACE_YUV420PS;
+   case VideoInfo::CS_YUV422PS: return COLORSPACE_YUV422PS;
+   case VideoInfo::CS_YUV444PS: return COLORSPACE_YUV444PS;
+
+   case VideoInfo::CS_RGBP: return COLORSPACE_RGBP8;
+   case VideoInfo::CS_RGBP10: return COLORSPACE_RGBP10;
+   case VideoInfo::CS_RGBP12: return COLORSPACE_RGBP12;
+   case VideoInfo::CS_RGBP14: return COLORSPACE_RGBP14;
+   case VideoInfo::CS_RGBP16: return COLORSPACE_RGBP16;
+   case VideoInfo::CS_RGBPS: return COLORSPACE_RGBPS;
+
 #else if defined(FILTER_AVS_25)
    case VideoInfo::CS_YUY2: return COLORSPACE_YV16;
 #endif
@@ -67,6 +100,7 @@ Colorspace AVSColorspaceToColorspace(int pixel_type)
 }
 
 static const int PlaneOrder[] = { PLANAR_Y, PLANAR_U, PLANAR_V };
+static const int PlaneOrderRGB[] = { PLANAR_G, PLANAR_B, PLANAR_R };
 
 /* clip class, adapted to avs25 */
 class Clip : public Filtering::Clip {
@@ -101,8 +135,10 @@ public:
         else
 #endif
         {
+            int bit_depth = bit_depths[C];
+            int nPixelSize = bit_depth == 8 ? 1 : ((bit_depth <= 16) ? 2 : 4); // uint8_t, uint16_t, float
             for (int i = 0; i < plane_counts[C]; i++)
-                planes[i] = Avisynth2x::ConvertTo<T>(frame, PlaneOrder[i]);
+                planes[i] = Avisynth2x::ConvertTo<T>(frame, planes_isRGB[C] ? PlaneOrderRGB[i] : PlaneOrder[i], nPixelSize);
         }
         return plane_counts[C] == 1 ? Frame<T>(planes[0]) : Frame<T>(planes, C);
     }
