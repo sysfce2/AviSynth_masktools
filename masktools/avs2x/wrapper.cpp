@@ -41,8 +41,8 @@
 #include "../filters/morphologic/deflate/deflate16.h"
 #endif
 
-#include "../../avs2x/avs2x.h"
 #include "../helpers/avs2x/helpers_avs2x.h"
+#include "../../avs2x/filter.h" // Filtering::Avisynth2x namespace
 
 using namespace Filtering;
 using namespace Filtering::MaskTools::Filters;
