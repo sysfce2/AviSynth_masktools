@@ -70,7 +70,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Morpho
         Word nValue;
     public:
         NewValue(Word nValue, int nMaxDeviation) : nMax(-1), nMaxDeviation(nMaxDeviation), nValue(nValue) { }
-        void add(Word nValue) { if ( nValue > nMax ) nMax = nValue; }
+        void add(Word _nValue) { if ( _nValue > nMax ) nMax = _nValue; }
         Word finalize() const { return static_cast<Word>(nMax < 0 ? nValue : (nMax - nValue > nMaxDeviation ? nValue + nMaxDeviation : nMax)); }
     };
 

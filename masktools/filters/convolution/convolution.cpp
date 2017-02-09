@@ -94,12 +94,12 @@ public:
          delete[] horizontals;
       }
    }
-   Type *get_line(int nIdx)
+   Type *get_line(int _nIdx)
    {
-      if ( nIdx + this->nIdx < nVertical )
-         return horizontals[nIdx + this->nIdx];
+      if ( _nIdx + this->nIdx < nVertical )
+         return horizontals[_nIdx + this->nIdx];
       else
-         return horizontals[nIdx + this->nIdx - nVertical];
+         return horizontals[_nIdx + this->nIdx - nVertical];
    }
    void next_line()
    {
