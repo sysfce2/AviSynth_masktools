@@ -404,9 +404,6 @@
     <ClCompile Include="..\filters\logic\logic.cpp">
       <Filter>filters\logic</Filter>
     </ClCompile>
-    <ClCompile Include="..\filters\merge\merge.cpp">
-      <Filter>filters\merge</Filter>
-    </ClCompile>
     <ClCompile Include="..\filters\binarize\binarize.cpp">
       <Filter>filters\binarize</Filter>
     </ClCompile>
@@ -421,6 +418,9 @@
     </ClCompile>
     <ClCompile Include="..\filters\morphologic\deflate\deflate16.cpp">
       <Filter>filters\morphologic\deflate</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\merge\merge.cpp">
+      <Filter>filters\merge</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

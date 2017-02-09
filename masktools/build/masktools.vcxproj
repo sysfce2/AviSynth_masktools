@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="debug-avs25|Win32">
-      <Configuration>debug-avs25</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="debug-avs25|x64">
-      <Configuration>debug-avs25</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="debug-avs26-16bit|Win32">
       <Configuration>debug-avs26-16bit</Configuration>
       <Platform>Win32</Platform>
@@ -41,14 +33,6 @@
       <Configuration>profile-avs26</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="release-avs25|Win32">
-      <Configuration>release-avs25</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="release-avs25|x64">
-      <Configuration>release-avs25</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
     <ProjectConfiguration Include="release-avs26|Win32">
       <Configuration>release-avs26</Configuration>
       <Platform>Win32</Platform>
@@ -62,6 +46,7 @@
     <ProjectGuid>{185396D8-57BD-4DDF-8CD3-26035EA50DB9}</ProjectGuid>
     <RootNamespace>masktools</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'" Label="Configuration">
@@ -72,13 +57,6 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
-    <UseOfMfc>false</UseOfMfc>
-    <UseOfAtl>false</UseOfAtl>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
@@ -109,14 +87,6 @@
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
-    <UseOfMfc>false</UseOfMfc>
-    <UseOfAtl>false</UseOfAtl>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
@@ -125,13 +95,6 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
-    <UseOfMfc>false</UseOfMfc>
-    <UseOfAtl>false</UseOfAtl>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v140</PlatformToolset>
     <UseOfMfc>false</UseOfMfc>
@@ -164,25 +127,12 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v140</PlatformToolset>
-    <UseOfMfc>false</UseOfMfc>
-    <UseOfAtl>false</UseOfAtl>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
@@ -198,19 +148,11 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
@@ -226,157 +168,82 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
-  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>11.0.60315.1</_ProjectFileVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">
-    <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|x64'">
-    <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>masktools2</TargetName>
-    <IncludePath>$(AVISYNTH_SDK_PATH)\include;C:\Soft\Boost;$(IncludePath)</IncludePath>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.0\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(AVISYNTH_SDK_PATH)\include;C:\Soft\Boost;$(IncludePath)</IncludePath>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(AVISYNTH_SDK_PATH)\include;C:\Soft\Boost;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.0\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSdk_71A_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.0\;$(WindowsSdk_71A_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-avs26|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <TargetName>masktools2</TargetName>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">
-    <OutDir>$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|x64'">
-    <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
-    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(AVISYNTH_SDK_PATH)\include;C:\Soft\Boost;$(IncludePath)</IncludePath>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.0\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.0\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">
-    <OutDir>$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\</LibraryPath>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">
-    <ClCompile>
-      <Optimization>Full</Optimization>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;MT_HAVE_BOOST_SPIRIT;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_25;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <StructMemberAlignment>16Bytes</StructMemberAlignment>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader />
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat />
-    </ClCompile>
-    <Link>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\..\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <IgnoreSpecificDefaultLibraries>libmmd.lib;odbc32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
-      <OptimizeReferences />
-      <EnableCOMDATFolding />
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention />
-      <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
-      <TargetMachine>MachineX86</TargetMachine>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-avs25|x64'">
-    <Midl>
-      <TargetEnvironment>X64</TargetEnvironment>
-    </Midl>
-    <ClCompile>
-      <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_25;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <StructMemberAlignment>16Bytes</StructMemberAlignment>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader />
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat />
-    </ClCompile>
-    <Link>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>..\..\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <IgnoreSpecificDefaultLibraries>odbc32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
-      <SubSystem>Windows</SubSystem>
-      <OptimizeReferences />
-      <EnableCOMDATFolding />
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention />
-      <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
-      <TargetMachine>MachineX64</TargetMachine>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">
     <ClCompile>
       <Optimization>Full</Optimization>
@@ -505,7 +372,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -539,7 +406,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -581,7 +448,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -608,63 +475,6 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
-      <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
-      <TargetMachine>MachineX64</TargetMachine>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_25;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader />
-      <BrowseInformation>true</BrowseInformation>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>OldStyle</DebugInformationFormat>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)masktools.pdb</ProgramDatabaseFile>
-      <GenerateMapFile>false</GenerateMapFile>
-      <SubSystem>Windows</SubSystem>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention />
-      <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
-      <TargetMachine>MachineX86</TargetMachine>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs25|x64'">
-    <Midl>
-      <TargetEnvironment>X64</TargetEnvironment>
-    </Midl>
-    <ClCompile>
-      <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_25;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>false</MinimalRebuild>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <RuntimeTypeInfo>true</RuntimeTypeInfo>
-      <PrecompiledHeader />
-      <BrowseInformation>true</BrowseInformation>
-      <WarningLevel>Level4</WarningLevel>
-      <DebugInformationFormat>OldStyle</DebugInformationFormat>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)masktools.pdb</ProgramDatabaseFile>
-      <SubSystem>Windows</SubSystem>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <DataExecutionPrevention />
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
@@ -730,7 +540,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -759,7 +569,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -789,9 +599,7 @@
     <ClInclude Include="..\common\simd.h" />
     <ClInclude Include="..\filters\binarize\binarize16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\blur\mappedblur.h" />
@@ -799,59 +607,43 @@
     <ClInclude Include="..\filters\binarize\binarize.h" />
     <ClInclude Include="..\filters\logic\logic16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\lut\lut16\lut16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\merge\merge.h" />
     <ClInclude Include="..\filters\merge\merge16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\morphologic\deflate\deflate16.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\morphologic\expand\expand16.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\morphologic\functions16.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\morphologic\inflate\inflate16.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\morphologic\inpand\inpand16.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\morphologic\morphologic.h" />
@@ -871,38 +663,28 @@
     <ClInclude Include="..\filters\logic\logic.h" />
     <ClInclude Include="..\filters\convolution\convolution.h" />
     <ClInclude Include="..\filters\morphologic\morphologic16.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\support\adddiff16\adddiff16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\support\average16\average16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\support\clamp16\clamp16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\support\makediff16\makediff16.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\filters\support\makediff\makediff.h" />
@@ -925,9 +707,7 @@
   <ItemGroup>
     <ClCompile Include="..\filters\binarize\binarize16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\blur\mappedblur.cpp" />
@@ -935,46 +715,34 @@
     <ClCompile Include="..\filters\binarize\binarize.cpp" />
     <ClCompile Include="..\filters\logic\logic16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\lut\lut16\lut16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\merge\merge.cpp" />
     <ClCompile Include="..\filters\merge\merge16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\morphologic\deflate\deflate16.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\morphologic\expand\expand.cpp" />
     <ClCompile Include="..\filters\morphologic\expand\expand16.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\morphologic\inflate\inflate16.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\morphologic\inpand\inpand.cpp" />
@@ -986,42 +754,31 @@
     <ClCompile Include="..\filters\lut\lutf\lutf.cpp" />
     <ClCompile Include="..\filters\lut\lutxyz\lutxyz.cpp" />
     <ClCompile Include="..\filters\lut\lutsx\lutsx.cpp" />
-    <ClCompile Include="..\filters\merge\merge.cpp" />
     <ClCompile Include="..\filters\logic\logic.cpp" />
     <ClCompile Include="..\filters\convolution\convolution.cpp" />
     <ClCompile Include="..\filters\morphologic\inpand\inpand16.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\support\adddiff16\adddiff16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\support\average16\average16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\support\clamp16\clamp16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\support\makediff16\makediff16.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\filters\support\makediff\makediff.cpp" />
@@ -1034,14 +791,10 @@
     <ClCompile Include="..\filters\gradient\gradient.cpp" />
     <ClCompile Include="..\common\clip\inputconfig.cpp" />
     <ClCompile Include="..\avs2x\wrapper.cpp">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs25|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='release-avs25|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">Level3</WarningLevel>
@@ -1050,14 +803,10 @@
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">Level3</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\helpers\avs2x\helpers_avs2x.cpp">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs25|Win32'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs25|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='release-avs25|Win32'">Level3</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='release-avs25|x64'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='release-avs26|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='profile-avs26|Win32'">Level3</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">Level3</WarningLevel>
