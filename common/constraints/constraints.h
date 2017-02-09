@@ -82,7 +82,7 @@ public:
     Processor() : processor(NULL), nSpeed(-1) { }
     Processor(P *processor) : processor(processor), nSpeed(0), constraint(CPU_NONE, 1, 1, 1, 1) { }
     Processor(P *processor, const Constraint &constraint, int nSpeed) : processor(processor), nSpeed(nSpeed), constraint(constraint) { }
-    bool respect(const Constraint &constraint) const { return this->constraint.respect(constraint); }
+    bool respect(const Constraint &_constraint) const { return this->constraint.respect(_constraint); }
     int speed() const { return nSpeed; }
     P* getFunction() const { return processor; }
     void print() const { constraint.print(); }

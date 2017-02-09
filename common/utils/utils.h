@@ -16,6 +16,7 @@
 
 #pragma warning(disable:4267) // disable possible loss of data conversion
 #pragma warning(disable:4127) // disable conditional expression is constant
+#pragma warning(disable:4499) // disable warning C4499: 'static': an explicit specialization cannot have a storage class (ignored)
 
 #define UNUSED(x) x
 

@@ -86,10 +86,10 @@ class Parameters : public std::vector<Parameter> {
 public:
 
     /* handy accessor */
-    Value operator[](const String &name) const
+    Value operator[](const String &_name) const
     {
         for(auto &p :*this) {
-            if (name == p.getName()) {
+            if (_name == p.getName()) {
                 return p.getValue();
             }
         }
@@ -110,11 +110,11 @@ class Signature {
 
 public:
 
-    Signature(const String &name) : name(name) { }
+    Signature(const String &_name) : name(_name) { }
     void add(const Parameter &parameter) { parameters.push_back(parameter); }
 
     String getName() const { return name; }
-    Value operator[](const String &name) const { return parameters[name]; }
+    Value operator[](const String &_name) const { return parameters[_name]; }
     Parameter operator[](int index) const { return parameters.at(index); }
     int count() const { return int(parameters.size()); }
 };

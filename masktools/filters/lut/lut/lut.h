@@ -18,6 +18,8 @@ protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
+        UNUSED(constraints);
+        UNUSED(frames);
         lut_c(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane]);
     }
 

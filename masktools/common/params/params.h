@@ -23,7 +23,7 @@ class Operator {
 public:
 
    Operator() : mode(NONE), nValue(-1) {}
-   Operator(Mode mode, int nValue = -1) : mode(mode), nValue(mode == MEMSET ? nValue : -1) {}
+   Operator(Mode _mode, int _nValue = -1) : mode(_mode), nValue(_mode == MEMSET ? _nValue : -1) {}
    Operator(int nValue)
    {
       this->nValue = -1;
@@ -40,8 +40,8 @@ public:
 
    bool operator==(const Operator &operation) const { return mode == operation.mode; }
    bool operator!=(const Operator &operation) const { return mode != operation.mode; }
-   bool operator==(Mode mode) const { return mode == this->mode; }
-   bool operator!=(Mode mode) const { return mode != this->mode; }
+   bool operator==(Mode _mode) const { return _mode == this->mode; }
+   bool operator!=(Mode _mode) const { return _mode != this->mode; }
    Mode getMode() const { return mode; }
    int value() const { return nValue; }
 };
