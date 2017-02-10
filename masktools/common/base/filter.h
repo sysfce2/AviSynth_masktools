@@ -62,7 +62,7 @@ public:
         nXOffset(parameters["offx"].toInt()),
         nYOffset(parameters["offy"].toInt()),
         nCoreWidth(parameters["w"].toInt()),
-        nCoreHeight(parameters["h"].toInt())
+        nCoreHeight(parameters["stacked"].toBool() ? (2 * parameters["h"].toInt()) : parameters["h"].toInt())
     {
         for (auto &param: parameters) {
             if (param.getType() == TYPE_CLIP) {
