@@ -75,7 +75,23 @@ protected:
 public:
    Merge16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
-      use_luma = parameters["luma"].toBool();
+     bool isStacked = parameters["stacked"].toBool();
+     int bits_per_pixel = bit_depths[C];
+
+     if (isStacked && bits_per_pixel != 8) {
+       error = "Stacked specified for a non-8 bit clip";
+       return;
+     }
+     if (!isStacked && bits_per_pixel == 8) {
+       error = "8 bit clip needs stacked=true";
+       return;
+     }
+     if (bits_per_pixel == 32) {
+       error = "32 bit float clip is not supported yet";
+       return;
+     }
+
+     use_luma = parameters["luma"].toBool();
 
       bool is420 = width_ratios[1][C] == 2 && height_ratios[1][C] == 2;
       bool is422 = width_ratios[1][C] == 2 && height_ratios[1][C] == 1;
@@ -110,7 +126,7 @@ public:
           }
       }
 
-      if (parameters["stacked"].toBool()) {
+      if (isStacked) {
           if (is422 && use_luma) {
             error = "stacked and use_luma on 422 not supported";
             return;
