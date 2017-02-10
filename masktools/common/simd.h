@@ -137,6 +137,48 @@ static MT_FORCEINLINE __m128i simd_mullo_epi32(__m128i &a, __m128i &b) {
     }
 }
 
+// sse2 replacement of _mm_mullo_epi32 in SSE4.1
+// another way for do mullo for SSE2, actually not used, there is simd_mullo_epi32
+// use it after speed test, may have too much overhead and C is faster
+static MT_FORCEINLINE __m128i _MM_MULLO_EPI32(const __m128i &a, const __m128i &b)
+{
+  // for SSE 4.1: return _mm_mullo_epi32(a, b);
+  __m128i tmp1 = _mm_mul_epu32(a, b); // mul 2,0
+  __m128i tmp2 = _mm_mul_epu32(_mm_srli_si128(a, 4), _mm_srli_si128(b, 4)); // mul 3,1
+                                                                            // shuffle results to [63..0] and pack. a2->a1, a0->a0
+  return _mm_unpacklo_epi32(_mm_shuffle_epi32(tmp1, _MM_SHUFFLE(0, 0, 2, 0)), _mm_shuffle_epi32(tmp2, _MM_SHUFFLE(0, 0, 2, 0)));
+}
+
+// fake _mm_packus_epi32 (orig is SSE4.1 only)
+static MT_FORCEINLINE __m128i _MM_PACKUS_EPI32(__m128i a, __m128i b)
+{
+  a = _mm_slli_epi32(a, 16);
+  a = _mm_srai_epi32(a, 16);
+  b = _mm_slli_epi32(b, 16);
+  b = _mm_srai_epi32(b, 16);
+  a = _mm_packs_epi32(a, b);
+  return a;
+}
+
+// non-existant in simd
+static MT_FORCEINLINE __m128i _MM_CMPLE_EPU16(__m128i x, __m128i y)
+{
+  // Returns 0xFFFF where x <= y:
+  return _mm_cmpeq_epi16(_mm_subs_epu16(x, y), _mm_setzero_si128());
+}
+
+
+template<CpuFlags flags>
+static MT_FORCEINLINE __m128i simd_packus_epi32(__m128i &a, __m128i &b) {
+  if (flags >= CPU_SSE4_1) {
+    return _mm_packus_epi32(a, b);
+  }
+  else {
+    return _MM_PACKUS_EPI32(a, b);
+  }
+}
+
+
 static MT_FORCEINLINE __m128i read_word_stacked_simd(const Byte *pMsb, const Byte *pLsb, int x) {
     auto msb = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(pMsb+x));
     auto lsb = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(pLsb+x));
