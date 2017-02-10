@@ -5,7 +5,7 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Binarize16 {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight);
 
 #define DEFINE_PROCESSOR(name) \
 extern Processor *binarize_##name##_stacked_16_c; \
@@ -44,7 +44,7 @@ protected:
     {
         UNUSED(n);
         UNUSED(frames);
-        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height());
+        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height(), dst.origheight());
     }
 
     bool isMode(const char *mode) {
@@ -54,19 +54,34 @@ protected:
 public:
   Binarize16(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
   {
+    bool isStacked = parameters["stacked"].toBool();
+    int bits_per_pixel = bit_depths[C];
+
+    if (isStacked && bits_per_pixel != 8) {
+      error = "Stacked specified for a non-8 bit clip";
+      return;
+    }
+    if (!isStacked && bits_per_pixel == 8) {
+      error = "8 bit clip needs stacked=true";
+      return;
+    }
+    if (bits_per_pixel == 32) {
+      error = "32 bit float clip is not supported yet";
+      return;
+    }
+
     if (parameters["threshold"].is_defined()) {
       nThreshold = convert<Word, int>(parameters["threshold"].toInt());
     }
     else {
-      nThreshold = (1 << (bit_depths[C] - 1)); // bit-depth adaptive default value
-    }
-
-    if (bit_depths[C] < 10 || bit_depths[C]>16) {
-      int n = 0;
+      if(isStacked)
+        nThreshold = 32768; // 16 bit stacked half
+      else
+        nThreshold = (1 << (bits_per_pixel - 1)); // bit-depth adaptive default value
     }
 
 #define SET_MODE(mode) \
-    if (parameters["stacked"].toBool() == true) { \
+    if (isStacked) { \
         processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
         processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     } else { \
@@ -113,7 +128,7 @@ public:
         signature.setValidBitdepth(10,16);
 
         signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(32768, "threshold")); // PF todo: auto half on bitdepth
+        signature.add(Parameter(32768, "threshold")); // default is autocalculated for current bit depth as seen above
         signature.add(Parameter(false, "upper"));
         signature.add(Parameter(String("lower"), "mode"));
         signature.add(Parameter(false, "stacked"));

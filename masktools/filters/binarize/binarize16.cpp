@@ -56,9 +56,9 @@ MAKE_TEMPLATES(16)
 #undef MAKE_TEMPLATES
 
 template <Operator op>
-void binarize_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight)
+void binarize_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight)
 {
-    auto pLsb = pDst + nDstPitch * nHeight / 2;
+    auto pLsb = pDst + nDstPitch * nOrigHeight / 2;
 
     for ( int y = 0; y < nHeight / 2; y++ )
     {
@@ -72,7 +72,7 @@ void binarize_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nW
 }
 
 template <Operator op>
-void binarize_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight)
+void binarize_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int)
 {
     for ( int y = 0; y < nHeight; y++ )
     {
@@ -166,11 +166,11 @@ static inline __m128i binarize_255_t_sse2_op(__m128i x, __m128i t, __m128i halfr
 
 #pragma warning(disable: 4309)
 template<int bits_per_pixel, decltype(binarize_upper_sse2_op<16>) op, decltype(binarize_upper<16>) op_c>
-void binarize_sse2_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight)
+void binarize_sse2_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight)
 {
     int wMod8 = (nWidth / 8) * 8;
     auto pDst2 = pDst;
-    auto pDstLsb = pDst + nDstPitch * nHeight / 2;
+    auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
 
     auto t = _mm_set1_epi16(Word(nThreshold));
     auto halfrange = _mm_add_epi16(t, _mm_set1_epi16(0x8000)); // shift for signed int cmp
@@ -190,12 +190,12 @@ void binarize_sse2_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, i
     }
 
     if (nWidth > wMod8) {
-        binarize_stacked_t<op_c>(pDst2 + wMod8, nDstPitch, nThreshold, nWidth - wMod8, nHeight);
+        binarize_stacked_t<op_c>(pDst2 + wMod8, nDstPitch, nThreshold, nWidth - wMod8, nHeight, nOrigHeight);
     }
 }
 
 template<int bits_per_pixel, decltype(binarize_upper_sse2_op<16>) op, decltype(binarize_upper<16>) op_c> // 16 or whatever for decltype
-void binarize_sse2_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight)
+void binarize_sse2_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight)
 {
     nWidth *= 2; // really rowsize: width * sizeof(uint16)
     int wMod16 = (nWidth / 16) * 16;
@@ -215,7 +215,7 @@ void binarize_sse2_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshol
         pDst += nDstPitch;
     }
     if (nWidth > wMod16) {
-        binarize_interleaved_t<op_c>(pDst2 + wMod16, nDstPitch, nThreshold, (nWidth - wMod16)/sizeof(uint16_t), nHeight); // rowsize/2
+        binarize_interleaved_t<op_c>(pDst2 + wMod16, nDstPitch, nThreshold, (nWidth - wMod16)/sizeof(uint16_t), nHeight, nOrigHeight); // rowsize/2
     }
 }
 
