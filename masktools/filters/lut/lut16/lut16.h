@@ -6,14 +6,14 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Single16bit {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536]);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked);
 
-Processor lut16_c_interleaved;
+Processor lut16_c;
 Processor lut16_c_stacked;
 
 class Lut16 : public MaskTools::Filter
 {
-   Word luts[3][65536];
+   Word luts[3][65536]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
    Processor* processor;
 
 protected:
@@ -22,7 +22,7 @@ protected:
         UNUSED(n);
         UNUSED(constraints);
         UNUSED(frames);
-        processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane]);
+        processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane], dst.origheight());
     }
 
 public:
@@ -31,6 +31,23 @@ public:
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X);
+
+      bool isStacked = parameters["stacked"].toBool();
+      int bits_per_pixel = bit_depths[C];
+      int max_pixel_value = (1 << bits_per_pixel) - 1;
+
+      if (isStacked && bits_per_pixel != 8) {
+        error = "Stacked specified for a non-8 bit clip";
+        return;
+      }
+      if (!isStacked && bits_per_pixel == 8) {
+        error = "8 bit clip needs stacked=true";
+        return;
+      }
+      if (bits_per_pixel == 32) {
+        error = "32 bit float clip is not supported yet";
+        return;
+      }
 
       /* compute the luts */
       for ( int i = 0; i < 3; i++ )
@@ -57,14 +74,22 @@ public:
               return;
           }
 
-          for ( int x = 0; x < 65536; x++ )
+          if (bits_per_pixel == 16 || bits_per_pixel == 8) { // real or stacked 16 bit
+            for (int x = 0; x <= 65535; x++)
               luts[i][x] = ctx.compute_word(x, 0.0f);
+          }
+          else {
+            for (int x = 0; x <= max_pixel_value; x++)
+              luts[i][x] = min(ctx.compute_word(x, 0.0f),Word(max_pixel_value)); // 65535 clamp is not enough
+            for (int x = max_pixel_value; x < 65536; x++)
+              luts[i][x] = max_pixel_value;
+          }
       }
 
-      if (parameters["stacked"].toBool()) {
+      if (isStacked) {
           processor = lut16_c_stacked;
       } else {
-          processor = lut16_c_interleaved;
+          processor = lut16_c;
       }
    }
 
