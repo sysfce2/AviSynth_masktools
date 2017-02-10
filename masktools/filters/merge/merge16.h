@@ -6,7 +6,7 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge16 {
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
-                        const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight);
+                        const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, int nOrigHeight);
 
 extern Processor *merge16_c_stacked;
 extern Processor *merge16_luma_420_c_stacked;
@@ -55,20 +55,20 @@ protected:
             chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                     frames[1].plane(0).data(), frames[1].plane(0).pitch(),
-                    dst.width(), dst.height());
+                    dst.width(), dst.height(), dst.origheight());
             }
             else {
                 processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                     frames[1].plane(0).data(), frames[1].plane(0).pitch(),
-                    dst.width(), dst.height());
+                    dst.width(), dst.height(), dst.origheight());
             }
         }
         else {
             processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
                 frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                 frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-                dst.width(), dst.height());
+                dst.width(), dst.height(), dst.origheight());
         }
     }
 
