@@ -241,7 +241,7 @@ void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, 
     }
 }
 
-/* Interleaved */
+/* Native */
 
 MT_FORCEINLINE static Word get_mask_420_c(const Byte *ptr, int pitch, int x) {
     x = x*2;
@@ -262,7 +262,7 @@ void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t n
 {
     for ( int y = 0; y < nHeight; ++y )
     {
-        for ( int x = 0; x < nWidth / 2; ++x ) { // nWidth/2: interleaved
+        for ( int x = 0; x < nWidth / 2; ++x ) { // nWidth/2: native. width is Rowsize
             Word dst = reinterpret_cast<const Word*>(pDst)[x];
             Word src = reinterpret_cast<const Word*>(pSrc1)[x];
             Word mask;
