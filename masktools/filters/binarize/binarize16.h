@@ -10,14 +10,14 @@ typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nW
 #define DEFINE_PROCESSOR(name) \
 extern Processor *binarize_##name##_stacked_16_c; \
 extern Processor *binarize_##name##_stacked_16_sse2; \
-extern Processor *binarize_##name##_interleaved_10_c; \
-extern Processor *binarize_##name##_interleaved_10_sse2; \
-extern Processor *binarize_##name##_interleaved_12_c; \
-extern Processor *binarize_##name##_interleaved_12_sse2; \
-extern Processor *binarize_##name##_interleaved_14_c; \
-extern Processor *binarize_##name##_interleaved_14_sse2; \
-extern Processor *binarize_##name##_interleaved_16_c; \
-extern Processor *binarize_##name##_interleaved_16_sse2;
+extern Processor *binarize_##name##_native_10_c; \
+extern Processor *binarize_##name##_native_10_sse2; \
+extern Processor *binarize_##name##_native_12_c; \
+extern Processor *binarize_##name##_native_12_sse2; \
+extern Processor *binarize_##name##_native_14_c; \
+extern Processor *binarize_##name##_native_14_sse2; \
+extern Processor *binarize_##name##_native_16_c; \
+extern Processor *binarize_##name##_native_16_sse2;
 
 DEFINE_PROCESSOR(upper);
 DEFINE_PROCESSOR(lower);
@@ -86,22 +86,22 @@ public:
         processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     } else { \
         switch(bit_depths[C]) { \
-        case 10: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_10_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 10: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_10_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
-        case 12: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_12_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 12: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_12_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
-        case 14: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_14_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 14: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_14_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
-        case 16: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_interleaved_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_interleaved_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 16: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
         }\
     }
 
-        if (isMode("0 x")) { SET_MODE(0_x); } // e.g. binarize_0_x_10_interleaved_c instead of binarize_0_x_interleaved_c
+        if (isMode("0 x")) { SET_MODE(0_x); } // e.g. binarize_0_x_10_native_c instead of binarize_0_x_native_c
         else if (isMode("t x")) { SET_MODE(t_x); }
         else if (isMode("x 0")) { SET_MODE(x_0); }
         else if (isMode("x t")) { SET_MODE(x_t); }

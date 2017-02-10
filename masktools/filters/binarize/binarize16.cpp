@@ -72,7 +72,7 @@ void binarize_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nW
 }
 
 template <Operator op>
-void binarize_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int)
+void binarize_native_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int)
 {
     for ( int y = 0; y < nHeight; y++ )
     {
@@ -195,7 +195,7 @@ void binarize_sse2_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, i
 }
 
 template<int bits_per_pixel, decltype(binarize_upper_sse2_op<16>) op, decltype(binarize_upper<16>) op_c> // 16 or whatever for decltype
-void binarize_sse2_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight)
+void binarize_sse2_native_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight)
 {
     nWidth *= 2; // really rowsize: width * sizeof(uint16)
     int wMod16 = (nWidth / 16) * 16;
@@ -215,7 +215,7 @@ void binarize_sse2_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshol
         pDst += nDstPitch;
     }
     if (nWidth > wMod16) {
-        binarize_interleaved_t<op_c>(pDst2 + wMod16, nDstPitch, nThreshold, (nWidth - wMod16)/sizeof(uint16_t), nHeight, nOrigHeight); // rowsize/2
+        binarize_native_t<op_c>(pDst2 + wMod16, nDstPitch, nThreshold, (nWidth - wMod16)/sizeof(uint16_t), nHeight, nOrigHeight); // rowsize/2
     }
 }
 
@@ -250,10 +250,10 @@ Processor *binarize_255_t_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##
 
 
 DEFINE_PROCESSORS(stacked,16)
-DEFINE_PROCESSORS(interleaved,10)
-DEFINE_PROCESSORS(interleaved,12)
-DEFINE_PROCESSORS(interleaved,14)
-DEFINE_PROCESSORS(interleaved,16)
+DEFINE_PROCESSORS(native,10)
+DEFINE_PROCESSORS(native,12)
+DEFINE_PROCESSORS(native,14)
+DEFINE_PROCESSORS(native,16)
 
 #undef DEFINE_PROCESSORS
 
