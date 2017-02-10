@@ -18,20 +18,24 @@ extern Processor *merge16_luma_420_sse2_stacked;
 extern Processor *merge16_luma_420_ssse3_stacked; 
 extern Processor *merge16_luma_420_sse4_1_stacked;
 
-extern Processor *merge16_c_interleaved;
-extern Processor *merge16_luma_420_c_interleaved;
-extern Processor *merge16_luma_422_c_interleaved;
+#define MAKE_EXTERNS(bits_per_pixel) \
+extern Processor *merge16_##bits_per_pixel##_c; \
+extern Processor *merge16_luma_420_##bits_per_pixel##_c; \
+extern Processor *merge16_luma_422_##bits_per_pixel##_c; \
+extern Processor *merge16_##bits_per_pixel##_sse2; \
+extern Processor *merge16_##bits_per_pixel##_sse4_1; \
+extern Processor *merge16_luma_420_##bits_per_pixel##_sse2; \
+extern Processor *merge16_luma_420_##bits_per_pixel##_ssse3; \
+extern Processor *merge16_luma_420_##bits_per_pixel##_sse4_1; \
+extern Processor *merge16_luma_422_##bits_per_pixel##_sse2; \
+extern Processor *merge16_luma_422_##bits_per_pixel##_ssse3; \
+extern Processor *merge16_luma_422_##bits_per_pixel##_sse4_1;
 
-extern Processor *merge16_sse2_interleaved;
-extern Processor *merge16_sse4_1_interleaved;
-
-extern Processor *merge16_luma_420_sse2_interleaved;
-extern Processor *merge16_luma_420_ssse3_interleaved; 
-extern Processor *merge16_luma_420_sse4_1_interleaved;
-
-extern Processor *merge16_luma_422_sse2_interleaved;
-extern Processor *merge16_luma_422_ssse3_interleaved;
-extern Processor *merge16_luma_422_sse4_1_interleaved;
+MAKE_EXTERNS(10)
+MAKE_EXTERNS(12)
+MAKE_EXTERNS(14)
+MAKE_EXTERNS(16)
+#undef MAKE_EXTERNS
 
 class Merge16 : public MaskTools::Filter
 {
@@ -122,25 +126,37 @@ public:
           chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_ssse3_stacked, Constraint( CPU_SSSE3, 1, 1, 1, 1 ), 2 ) );
           chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_sse4_1_stacked, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 3 ) );
       } else {
-          /* add the processors */
-          processors.push_back( Filtering::Processor<Processor>( merge16_c_interleaved, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
-          processors.push_back( Filtering::Processor<Processor>( merge16_sse2_interleaved, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) );
-          processors.push_back( Filtering::Processor<Processor>( merge16_sse4_1_interleaved, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 2 ) );
+#define MAKE_PROCESSORS(bits_per_pixel) \
+          /* add the processors */ \
+          processors.push_back( Filtering::Processor<Processor>( merge16_##bits_per_pixel##_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+          processors.push_back( Filtering::Processor<Processor>( merge16_##bits_per_pixel##_sse2, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) ); \
+          processors.push_back( Filtering::Processor<Processor>( merge16_##bits_per_pixel##_sse4_1, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 2 ) ); \
+          /* add the chroma processors */ \
+          /* used only for 420 and 422  */ \
+          if (is420) { \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_##bits_per_pixel##_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_##bits_per_pixel##_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1)); \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_##bits_per_pixel##_ssse3, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2)); \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_##bits_per_pixel##_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3)); \
+          } \
+          else { /* 422 */ \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_##bits_per_pixel##_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_##bits_per_pixel##_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1)); \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_##bits_per_pixel##_ssse3, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2)); \
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_##bits_per_pixel##_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3)); \
+          }
 
-          /* add the chroma processors */
-          // used only for 420 and 422
-          if (is420) {
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_c_interleaved, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_sse2_interleaved, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_ssse3_interleaved, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_sse4_1_interleaved, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+          switch (bit_depths[C]) {
+          case 10: MAKE_PROCESSORS(10);
+            break;
+          case 12: MAKE_PROCESSORS(12);
+            break;
+          case 14: MAKE_PROCESSORS(14);
+            break;
+          case 16: MAKE_PROCESSORS(16);
+            break;
           }
-          else { // 422
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_c_interleaved, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_sse2_interleaved, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_ssse3_interleaved, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_sse4_1_interleaved, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
-          }
+#undef MAKE_PROCESSORS
       }
    }
 
