@@ -198,9 +198,40 @@ public:
         Frame<const Byte> frames[3];
         Constraint constraints[3];
 
+        // PF 170211: Issue: volatile pointers
+        // old: get_const_frame requested PVideoFrame frame = clip->GetFrame to a local variable, 
+        //      the ConvertTo method then stored plane pointers obtained by frame->ReadPtr, then 
+        //      the function returned and the frame's destructor was called.
+        //      So the plane pointers just requested were no longer valid!
+        //      As the memory was not referenced anymore, Avisynth reassigned the same area to the
+        //      next frame for GetFrame. The third clip parameter was given the same
+        //      memory are as the second clip used.
+        // new: Child Avisynth frames (additional clip parameters of mt_xxx filters) now are stored in an array, 
+        //      as PVideoFrame frames are reference counted, the read pointers
+        //      are still valid here, and processing can be done with valid pointers
+        //      Method get_const_frame returns the result PVideoFrame after clip's GetFrame() and 
+        //           caller has to store it until the processing of the planes is done.
+        // 
+        // script failed: 
+        /* blankclip(128, 1024, 1024, "yv24")
+           horiz_gradient = masktools_mt_lutspa(expr = "x 255 *", u = -128, v = -128)
+           vert_gradient = masktools_mt_lutspa(expr = "y 255 *", u = -128, v = -128).scriptclip("""tweak(bright=rand(255))""")
+           masktools_mt_merge(vert_gradient, horiz_gradient, masktools_mt_lut(y = -255), true)
+           #expected: mask = 255 : horiz_gradient
+           #reality : mask = 255 results in full white instead of horiz_gradient
+           #reason : horiz_gradient points to the same memory area as the mask, due to a bug in masktools b2.
+           #         the second clip's video frame is released before the plane processing and
+           #         under specific timing and circumstances the mask clip is getting the same video pointers
+           #         as overlay clip.
+         */
+        int clipcount = int(input_configuration().size());
+        PVideoFrame *tmp_videoframes = new PVideoFrame[clipcount]; // Fix#1 for "volatile pointers"
+
         for (int i = 0; i < int(input_configuration().size()); i++) {
-            
-            frames[i] = childs[input_configuration()[i].index()]->get_const_frame(n + input_configuration()[i].offset(), env)
+            int childindex = input_configuration()[i].index();
+            PClip &currentClip = childs[childindex];
+            // Fix#2 for "volatile pointers": get back PVideoFrame GetFrame result
+            frames[i] = currentClip->get_const_frame(n + input_configuration()[i].offset(), tmp_videoframes[i], env)
                 .offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
         }
 

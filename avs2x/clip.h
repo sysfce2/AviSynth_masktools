@@ -143,16 +143,41 @@ public:
         return plane_counts[C] == 1 ? Frame<T>(planes[0]) : Frame<T>(planes, C);
     }
 
-    virtual Frame<Byte> get_frame(int n, IScriptEnvironment *env)
-    {
-        PVideoFrame frame = pclip->GetFrame(n, env);
-        return ConvertTo<Byte>(frame);
-    }
 
+#if 0
+   virtual Frame<Byte> get_frame(int n, IScriptEnvironment *env)
+   {
+     PVideoFrame frame = pclip->GetFrame(n, env);
+     return ConvertTo<Byte>(frame);
+   }
+    
    virtual Frame<const Byte> get_const_frame(int n, IScriptEnvironment *env)
    {
+       /* PF: nasty phenomenon, only happened in speficic circumstanced/timing.
+       1.)We are getting the frame
+       2.)Extract the plane ReadPtr-s with ConvertTo
+       3.)Then the destructor of the local variable PVideoFrame frame is called on exit.
+       Thus the pointers that has been just requested are no longer valid, that PVideoFrame area may be reused.
+       */
        PVideoFrame frame = pclip->GetFrame(clip<int>(n, 0, nFrames - 1), env);
        return ConvertTo<const Byte>(frame);
+   }
+#endif
+   /* not used
+   virtual Frame<Byte> get_frame(int n, PVideoFrame &frame_out, IScriptEnvironment *env)
+   {
+     frame_out = pclip->GetFrame(n, env);
+     return ConvertTo<Byte>(frame_out);
+   }
+   */
+
+   virtual Frame<const Byte> get_const_frame(int n, PVideoFrame &frame_out, IScriptEnvironment *env)
+   {
+     // PF 170211: Issue: volatile pointers
+     // return the frame, or else plane pointers stored in ConvertTo are not valid anymore
+     // after function exit
+     frame_out = pclip->GetFrame(clip<int>(n, 0, nFrames - 1), env);
+     return ConvertTo<const Byte>(frame_out);
    }
 };
 
