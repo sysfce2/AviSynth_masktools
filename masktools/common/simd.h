@@ -122,6 +122,19 @@ static MT_FORCEINLINE __m128i simd_blend_epi8(__m128i const &selector, __m128i c
     }
 }
 
+// another blendv, good param order
+template<CpuFlags flags>
+static MT_FORCEINLINE __m128i simd_blendv_epi8(__m128i x, __m128i y, __m128i mask)
+{
+  if (flags >= CPU_SSE4_1) {
+    return _mm_blendv_epi8(x, y, mask);
+  }
+  else {
+    // Replace bit in x with bit in y when matching bit in mask is set:
+    return _mm_or_si128(_mm_andnot_si128(mask, x), _mm_and_si128(mask, y));
+  }
+}
+
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_mullo_epi32(__m128i &a, __m128i &b) {
     if (flags >= CPU_SSE4_1) {
@@ -175,7 +188,7 @@ static MT_FORCEINLINE __m128i simd_max_epu16(__m128i x, __m128i y)
     return _mm_max_epu16(x, y);
   }
   else {
-    return simd_blend_epi8<flags>(x, y, _MM_CMPLE_EPU16(x, y));
+    return simd_blendv_epi8<flags>(x, y, _MM_CMPLE_EPU16(x, y)); // blendv (not blend) watch param order !
   }
 }
 
@@ -187,7 +200,7 @@ static MT_FORCEINLINE __m128i simd_min_epu16(__m128i x, __m128i y)
     return _mm_min_epu16(x, y);
   }
   else {
-    return simd_blend_epi8<flags>(y, x, _MM_CMPLE_EPU16(x, y));
+    return simd_blendv_epi8<flags>(y, x, _MM_CMPLE_EPU16(x, y)); // blendv (not blend) watch param order !
   }
 }
 
