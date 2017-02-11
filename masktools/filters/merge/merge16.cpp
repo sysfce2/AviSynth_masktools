@@ -279,7 +279,7 @@ void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t n
 {
     for ( int y = 0; y < nHeight; ++y )
     {
-        for ( int x = 0; x < nWidth / 2; ++x ) { // nWidth/2: native. width is Rowsize
+        for ( int x = 0; x < nWidth; ++x ) { 
             Word dst = reinterpret_cast<const Word*>(pDst)[x];
             Word src = reinterpret_cast<const Word*>(pSrc1)[x];
             Word mask;
@@ -334,6 +334,8 @@ template <CpuFlags flags, MaskMode mode, Processor merge_c, int bits_per_pixel>
 void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                             const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
 {
+    nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
+
     int wMod16 = (nWidth / 16) * 16;
     auto pDst_s = pDst;
     auto pSrc1_s = pSrc1;
@@ -381,7 +383,7 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
     }
 
     if (nWidth > wMod16) {
-        merge_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16, nMaskPitch, nWidth-wMod16, nHeight, nOrigHeight);
+        merge_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16, nMaskPitch, (nWidth-wMod16) / sizeof(uint16_t), nHeight, nOrigHeight);
     }
 }
 
