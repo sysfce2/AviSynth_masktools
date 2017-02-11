@@ -4,10 +4,10 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace Average16 {
 
-void average16_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight)
+void average16_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight)
 {
-    auto pDstLsb = pDst + nDstPitch * nHeight / 2;
-    auto pSrcLsb = pSrc + nSrcPitch * nHeight / 2;
+    auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
+    auto pSrcLsb = pSrc + nSrcPitch * nOrigHeight / 2;
 
     for (int y = 0; y < nHeight / 2; y++) {
         for (int x = 0; x < nWidth; x++) {
@@ -25,13 +25,13 @@ void average16_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrd
     }
 }
 
-void average16_interleaved_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight)
+void average16_native_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int)
 {
     for (int y = 0; y < nHeight; y++) {
         auto pDstWord = reinterpret_cast<Word*>(pDst);
         auto pSrcWord = reinterpret_cast<const Word*>(pSrc);
 
-        for (int x = 0; x < nWidth / 2; x++) {
+        for (int x = 0; x < nWidth; x++) {
             pDstWord[x] = (pDstWord[x] + pSrcWord[x] + 1) >> 1;
         }
         pDst += nDstPitch;
@@ -40,14 +40,14 @@ void average16_interleaved_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, 
 }
 
 
-void average16_stacked_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight)
+void average16_stacked_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight)
 {
     int wMod8 = (nWidth / 8) * 8;
 
     auto pDst2 = pDst;
     auto pSrc2 = pSrc;
-    auto pDstLsb = pDst + nDstPitch * nHeight / 2;
-    auto pSrcLsb = pSrc + nSrcPitch * nHeight / 2;
+    auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
+    auto pSrcLsb = pSrc + nSrcPitch * nOrigHeight / 2;
 
     auto ff = _mm_set1_epi16(0x00FF);
     auto zero = _mm_setzero_si128();
@@ -67,12 +67,14 @@ void average16_stacked_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, p
         pSrcLsb += nSrcPitch;
     }
     if (nWidth > wMod8) {
-        average16_stacked_c(pDst2 + wMod8, nDstPitch, pSrc2 + wMod8, nSrcPitch, nWidth - wMod8, nHeight);
+        average16_stacked_c(pDst2 + wMod8, nDstPitch, pSrc2 + wMod8, nSrcPitch, nWidth - wMod8, nHeight, nOrigHeight);
     }
 }
 
-void average16_interleaved_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight)
+void average16_native_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight)
 {
+    nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
+  
     int wMod16 = (nWidth / 16) * 16;
 
     auto pDst2 = pDst;
@@ -91,7 +93,7 @@ void average16_interleaved_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
         pSrc += nSrcPitch;
     }
     if (nWidth > wMod16) {
-        average16_interleaved_c(pDst2 + wMod16, nDstPitch, pSrc2 + wMod16, nSrcPitch, nWidth - wMod16, nHeight);
+        average16_native_c(pDst2 + wMod16, nDstPitch, pSrc2 + wMod16, nSrcPitch, (nWidth - wMod16) / sizeof(uint16_t), nHeight, nOrigHeight);
     }
 }
 
