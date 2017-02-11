@@ -131,6 +131,10 @@ MT_FORCEINLINE static Word get_mask_420_stacked_c(const Byte *pMsb, const Byte *
         ((int(get_value_stacked_c(pMsb, pLsb, x+1)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x+1) + 1) >> 1) + 1) >> 1;
 }
 
+MT_FORCEINLINE static Word get_mask_422_stacked_c(const Byte *pMsb, const Byte *pLsb, int pitch, int x) {
+  x = x * 2;
+  return int((get_value_stacked_c(pMsb, pLsb, x)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x) + 1) >> 1;
+}
 
 template<MaskMode mode>
 void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
@@ -148,9 +152,11 @@ void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptr
             Word mask;
 
             if (mode == MASK420) {
-                mask = get_mask_420_stacked_c(pMask, pMaskLsb, nMaskPitch, x);
+              mask = get_mask_420_stacked_c(pMask, pMaskLsb, nMaskPitch, x);
+            } else if (mode == MASK422) {
+              mask = get_mask_422_stacked_c(pMask, pMaskLsb, nMaskPitch, x);
             } else {
-                mask = get_value_stacked_c(pMask, pMaskLsb, x);
+              mask = get_value_stacked_c(pMask, pMaskLsb, x);
             }
 
             Word output = merge_core_c<16>(dst, src, mask);
@@ -185,6 +191,15 @@ MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const 
     return get_single_mask_value<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
 }
 
+template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_mask_422_stacked_simd(const Byte *pMsb, const Byte *pLsb, int pitch, int x) {
+  x = x * 2;
+
+  auto row1_lo = read_word_stacked_simd(pMsb, pLsb, x);
+  auto row1_hi = read_word_stacked_simd(pMsb, pLsb, x + 8);
+
+  return get_single_mask_value_422<flags>(row1_lo, row1_hi);
+}
 
 template <CpuFlags flags, MaskMode mode, Processor merge_c>
 void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
@@ -213,6 +228,8 @@ void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, 
 
             if (mode == MASK420) {
                 mask = get_mask_420_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i);
+            } else if (mode == MASK422) {
+                mask = get_mask_422_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i);
             } else {
                 mask = read_word_stacked_simd(pMask, pMaskLsb, i);
             }
@@ -371,6 +388,7 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
 /* Stacked, always 16 bit */
 Processor *merge16_c_stacked = &merge16_t_stacked_c<MASK444>;
 Processor *merge16_luma_420_c_stacked = &merge16_t_stacked_c<MASK420>;
+Processor *merge16_luma_422_c_stacked = &merge16_t_stacked_c<MASK422>;
 
 Processor *merge16_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK444, merge16_t_stacked_c<MASK444>>;
 Processor *merge16_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK444, merge16_t_stacked_c<MASK444>>;
@@ -378,6 +396,10 @@ Processor *merge16_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK444, 
 Processor *merge16_luma_420_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK420, merge16_t_stacked_c<MASK420>>;
 Processor *merge16_luma_420_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK420, merge16_t_stacked_c<MASK420>>;
 Processor *merge16_luma_420_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK420, merge16_t_stacked_c<MASK420>>;
+
+Processor *merge16_luma_422_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK422, merge16_t_stacked_c<MASK422>>;
+Processor *merge16_luma_422_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK422, merge16_t_stacked_c<MASK422>>;
+Processor *merge16_luma_422_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK422, merge16_t_stacked_c<MASK422>>;
 
 /* Native */
 // specialize them

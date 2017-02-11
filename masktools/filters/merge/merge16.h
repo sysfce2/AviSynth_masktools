@@ -10,6 +10,7 @@ typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrd
 
 extern Processor *merge16_c_stacked;
 extern Processor *merge16_luma_420_c_stacked;
+extern Processor *merge16_luma_422_c_stacked;
 
 extern Processor *merge16_sse2_stacked;
 extern Processor *merge16_sse4_1_stacked;
@@ -17,6 +18,11 @@ extern Processor *merge16_sse4_1_stacked;
 extern Processor *merge16_luma_420_sse2_stacked;
 extern Processor *merge16_luma_420_ssse3_stacked; 
 extern Processor *merge16_luma_420_sse4_1_stacked;
+
+extern Processor *merge16_luma_422_sse2_stacked;
+extern Processor *merge16_luma_422_ssse3_stacked;
+extern Processor *merge16_luma_422_sse4_1_stacked;
+
 
 #define MAKE_EXTERNS(bits_per_pixel) \
 extern Processor *merge16_##bits_per_pixel##_c; \
@@ -103,12 +109,6 @@ public:
       }
 
       if (use_luma) {
-        /*
-        if ((width_ratios[1][C] != 2 || height_ratios[1][C] != 2) && (width_ratios[1][C] != 1 || height_ratios[1][C] != 1)) {
-        error = "\"luma\" is unsupported in 422";
-        return;
-        }
-        */
           auto c1 = childs[0]->colorspace();
           auto c2 = childs[1]->colorspace();
           if ((width_ratios[1][c1] != width_ratios[1][c2]) || (height_ratios[1][c1] != height_ratios[1][c2])) {
@@ -127,20 +127,24 @@ public:
       }
 
       if (isStacked) {
-          if (is422 && use_luma) {
-            error = "stacked and use_luma on 422 not supported";
-            return;
-          }
           /* add the processors */
           processors.push_back( Filtering::Processor<Processor>( merge16_c_stacked, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
           processors.push_back( Filtering::Processor<Processor>( merge16_sse2_stacked, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) );
           processors.push_back( Filtering::Processor<Processor>( merge16_sse4_1_stacked, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 2 ) );
 
           /* add the chroma processors */
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_c_stacked, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_sse2_stacked, Constraint( CPU_SSE2, 1, 1, 1, 1 ), 1 ) );
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_ssse3_stacked, Constraint( CPU_SSSE3, 1, 1, 1, 1 ), 2 ) );
-          chroma_processors.push_back( Filtering::Processor<Processor>( merge16_luma_420_sse4_1_stacked, Constraint( CPU_SSE4_1, 1, 1, 1, 1 ), 3 ) );
+          if (is420) {
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_420_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+          }
+          else { // 422
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge16_luma_422_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+          }
       } else {
 #define MAKE_PROCESSORS(bits_per_pixel) \
           /* add the processors */ \
