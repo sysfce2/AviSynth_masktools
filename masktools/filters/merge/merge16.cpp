@@ -192,7 +192,7 @@ MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const 
 }
 
 template <CpuFlags flags>
-MT_FORCEINLINE static __m128i get_mask_422_stacked_simd(const Byte *pMsb, const Byte *pLsb, int pitch, int x) {
+MT_FORCEINLINE static __m128i get_mask_422_stacked_simd(const Byte *pMsb, const Byte *pLsb, int x) {
   x = x * 2;
 
   auto row1_lo = read_word_stacked_simd(pMsb, pLsb, x);
@@ -229,7 +229,7 @@ void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, 
             if (mode == MASK420) {
                 mask = get_mask_420_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i);
             } else if (mode == MASK422) {
-                mask = get_mask_422_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i);
+                mask = get_mask_422_stacked_simd<flags>(pMask, pMaskLsb, i);
             } else {
                 mask = read_word_stacked_simd(pMask, pMaskLsb, i);
             }
