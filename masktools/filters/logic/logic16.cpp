@@ -24,10 +24,10 @@ static MT_FORCEINLINE Word max_t(Word a, Word b, Word th1, Word th2) {
 }
 
 template <decltype(and_c) op>
-void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Word nThresholdDestination, Word nThresholdSource)
+void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
-    auto pDstLsb = pDst + nDstPitch * nHeight / 2;
-    auto pSrcLsb = pSrc + nSrcPitch * nHeight / 2;
+    auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
+    auto pSrcLsb = pSrc + nSrcPitch * nOrigHeight / 2;
 
     for (int y = 0; y < nHeight / 2; y++) {
         for (int x = 0; x < nWidth; x++) {
@@ -46,13 +46,13 @@ void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdif
 }
 
 template <decltype(and_c) op>
-void logic16_interleaved_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Word nThresholdDestination, Word nThresholdSource)
+void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     for (int y = 0; y < nHeight; y++) {
         auto pDstWord = reinterpret_cast<Word*>(pDst);
         auto pSrcWord = reinterpret_cast<const Word*>(pSrc);
 
-        for (int x = 0; x < nWidth / 2; x++) {
+        for (int x = 0; x < nWidth; x++) {
             pDstWord[x] = op(pDstWord[x], pSrcWord[x], nThresholdDestination, nThresholdSource);
         }
         pDst += nDstPitch;
@@ -84,23 +84,23 @@ static MT_FORCEINLINE __m128i xor_sse2(const __m128i &a, const __m128i &b, const
 
 template <decltype(add_sse2) opa, decltype(add_sse2) opb>
 static MT_FORCEINLINE __m128i min_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) { 
-    return _mm_min_epu16(opa(a, th1), opb(b, th2));
+    return _mm_min_epu16(opa(a, th1), opb(b, th2)); // !!min_epu16: SSE4 todo simd_min_epu16
 }
 
 template <decltype(add_sse2) opa, decltype(add_sse2) opb>
 static MT_FORCEINLINE __m128i max_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) { 
-    return _mm_max_epu16(opa(a, th1), opb(b, th2));
+    return _mm_max_epu16(opa(a, th1), opb(b, th2)); // !!max_epu16: SSE4 todo simd_max_epu16
 }
 
 
 template<decltype(and_sse2) op, decltype(and_c) op_c>
-    void logic16_stacked_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Word nThresholdDestination, Word nThresholdSource)
+    void logic16_stacked_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     int wMod8 = (nWidth / 8) * 8;
     auto pDst2 = pDst;
     auto pSrc2 = pSrc;
-    auto pDstLsb = pDst + nDstPitch * nHeight / 2;
-    auto pSrcLsb = pSrc + nSrcPitch * nHeight / 2;
+    auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
+    auto pSrcLsb = pSrc + nSrcPitch * nOrigHeight / 2;
 
     auto tDest = _mm_set1_epi16(nThresholdDestination);
     auto tSource = _mm_set1_epi16(nThresholdSource);
@@ -122,13 +122,15 @@ template<decltype(and_sse2) op, decltype(and_c) op_c>
         pSrcLsb += nSrcPitch;
     }
     if (nWidth > wMod8) {
-        logic16_stacked_t<op_c>(pDst2 + wMod8, nDstPitch, pSrc2 + wMod8, nSrcPitch, nWidth - wMod8, nHeight, nThresholdDestination, nThresholdSource);
+        logic16_stacked_t<op_c>(pDst2 + wMod8, nDstPitch, pSrc2 + wMod8, nSrcPitch, nWidth - wMod8, nHeight, nOrigHeight, nThresholdDestination, nThresholdSource);
     }
 }
 
 template<decltype(and_sse2) op, decltype(and_c) op_c>
-void logic16_interleaved_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Word nThresholdDestination, Word nThresholdSource)
+void logic16_native_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
+    nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
+  
     int wMod16 = (nWidth / 16) * 16;
     auto pDst2 = pDst;
     auto pSrc2 = pSrc;
@@ -148,7 +150,7 @@ void logic16_interleaved_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
         pSrc += nSrcPitch;
     }
     if (nWidth > wMod16) {
-        logic16_interleaved_t<op_c>(pDst2 + wMod16, nDstPitch, pSrc2 + wMod16, nSrcPitch, nWidth - wMod16, nHeight, nThresholdDestination, nThresholdSource);
+        logic16_native_t<op_c>(pDst2 + wMod16, nDstPitch, pSrc2 + wMod16, nSrcPitch, (nWidth - wMod16) / sizeof(uint16_t), nHeight, nOrigHeight, nThresholdDestination, nThresholdSource);
     }
 }
 
@@ -160,10 +162,10 @@ Processor *or_stacked_c       = &logic16_stacked_t<or_c>;
 Processor *andn_stacked_c     = &logic16_stacked_t<andn_c>;
 Processor *xor_stacked_c      = &logic16_stacked_t<xor_c>;
 
-Processor *and_interleaved_c  = &logic16_interleaved_t<and_c>;
-Processor *or_interleaved_c   = &logic16_interleaved_t<or_c>;
-Processor *andn_interleaved_c = &logic16_interleaved_t<andn_c>;
-Processor *xor_interleaved_c  = &logic16_interleaved_t<xor_c>;
+Processor *and_native_c  = &logic16_native_t<and_c>;
+Processor *or_native_c   = &logic16_native_t<or_c>;
+Processor *andn_native_c = &logic16_native_t<andn_c>;
+Processor *xor_native_c  = &logic16_native_t<xor_c>;
 
 
 #define DEFINE_SILLY_C_MODE(mode, layout) \
@@ -177,10 +179,10 @@ Processor *xor_interleaved_c  = &logic16_interleaved_t<xor_c>;
     Processor *add##mode##sub_##layout##_c = &logic16_##layout##_t<mode##_t<add_c, sub_c>>;   \
     Processor *add##mode##add_##layout##_c = &logic16_##layout##_t<mode##_t<add_c, add_c>>;
 
-DEFINE_SILLY_C_MODE(min, stacked);
-DEFINE_SILLY_C_MODE(min, interleaved);
-DEFINE_SILLY_C_MODE(max, stacked);
-DEFINE_SILLY_C_MODE(max, interleaved);
+DEFINE_SILLY_C_MODE(min, stacked)
+DEFINE_SILLY_C_MODE(min, native)
+DEFINE_SILLY_C_MODE(max, stacked)
+DEFINE_SILLY_C_MODE(max, native)
 
 
 Processor *and_stacked_sse2      = &logic16_stacked_t_sse2<and_sse2, and_c>;
@@ -188,10 +190,10 @@ Processor *or_stacked_sse2       = &logic16_stacked_t_sse2<or_sse2, or_c>;
 Processor *andn_stacked_sse2     = &logic16_stacked_t_sse2<andn_sse2, andn_c>;
 Processor *xor_stacked_sse2      = &logic16_stacked_t_sse2<xor_sse2, xor_c>;
 
-Processor *and_interleaved_sse2  = &logic16_interleaved_t_sse2<and_sse2, and_c>;
-Processor *or_interleaved_sse2   = &logic16_interleaved_t_sse2<or_sse2, or_c>;
-Processor *andn_interleaved_sse2 = &logic16_interleaved_t_sse2<andn_sse2, andn_c>;
-Processor *xor_interleaved_sse2  = &logic16_interleaved_t_sse2<xor_sse2, xor_c>;
+Processor *and_native_sse2  = &logic16_native_t_sse2<and_sse2, and_c>;
+Processor *or_native_sse2   = &logic16_native_t_sse2<or_sse2, or_c>;
+Processor *andn_native_sse2 = &logic16_native_t_sse2<andn_sse2, andn_c>;
+Processor *xor_native_sse2  = &logic16_native_t_sse2<xor_sse2, xor_c>;
 
 #define DEFINE_SILLY_SSE2_VERSIONS(mode, layout) \
     Processor *mode##_##layout##_sse2         = &logic16_##layout##_t_sse2<mode##_t_sse2<nop_sse2, nop_sse2>, mode##_t<nop_c, nop_c>>;   \
@@ -204,9 +206,11 @@ Processor *xor_interleaved_sse2  = &logic16_interleaved_t_sse2<xor_sse2, xor_c>;
     Processor *add##mode##sub_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add_sse2, sub_sse2>, mode##_t<add_c, sub_c>>;   \
     Processor *add##mode##add_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add_sse2, add_sse2>, mode##_t<add_c, add_c>>;
 
+// todo: add_sse2 to 10-14 bits (only 16 bit saturates correctly in simd)
+
 DEFINE_SILLY_SSE2_VERSIONS(min, stacked)
 DEFINE_SILLY_SSE2_VERSIONS(max, stacked)
-DEFINE_SILLY_SSE2_VERSIONS(min, interleaved)
-DEFINE_SILLY_SSE2_VERSIONS(max, interleaved)
+DEFINE_SILLY_SSE2_VERSIONS(min, native)
+DEFINE_SILLY_SSE2_VERSIONS(max, native)
 
 } } } }

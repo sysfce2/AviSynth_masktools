@@ -5,13 +5,13 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic16 {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Word nThresholdDestination, Word nThresholdSource);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource);
 
 #define DEFINE_PROCESSOR(name) \
    extern Processor *name##_stacked_c; \
-   extern Processor *name##_interleaved_c; \
+   extern Processor *name##_native_c; \
    extern Processor *name##_stacked_sse2; \
-   extern Processor *name##_interleaved_sse2;
+   extern Processor *name##_native_sse2;
 
 DEFINE_PROCESSOR(and);
 DEFINE_PROCESSOR(or);
@@ -47,20 +47,35 @@ protected:
        UNUSED(n);
        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-           dst.width(), dst.height(), nThresholdDestination, nThresholdSource);
+           dst.width(), dst.height(), dst.origheight(), nThresholdDestination, nThresholdSource);
    }
 
 public:
     Logic16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
     {
+      bool isStacked = parameters["stacked"].toBool();
+      int bits_per_pixel = bit_depths[C];
+
+      if (isStacked && bits_per_pixel != 8) {
+        error = "Stacked specified for a non-8 bit clip";
+        return;
+      }
+      if (!isStacked && bits_per_pixel == 8) {
+        error = "8 bit clip needs stacked=true";
+        return;
+      }
+      if (bits_per_pixel == 32) {
+        error = "32 bit float clip is not supported yet";
+        return;
+      }
 
 #define SET_MODE(mode) \
-    if (parameters["stacked"].toBool() == true) { \
+    if (isStacked) { \
         processors.push_back( Filtering::Processor<Processor>( mode##_stacked_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
         processors.push_back( Filtering::Processor<Processor>( mode##_stacked_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     } else { \
-        processors.push_back( Filtering::Processor<Processor>( mode##_interleaved_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
-        processors.push_back( Filtering::Processor<Processor>( mode##_interleaved_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        processors.push_back( Filtering::Processor<Processor>( mode##_native_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+        processors.push_back( Filtering::Processor<Processor>( mode##_native_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     }
         int nTh1 = parameters["th1"].toInt();
         int nTh2 = parameters["th2"].toInt();
