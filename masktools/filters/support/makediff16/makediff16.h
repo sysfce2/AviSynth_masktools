@@ -66,22 +66,22 @@ public:
          case 10:
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
-           processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 2));
            break;
          case 12:
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
-           processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 2));
            break;
          case 14:
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
-           processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 2));
            break;
          case 16:
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
-           processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 2));
            break;
          }
        }
