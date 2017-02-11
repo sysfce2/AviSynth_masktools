@@ -5,13 +5,23 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Support { namespace MakeDiff16 {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
 
 Processor makediff16_stacked_c;
 Processor makediff16_stacked_sse2;
 
-Processor makediff16_interleaved_c;
-Processor makediff16_interleaved_sse2;
+extern Processor *makediff16_native_10_c;
+extern Processor *makediff16_native_12_c;
+extern Processor *makediff16_native_14_c;
+extern Processor *makediff16_native_16_c;
+extern Processor *makediff16_native_10_sse2;
+extern Processor *makediff16_native_12_sse2;
+extern Processor *makediff16_native_14_sse2;
+extern Processor *makediff16_native_16_sse2;
+extern Processor *makediff16_native_10_sse4_1;
+extern Processor *makediff16_native_12_sse4_1;
+extern Processor *makediff16_native_14_sse4_1;
+extern Processor *makediff16_native_16_sse4_1;
 
 class MakeDiff16 : public MaskTools::Filter
 {
@@ -25,19 +35,55 @@ protected:
       UNUSED(n);
       processors.best_processor( constraints[nPlane] )( dst.data(), dst.pitch(), 
           frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
-          dst.width(), dst.height() );
+          dst.width(), dst.height(), dst.origheight() );
    }
 
 public:
    MakeDiff16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
-       /* add the processors */
-       if (parameters["stacked"].toBool() == true) {
+     bool isStacked = parameters["stacked"].toBool();
+     int bits_per_pixel = bit_depths[C];
+
+     if (isStacked && bits_per_pixel != 8) {
+       error = "Stacked specified for a non-8 bit clip";
+       return;
+     }
+     if (!isStacked && bits_per_pixel == 8) {
+       error = "8 bit clip needs stacked=true";
+       return;
+     }
+     if (bits_per_pixel == 32) {
+       error = "32 bit float clip is not supported yet";
+       return;
+     }
+
+     /* add the processors */
+       if (isStacked) {
            processors.push_back(Filtering::Processor<Processor>(makediff16_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(makediff16_stacked_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
        } else {
-           processors.push_back(Filtering::Processor<Processor>(makediff16_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           processors.push_back(Filtering::Processor<Processor>(makediff16_interleaved_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+         switch (bit_depths[C]) {
+         case 10:
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_10_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           break;
+         case 12:
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_12_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           break;
+         case 14:
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_14_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           break;
+         case 16:
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors.push_back(Filtering::Processor<Processor>(makediff16_native_16_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           break;
+         }
        }
    }
 
