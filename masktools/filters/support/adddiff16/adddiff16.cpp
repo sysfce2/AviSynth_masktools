@@ -11,12 +11,12 @@ static MT_FORCEINLINE Word adddiff16_core_c(Word dst, Word src) {
     return clip<Word, int>(int(dst) + src - (half), 0, max_pixel_value);
 }
 
-template<bool lessThan16bits>
-static MT_FORCEINLINE __m128i adddiff16_core_sse2(const __m128i &dst, const __m128i &src, const __m128i &halfrange, const __m128i &max_pixel_value) {
+template<CpuFlags flags, bool lessThan16bits>
+static MT_FORCEINLINE __m128i adddiff16_core_simd(const __m128i &dst, const __m128i &src, const __m128i &halfrange, const __m128i &max_pixel_value) {
   if (lessThan16bits) {
     auto val = _mm_add_epi16(src, dst);
     auto result = _mm_subs_epu16(val, halfrange);
-    return _mm_min_epi16(result, max_pixel_value);
+    return simd_min_epu16<flags>(result, max_pixel_value);
   }
   else {
     auto dstval = _mm_sub_epi16(dst, halfrange);
@@ -82,7 +82,7 @@ void adddiff16_stacked_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, p
         for ( int i = 0; i < wMod8; i+=8 ) {
             auto dst = read_word_stacked_simd(pDst, pDstLsb, i);
             auto src = read_word_stacked_simd(pSrc, pSrcLsb, i);
-            auto result = adddiff16_core_sse2<false>(dst, src, halfrange, halfrange /*dummy*/);
+            auto result = adddiff16_core_simd<CPU_SSE2,false>(dst, src, halfrange, halfrange /*dummy*/);
 
             write_word_stacked_simd(pDst, pDstLsb, i, result, ff, zero);
         }
@@ -97,8 +97,9 @@ void adddiff16_stacked_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, p
     }
 }
 
-template<int bits_per_pixel>
-void adddiff16_native_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight)
+// for 16 bits SSE2 is enough, 10-14 can benefit from SSE4_1
+template<CpuFlags flags, int bits_per_pixel>
+void adddiff16_native_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight)
 {
     nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
 
@@ -117,9 +118,9 @@ void adddiff16_native_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, pt
 
             __m128i result;
             if(bits_per_pixel < 16)
-              result = adddiff16_core_sse2<true>(dst, src, halfrange, max_pixel_value);
+              result = adddiff16_core_simd<flags, true>(dst, src, halfrange, max_pixel_value);
             else
-              result = adddiff16_core_sse2<false>(dst, src, halfrange, max_pixel_value);
+              result = adddiff16_core_simd<flags, false>(dst, src, halfrange, max_pixel_value);
 
             simd_store_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m128i*>(pDst+i), result);
         }
@@ -132,8 +133,9 @@ void adddiff16_native_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, pt
 }
 
 #define MAKE_TEMPLATES(bits_per_pixel) \
-template void adddiff16_native_sse2<##bits_per_pixel##>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight); \
-template void adddiff16_native_c<##bits_per_pixel##>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
+template void adddiff16_native_c<##bits_per_pixel##>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight); \
+template void adddiff16_native_simd<CPU_SSE2,##bits_per_pixel##>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight); \
+template void adddiff16_native_simd<CPU_SSE4_1,##bits_per_pixel##>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
 MAKE_TEMPLATES(10)
 MAKE_TEMPLATES(12)
 MAKE_TEMPLATES(14)
@@ -142,7 +144,8 @@ MAKE_TEMPLATES(16)
 
 #define MAKE_EXPORTS(bits_per_pixel) \
 Processor *adddiff16_native_##bits_per_pixel##_c = &adddiff16_native_c<##bits_per_pixel##>; \
-Processor *adddiff16_native_##bits_per_pixel##_sse2 = &adddiff16_native_sse2<##bits_per_pixel##>; 
+Processor *adddiff16_native_##bits_per_pixel##_sse2 = &adddiff16_native_simd<CPU_SSE2,##bits_per_pixel##>; \
+Processor *adddiff16_native_##bits_per_pixel##_sse4_1 = &adddiff16_native_simd<CPU_SSE4_1, ##bits_per_pixel##>;
 
 MAKE_EXPORTS(10)
 MAKE_EXPORTS(12)
