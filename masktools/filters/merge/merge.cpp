@@ -55,7 +55,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       auto dst = simd_load_si128<mem_mode>(pDst);
       auto dst_lo = _mm_unpacklo_epi8(dst, zero);
       auto dst_hi = _mm_unpackhi_epi8(dst, zero);
-
+      
       auto src = simd_load_si128<mem_mode>(pSrc);
       auto src1_lo = _mm_unpacklo_epi8(src, zero);
       auto src1_hi = _mm_unpackhi_epi8(src, zero);
@@ -94,6 +94,9 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
             auto mask_t2 = _mm_unpackhi_epi8(src2, zero);
 
             auto result = merge_sse2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero);
+            // remark: when mask is 255 then second clip's 255 becomes 254 and 0 becomes 1
+            // it 16 bit merge this problem is solved: special ensures that mask 255 returns second clip
+            // mask 0 returns first clip
 
             simd_store_si128<mem_mode>(pDst + i, result);
          }
