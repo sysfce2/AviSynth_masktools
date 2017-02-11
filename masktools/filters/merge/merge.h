@@ -33,7 +33,7 @@ protected:
     {
         UNUSED(n);
         if (use_luma && (nPlane > 0)) {
-            if (!(width_ratios[1][C] == 1 && width_ratios[1][C] == 1)) {
+            if (!(width_ratios[1][C] == 1 && height_ratios[1][C] == 1)) {
                 // 420 or 422
                 chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
