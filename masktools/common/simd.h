@@ -167,6 +167,29 @@ static MT_FORCEINLINE __m128i _MM_CMPLE_EPU16(__m128i x, __m128i y)
   return _mm_cmpeq_epi16(_mm_subs_epu16(x, y), _mm_setzero_si128());
 }
 
+// SSE2 version of SSE4.1-only _mm_max_epu16
+template<CpuFlags flags>
+static MT_FORCEINLINE __m128i simd_max_epu16(__m128i x, __m128i y)
+{
+  if (flags >= CPU_SSE4_1) {
+    return _mm_max_epu16(x, y);
+  }
+  else {
+    return simd_blend_epi8<flags>(x, y, _MM_CMPLE_EPU16(x, y));
+  }
+}
+
+// SSE2 version of SSE4.1-only _mm_min_epu16
+template<CpuFlags flags>
+static MT_FORCEINLINE __m128i simd_min_epu16(__m128i x, __m128i y)
+{
+  if (flags >= CPU_SSE4_1) {
+    return _mm_min_epu16(x, y);
+  }
+  else {
+    return simd_blend_epi8<flags>(y, x, _MM_CMPLE_EPU16(x, y));
+  }
+}
 
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_packus_epi32(__m128i &a, __m128i &b) {
