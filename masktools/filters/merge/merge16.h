@@ -108,6 +108,8 @@ public:
         operators[1] = operators[2] = NONE;
       }
 
+      // todo: allow 8 bit masks for 10+ bits
+
       if (use_luma) {
           auto c1 = childs[0]->colorspace();
           auto c2 = childs[1]->colorspace();
