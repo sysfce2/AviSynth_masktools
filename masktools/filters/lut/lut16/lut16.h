@@ -80,9 +80,9 @@ public:
           }
           else {
             for (int x = 0; x <= max_pixel_value; x++)
-              luts[i][x] = min(ctx.compute_word(x, 0.0f),Word(max_pixel_value)); // 65535 clamp is not enough
+              luts[i][x] = min(ctx.compute_word(x, 0.0f),Word(max_pixel_value)); // clamp to 65535 is not enough for 10-16 bit
             for (int x = max_pixel_value; x < 65536; x++)
-              luts[i][x] = max_pixel_value;
+              luts[i][x] = Word(max_pixel_value);
           }
       }
 
