@@ -15,13 +15,39 @@ void Functions::memset_plane(Byte *ptr, ptrdiff_t pitch, int width, int height, 
     }
 }
 
-void Functions::copy_plane(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height)
+void Functions::memset_plane_16(Byte *ptr, ptrdiff_t pitch, int width, int height, Word value)
 {
-    if (dst_pitch == width && src_pitch == width) {
-        memcpy(pDst, pSrc, width*height);
+  if (pitch == width) {
+    std::fill_n((Word *)ptr, width*height, value);
+  }
+  else {
+    for (int y = 0; y < height; ++y) {
+      std::fill_n((Word *)ptr, width, value);
+      ptr += pitch;
+    }
+  }
+}
+
+void Functions::memset_plane_32(Byte *ptr, ptrdiff_t pitch, int width, int height, float value)
+{
+  if (pitch == width) {
+    std::fill_n((float *)ptr, width*height, value);
+  }
+  else {
+    for (int y = 0; y < height; ++y) {
+      std::fill_n((float *)ptr, width, value);
+      ptr += pitch;
+    }
+  }
+}
+
+void Functions::copy_plane(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int rowsize, int height)
+{
+    if (dst_pitch == rowsize && src_pitch == rowsize) {
+        memcpy(pDst, pSrc, rowsize*height);
     } else {
         for (int y = 0; y < height; ++y) {
-            memcpy(pDst, pSrc, width);
+            memcpy(pDst, pSrc, rowsize);
             pDst += dst_pitch;
             pSrc += src_pitch;
         }
