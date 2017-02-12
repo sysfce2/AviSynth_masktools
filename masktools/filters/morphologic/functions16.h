@@ -18,11 +18,12 @@ enum Directions {
 
 //height should be already divised by 2
 template<Border borderMode, Operator op>
-void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch) {
-    Byte *pDstLsb = pDst + height * dstPitch;
-    const Byte *pSrcpLsb = pSrcp + height * srcPitch;
-    const Byte *pSrcLsb = pSrc + height * srcPitch;
-    const Byte *pSrcnLsb = pSrcn + height * srcPitch;
+void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
+    UNUSED(height);
+    Byte *pDstLsb = pDst + nOrigHeight * dstPitch / 2;
+    const Byte *pSrcpLsb = pSrcp + nOrigHeight * srcPitch / 2;
+    const Byte *pSrcLsb = pSrc + nOrigHeight * srcPitch / 2;
+    const Byte *pSrcnLsb = pSrcn + nOrigHeight * srcPitch / 2;
     const int leftOffset = borderMode == Border::Left ? 0 : 1;
     const int rightOffset = borderMode == Border::Right ? 0 : 1;
 
@@ -43,8 +44,8 @@ void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pS
 }
 
 template<Border borderMode, Operator op>
-void process_line_morpho_interleaved_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch) {
-    UNUSED(dstPitch); UNUSED(srcPitch); UNUSED(height);
+void process_line_morpho_interleaved_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
+    UNUSED(dstPitch); UNUSED(srcPitch); UNUSED(height); UNUSED(nOrigHeight);
 
     const int leftOffset = borderMode == Border::Left ? 0 : 1;
     const int rightOffset = borderMode == Border::Right ? 0 : 1;
@@ -66,10 +67,10 @@ void process_line_morpho_interleaved_c(Word *pDst, const Word *pSrcp, const Word
 
 template<class T>
 struct MorphologicProcessor {
-    typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch);
+    typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight);
 
     template<ProcessLineC process_line_left, ProcessLineC process_line, ProcessLineC process_line_right>
-    static void generic_c(T *pDst, ptrdiff_t nDstPitch, const T *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight)
+    static void generic_c(T *pDst, ptrdiff_t nDstPitch, const T *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
     {
         const T *pSrcp = pSrc - nSrcPitch;
         const T *pSrcn = pSrc + nSrcPitch;
@@ -78,13 +79,13 @@ struct MorphologicProcessor {
         UNUSED(nCoordinates); UNUSED(pCoordinates);
 
         /* top-left */
-        process_line_left(pDst, pSrc, pSrc, pSrcn, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch);
+        process_line_left(pDst, pSrc, pSrc, pSrcn, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
 
         /* top */
-        process_line(pDst + 1, pSrc+1, pSrc+1, pSrcn+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch);
+        process_line(pDst + 1, pSrc+1, pSrc+1, pSrcn+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
 
         /* top-right */
-        process_line_right(pDst + nWidth - 1, pSrc + nWidth - 1, pSrc + nWidth - 1, pSrcn + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch);
+        process_line_right(pDst + nWidth - 1, pSrc + nWidth - 1, pSrc + nWidth - 1, pSrcn + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
 
         pDst  += nDstPitch;
         pSrcp += nSrcPitch;
@@ -94,11 +95,11 @@ struct MorphologicProcessor {
         for ( int y = 1; y < nHeight - 1; y++ )
         {
             /* left */
-            process_line_left(pDst, pSrcp, pSrc, pSrcn, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch);
+            process_line_left(pDst, pSrcp, pSrc, pSrcn, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
             /* center */
-            process_line(pDst + 1, pSrcp+1, pSrc+1, pSrcn+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch);
+            process_line(pDst + 1, pSrcp+1, pSrc+1, pSrcn+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
             /* right */
-            process_line_right(pDst + nWidth - 1, pSrcp + nWidth - 1, pSrc + nWidth - 1, pSrcn + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch);
+            process_line_right(pDst + nWidth - 1, pSrcp + nWidth - 1, pSrc + nWidth - 1, pSrcn + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
 
             pDst  += nDstPitch;
             pSrcp += nSrcPitch;
@@ -107,11 +108,11 @@ struct MorphologicProcessor {
         }
 
         /* bottom-left */
-        process_line_left(pDst, pSrcp, pSrc, pSrc, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch);
+        process_line_left(pDst, pSrcp, pSrc, pSrc, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
         /* bottom */
-        process_line(pDst + 1, pSrcp+1, pSrc+1, pSrc+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch);
+        process_line(pDst + 1, pSrcp+1, pSrc+1, pSrc+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
         /* bottom-right */
-        process_line_right(pDst + nWidth - 1, pSrcp + nWidth - 1, pSrc + nWidth - 1, pSrc + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch);
+        process_line_right(pDst + nWidth - 1, pSrcp + nWidth - 1, pSrc + nWidth - 1, pSrc + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
     }
 };
 
@@ -119,10 +120,10 @@ struct MorphologicProcessor {
 
 
 template<class T>
-void generic_custom_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight)
+void generic_custom_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
 {
-    Byte *pDstLsb = pDst + nHeight * nDstPitch;
-    const Byte *pSrcLsb = pSrc + nHeight * nDstPitch;
+    Byte *pDstLsb = pDst + nOrigHeight * nDstPitch / 2;
+    const Byte *pSrcLsb = pSrc + nOrigHeight * nDstPitch / 2;
 
     for ( int j = 0; j < nHeight; j++ )
     {
@@ -147,8 +148,10 @@ void generic_custom_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc,
 
 
 template<class T>
-void generic_custom_interleaved_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight)
+void generic_custom_interleaved_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
 {
+    UNUSED(nOrigHeight);
+
     for ( int j = 0; j < nHeight; j++ )
     {
         for ( int i = 0; i < nWidth; i++ )

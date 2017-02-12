@@ -6,8 +6,8 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 {
 
-typedef void (StackedProcessor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight);
-typedef void (InterleavedProcessor)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight);
+typedef void (StackedProcessor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight);
+typedef void (InterleavedProcessor)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight);
 
 class MorphologicFilter16 : public MaskTools::Filter
 {
@@ -27,12 +27,12 @@ protected:
         if (parameters["stacked"].toBool()) {
             stackedProcessors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                 frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
-                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height() / 2);
+                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height() / 2, dst.origheight()); // stacked: /2
         }
         else {
-            interleavedProcessors.best_processor(constraints[nPlane])(reinterpret_cast<Word*>((Byte*)dst.data()), dst.pitch() / 2, 
+            interleavedProcessors.best_processor(constraints[nPlane])(reinterpret_cast<Word*>((Byte*)dst.data()), dst.pitch() / 2, /* /2: word sized */
                 reinterpret_cast<const Word*>((const Byte*)(frames[0].plane(nPlane).data())), frames[0].plane(nPlane).pitch() / 2, 
-                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width() / 2, dst.height());
+                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height(), dst.origheight());
         }
     }
 
@@ -53,9 +53,27 @@ protected:
 public:
    MorphologicFilter16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD ), pCoordinates( NULL ), nCoordinates( 0 )
    {
-      nMaxDeviations[0] = clip<int, int>( parameters["thY"].toInt(), 0, 65535 );
-      nMaxDeviations[1] = clip<int, int>( parameters["thC"].toInt(), 0, 65535 );
-      nMaxDeviations[2] = clip<int, int>( parameters["thC"].toInt(), 0, 65535 );
+     bool isStacked = parameters["stacked"].toBool();
+     int bits_per_pixel = bit_depths[C];
+
+     if (isStacked && bits_per_pixel != 8) {
+       error = "Stacked specified for a non-8 bit clip";
+       return;
+     }
+     if (!isStacked && bits_per_pixel == 8) {
+       error = "8 bit clip needs stacked=true";
+       return;
+     }
+     if (bits_per_pixel == 32) {
+       error = "32 bit float clip is not supported yet";
+       return;
+     }
+     
+     int max_pixel_value = isStacked ? 65535 : ((1 << bits_per_pixel) - 1);
+
+     nMaxDeviations[0] = clip<int, int>( parameters["thY"].toInt(), 0, max_pixel_value);
+     nMaxDeviations[1] = clip<int, int>( parameters["thC"].toInt(), 0, max_pixel_value);
+     nMaxDeviations[2] = clip<int, int>( parameters["thC"].toInt(), 0, max_pixel_value);
    }
 
    ~MorphologicFilter16()
