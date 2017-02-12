@@ -30,7 +30,7 @@ processors.push_back(Filtering::Processor<Processor>(deflate_asse2, Constraint(C
         Signature signature = "mt_deflate16";
 
         signature.add( Parameter(TYPE_CLIP, "") );
-        signature.add( Parameter(65535, "thY") );
+        signature.add( Parameter(65535, "thY") ); // clamped in MorphologicFilter16
         signature.add( Parameter(65535, "thC") );
         signature.add( Parameter( false, "stacked" ) );
 

@@ -4,7 +4,7 @@
 
 using namespace Filtering;
 
-static inline Word meanMin(Word a1, Word a2, Word a3, Word a4, Word a5, Word a6, Word a7, Word a8, Word a9)
+static MT_FORCEINLINE Word meanMin(Word a1, Word a2, Word a3, Word a4, Word a5, Word a6, Word a7, Word a8, Word a9)
 {
     int nSum = 0;
     nSum += a1 + a2 + a3 + a4 + a6 + a7 + a8 + a9;
@@ -12,7 +12,7 @@ static inline Word meanMin(Word a1, Word a2, Word a3, Word a4, Word a5, Word a6,
     return static_cast<Word>(nSum < a5 ? nSum : a5);
 }
 
-static inline Word meanMinThresholded(Word a1, Word a2, Word a3, Word a4, Word a5, Word a6, Word a7, Word a8, Word a9, int nMaxDeviation)
+static MT_FORCEINLINE Word meanMinThresholded(Word a1, Word a2, Word a3, Word a4, Word a5, Word a6, Word a7, Word a8, Word a9, int nMaxDeviation)
 {
     int nMeanMin = meanMin(a1, a2, a3, a4, a5, a6, a7, a8, a9);
     if ( a5 - nMeanMin > nMaxDeviation ) nMeanMin = a5 - nMaxDeviation;
