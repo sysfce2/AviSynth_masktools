@@ -48,6 +48,7 @@ void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdif
 template <decltype(and_c) op>
 void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
+    UNUSED(nOrigHeight);
     for (int y = 0; y < nHeight; y++) {
         auto pDstWord = reinterpret_cast<Word*>(pDst);
         auto pSrcWord = reinterpret_cast<const Word*>(pSrc);
