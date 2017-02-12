@@ -37,9 +37,9 @@ protected:
 
    static Signature &add_defaults(Signature &signature)
    {
-      signature.add( Parameter( 3, "Y" ) );
-      signature.add( Parameter( 1, "U" ) );
-      signature.add( Parameter( 1, "V" ) );
+      signature.add( Parameter( 3.0f, "Y" ) );
+      signature.add( Parameter( 1.0f, "U" ) );
+      signature.add( Parameter( 1.0f, "V" ) );
       signature.add( Parameter( Value( String( "" ) ), "chroma" ) );
       signature.add( Parameter( 0, "offX" ) );
       signature.add( Parameter( 0, "offY" ) );
@@ -76,9 +76,9 @@ public:
         nHeight = childs[0]->height();
         C = childs[0]->colorspace();
 
-        operators[0] = Operator(parameters["Y"].toInt());
-        operators[1] = Operator(parameters["U"].toInt());
-        operators[2] = Operator(parameters["V"].toInt());
+        operators[0] = Operator((float)parameters["Y"].toFloat()); // prepare, once we'll have float for memset
+        operators[1] = Operator((float)parameters["U"].toFloat());
+        operators[2] = Operator((float)parameters["V"].toFloat());
 
         if (nXOffset < 0 || nXOffset > nWidth) nXOffset = 0;
         if (nYOffset < 0 || nYOffset > nHeight) nYOffset = 0;
@@ -101,7 +101,7 @@ public:
             else if (chroma == "copy third")
                 operators[1] = operators[2] = COPY_THIRD;
             else
-                operators[1] = operators[2] = Operator(MEMSET, atoi(chroma.c_str()));
+                operators[1] = operators[2] = Operator(MEMSET, std::stof(chroma.c_str())); // atoi(chroma.c_str())
         }
 
         /* checks the operators */
@@ -161,28 +161,91 @@ public:
 
     void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[3], const Frame<const byte> frames[3])
     {
+        bool isStacked = parameters["stacked"].is_defined() && parameters["stacked"].toBool();
+
         switch (operators[nPlane].getMode())
         {
         case COPY:
+          if (isStacked) {
+            // msb
             Functions::copy_plane(output_plane.data(), output_plane.pitch(),
-                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height());
-            break;
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              output_plane.width(), output_plane.height() / 2);
+            // lsb
+            Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+              frames[0].plane(nPlane).data() + frames[0].plane(nPlane).pitch() * frames[0].plane(nPlane).origheight() / 2, frames[0].plane(nPlane).pitch(),
+              output_plane.width(), output_plane.height() / 2);
+          }
+          else {
+            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              output_plane.width(), output_plane.height());
+          }
+          break;
         case COPY_SECOND:
-            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+            if (isStacked) {
+              // msb
+              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+                frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+                output_plane.width(), output_plane.height() / 2);
+              // lsb
+              Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+                frames[1].plane(nPlane).data() + frames[1].plane(nPlane).pitch() * frames[1].plane(nPlane).origheight() / 2, frames[1].plane(nPlane).pitch(),
+                output_plane.width(), output_plane.height() / 2);
+            } else {
+              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
                 output_plane.width(), output_plane.height());
+            }
             break;
         case COPY_THIRD:
-            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+            if (isStacked) {
+              // msb
+              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+                frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
+                output_plane.width(), output_plane.height() / 2);
+              // lsb
+              Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+                frames[2].plane(nPlane).data() + frames[2].plane(nPlane).pitch() * frames[2].plane(nPlane).origheight() / 2, frames[2].plane(nPlane).pitch(),
+                output_plane.width(), output_plane.height() / 2);
+            }
+            else {
+              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
                 output_plane.width(), output_plane.height());
+            }
             break;
         case MEMSET:
-            Functions::memset_plane(output_plane.data(), output_plane.pitch(), 
-                output_plane.width(), output_plane.height(), 
-                static_cast<Byte>(operators[nPlane].value()));
-            break;
+            switch (output_plane.pixelsize()) {
+            case 1:
+              if (isStacked) {
+                Word val = static_cast<Word>(operators[nPlane].value());
+                // msb
+                Functions::memset_plane(output_plane.data(), output_plane.pitch(),
+                  output_plane.width(), output_plane.height()/2,
+                  static_cast<Byte>(val >> 8));
+                // lsb
+                Functions::memset_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+                  output_plane.width(), output_plane.height() / 2,
+                  static_cast<Byte>(val & 0xFF));
+              } else {
+                Functions::memset_plane(output_plane.data(), output_plane.pitch(),
+                  output_plane.width(), output_plane.height(),
+                  static_cast<Byte>(operators[nPlane].value()));
+              }
+              break;
+            case 2: // 16 bit
+              Functions::memset_plane_16(output_plane.data(), output_plane.pitch(),
+                output_plane.width(), output_plane.height(),
+                static_cast<Word>(operators[nPlane].value()));
+              break;
+            case 4: // 32 bit/float
+              Functions::memset_plane_32(output_plane.data(), output_plane.pitch(),
+                output_plane.width(), output_plane.height(),
+                static_cast<float>(operators[nPlane].value_f()));
+              break;
+            }
+        break;
         case PROCESS:
             process(n, output_plane, nPlane, frames, constraints);
             break;
