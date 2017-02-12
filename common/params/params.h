@@ -33,9 +33,9 @@ class Value {
 public:
 
    Value() : type(TYPE_UNDEFINED), defined(false) { };
-   Value(int n) : type(TYPE_INT), defined(true), val_int(n) { }
-   Value(double d) : type(TYPE_FLOAT), defined(true), val_float(d) { }
-   Value(float d) : type(TYPE_FLOAT), defined(true), val_float(d) { }
+   Value(int n) : type(TYPE_INT), defined(true), val_int(n), val_float((float)n) { }
+   Value(double d) : type(TYPE_FLOAT), defined(true), val_float(d), val_int((int)d) { }
+   Value(float d) : type(TYPE_FLOAT), defined(true), val_float(d), val_int((int)d) { }
    Value(const String &s) : type(TYPE_STRING), defined(true), val_string(s) { }
    Value(bool b) : type(TYPE_BOOL), defined(true), val_bool(b) { }
    Value(const PClip& c) : type(TYPE_CLIP), defined(true), val_clip(c) { }
