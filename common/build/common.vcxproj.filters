@@ -57,12 +57,6 @@
     <ClInclude Include="..\constraints\constraints.h">
       <Filter>constraints</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\avs2x\avisynth-2_5.h">
-      <Filter>avs2x</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\avs2x\avisynth-2_6.h">
-      <Filter>avs2x</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\avs2x\clip.h">
       <Filter>avs2x</Filter>
     </ClInclude>
