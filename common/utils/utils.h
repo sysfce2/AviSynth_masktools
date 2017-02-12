@@ -54,6 +54,8 @@ typedef enum {
    COLORSPACE_YV24,
    COLORSPACE_I444,
 
+   COLORSPACE_YV411,
+
    COLORSPACE_Y10,
    COLORSPACE_YUV420P10,
    COLORSPACE_YUV422P10,
@@ -177,6 +179,7 @@ template<typename T, typename U> T threshold(U x, U mini, U maxi, U bottom = U(m
 
 /* width & height ratios, according to the colorspace */
 static const int plane_counts[COLORSPACE_COUNT] = { 0, 1, 3, 3, 3, 3, 3, 3, 
+3, // 411
 1, 3, 3, 3, // 10 bits
 1, 3, 3, 3, // 12 bits
 1, 3, 3, 3, // 14 bits
@@ -188,6 +191,7 @@ static const int plane_counts[COLORSPACE_COUNT] = { 0, 1, 3, 3, 3, 3, 3, 3,
 template<Colorspace C> int plane_count() { return plane_counts[C]; }
 
 static const bool planes_isRGB[COLORSPACE_COUNT] = { false, false, false, false, false, false, false, false,
+false, // 411
 false, false, false, false, // 10 bits
 false, false, false, false, // 12 bits
 false, false, false, false, // 14 bits
@@ -199,27 +203,30 @@ true, true, true, true, true, true // RGB 8,10,12,14,16,32/f
 template<Colorspace C> int plane_isRGB() { return planes_isRGB[C]; }
 
 static const int width_ratios[3][COLORSPACE_COUNT] =
-{ 
-//      8 bits               10          12          14          16          32          RGBP8,10,12,14,16,S
-   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-   { 0, 0, 2, 2, 2, 2, 1, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1 },
-   { 0, 0, 2, 2, 2, 2, 1, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1 },
+{
+//                           YV
+//      8 bits              411 10          12          14          16          32          RGBP8,10,12,14,16,S
+   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 2, 2, 1, 1, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 2, 2, 1, 1, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 0, 2, 2, 1, 1, 1, 1, 1, 1, 1 },
 };
 
 template<Colorspace C> int width_ratio(int nPlane) { return width_ratios[nPlane][C]; }
 
 static const int height_ratios[3][COLORSPACE_COUNT] =
 {
-//      8 bits               10          12          14          16          32          RGBP8,10,12,14,16,S
-   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-   { 0, 0, 2, 2, 1, 1, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1 },
-   { 0, 0, 2, 2, 1, 1, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1 },
+//                           YV
+//      8 bits               411 10          12          14          16          32          RGBP8,10,12,14,16,S
+   { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 1, 1, 1, 1, 4, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1 },
+   { 0, 0, 2, 2, 1, 1, 1, 1, 4, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 0, 2, 1, 1, 1, 1, 1, 1, 1, 1 },
 };
 
 template<Colorspace C> int height_ratio(int nPlane) { return height_ratios[nPlane][C]; }
 
 /* bit depths, according to the colorspace */
 static const int bit_depths[COLORSPACE_COUNT] = { 0, 8, 8, 8, 8, 8, 8, 8,
+8, // 411
 10, 10, 10, 10, // 10 bits
 12, 12, 12, 12, // 12 bits
 14, 14, 14, 14, // 14 bits

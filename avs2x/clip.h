@@ -59,6 +59,9 @@ Colorspace AVSColorspaceToColorspace(int pixel_type)
    case VideoInfo::CS_YV24: return COLORSPACE_YV24;
    case VideoInfo::CS_Y8  : return COLORSPACE_Y8;
 
+   case VideoInfo::CS_YV411: return COLORSPACE_YV411; // new from 2.2.1
+
+   // new color spaces from v2.2.0
    case VideoInfo::CS_Y10: return COLORSPACE_Y10;
    case VideoInfo::CS_YUV420P10: return COLORSPACE_YUV420P10;
    case VideoInfo::CS_YUV422P10: return COLORSPACE_YUV422P10;
