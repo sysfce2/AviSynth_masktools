@@ -11,6 +11,7 @@ typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrd
 Processor merge_c;
 Processor merge_luma_420_c;
 Processor merge_luma_422_c;
+Processor merge_luma_411_c;
 
 extern Processor *merge_sse2;
 extern Processor *merge_asse2;
@@ -18,6 +19,8 @@ extern Processor *merge_luma_420_sse2;
 extern Processor *merge_luma_420_asse2;
 extern Processor *merge_luma_422_sse2;
 extern Processor *merge_luma_422_asse2;
+extern Processor *merge_luma_411_sse2;
+extern Processor *merge_luma_411_asse2;
 
 
 class Merge : public MaskTools::Filter
@@ -34,7 +37,7 @@ protected:
         UNUSED(n);
         if (use_luma && (nPlane > 0)) {
             if (!(width_ratios[1][C] == 1 && height_ratios[1][C] == 1)) {
-                // 420 or 422
+                // 420 or 422 or 411
                 chroma_processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                     frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                     frames[1].plane(0).data(), frames[1].plane(0).pitch(),
@@ -60,7 +63,8 @@ public:
       use_luma = parameters["luma"].toBool();
       bool is420 = width_ratios[1][C] == 2 && height_ratios[1][C] == 2;
       bool is422 = width_ratios[1][C] == 2 && height_ratios[1][C] == 1;
-      
+      bool is411 = width_ratios[1][C] == 4 && height_ratios[1][C] == 1;
+
       // PF: for greyscale: graceful fallback to chromaless operation
       if (plane_counts[C] == 1) {
         use_luma = false;
@@ -69,6 +73,7 @@ public:
 
       if (use_luma) {
          // PF: implement use_luma for 422 clips
+         //     2.2.1 implement for 411 clips
           /*
           if ((width_ratios[1][C] != 2 || height_ratios[1][C] != 2) && (width_ratios[1][C] != 1 || height_ratios[1][C] != 1)) {
               error = "\"luma\" is unsupported in 422";
@@ -104,11 +109,15 @@ public:
         chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
         chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
       }
-      else { // 422
+      else if (is422){ // 422
         chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
         chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-
+      }
+      else {
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+        chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
       }
    }
 
