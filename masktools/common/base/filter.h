@@ -249,6 +249,8 @@ public:
             process_plane(n, output.plane(i), i, constraints, frames);
         }
 
+        delete[] tmp_videoframes;
+
         return output_frame;
     }
 
