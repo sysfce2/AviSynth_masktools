@@ -90,6 +90,17 @@ Parser::Parser Parser::getDefaultParser()
    parser.addSymbol(Symbol::Round).addSymbol(Symbol::Floor).addSymbol(Symbol::Trunc).addSymbol(Symbol::Ceil);
    /* number */
    parser.addSymbol(Symbol::Pi);
+   /* auto bitdepth conversion: BITDEPTH (bitdepth) and two functions */
+   parser.addSymbol(Symbol::BITDEPTH).addSymbol(Symbol::UpscaleByShift).addSymbol(Symbol::UpscaleByStretch);
+   /* special bit-depth adaptive constants */
+   parser.addSymbol(Symbol::RANGE_HALF).addSymbol(Symbol::RANGE_MAX).addSymbol(Symbol::RANGE_SIZE);
+   parser.addSymbol(Symbol::YMIN).addSymbol(Symbol::YMAX);
+   parser.addSymbol(Symbol::CMIN).addSymbol(Symbol::CMAX);
+
+   /* Symbol X, X and Y, X and Y and Z are added additionally at before processing lut expression */
+   /* like this:       
+      Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
+  */
 
    return parser;
 }

@@ -4,35 +4,42 @@
 using namespace Filtering;
 using namespace Filtering::Parser;
 
+// basic math
 static double addition        (double x, double y, double z) { UNUSED(z); return x + y; }
 static double multiplication  (double x, double y, double z) { UNUSED(z); return x * y; }
 static double division        (double x, double y, double z) { UNUSED(z); return x / y; }
 static double substraction    (double x, double y, double z) { UNUSED(z); return x - y; }
 static double power           (double x, double y, double z) { UNUSED(z); return pow(x, y); }
 static double modulo          (double x, double y, double z) { UNUSED(z); return double(convert<Int64, double>( x ) % convert<Int64, double>( y )); }
+// Ternary operator helper
 static double interrogation   (double x, double y, double z) { return x > 0 ? y : z; }
+// comparison
 static double equal           (double x, double y, double z) { UNUSED(z); return abs(x - y) < 0.000001 ? 1 : -1; }
 static double notEqual        (double x, double y, double z) { UNUSED(z); return abs(x - y) >= 0.000001 ? 1 : -1; }
 static double inferior        (double x, double y, double z) { UNUSED(z); return x <= y ? 1 : -1; }
 static double inferiorStrict  (double x, double y, double z) { UNUSED(z); return x < y ? 1 : -1; }
 static double superior        (double x, double y, double z) { UNUSED(z); return x >= y ? 1 : -1; }
 static double superiorStrict  (double x, double y, double z) { UNUSED(z); return x > y ? 1 : -1; }
+// bool
 static double and             (double x, double y, double z) { UNUSED(z); return x > 0 && y > 0 ? 1 : -1; }
 static double or              (double x, double y, double z) { UNUSED(z); return x > 0 || y > 0 ? 1 : -1; }
 static double andNot          (double x, double y, double z) { UNUSED(z); return x > 0 && y <= 0 ? 1 : -1; }
 static double xor             (double x, double y, double z) { UNUSED(z); return (x > 0 && y <= 0) || (x <= 0 && y > 0)? 1 : -1; }
+// Unsigned Bit arithmetic
 static double andUB           (double x, double y, double z) { UNUSED(z); return double(clip<Uint64, double>(x) & clip<Uint64, double>(y)); }
 static double orUB            (double x, double y, double z) { UNUSED(z); return double(clip<Uint64, double>(x) | clip<Uint64, double>(y)); }
 static double xorUB           (double x, double y, double z) { UNUSED(z); return double(clip<Uint64, double>(x) ^ clip<Uint64, double>(y)); }
 static double negateUB        (double x, double y, double z) { UNUSED(y); UNUSED(z); return double(~clip<Uint64, double>(x)); }
 static double posshiftUB      (double x, double y, double z) { UNUSED(z); return y >= 0 ? double(clip<Uint64, double>(x) << clip<Int64, double>(y)) : double(clip<Uint64, double>(x) >> clip<Int64, double>(-y)); }
 static double negshiftUB      (double x, double y, double z) { UNUSED(z); return y >= 0 ? double(clip<Uint64, double>(x) >> clip<Int64, double>(y)) : double(clip<Uint64, double>(x) << clip<Int64, double>(-y)); }
+// Signed Bit arithmetic
 static double andSB           (double x, double y, double z) { UNUSED(z); return double(clip<Int64, double>(x) & clip<Int64, double>(y)); }
 static double orSB            (double x, double y, double z) { UNUSED(z); return double(clip<Int64, double>(x) | clip<Int64, double>(y)); }
 static double xorSB           (double x, double y, double z) { UNUSED(z); return double(clip<Int64, double>(x) ^ clip<Int64, double>(y)); }
 static double negateSB        (double x, double y, double z) { UNUSED(y); UNUSED(z); return double(~clip<Int64, double>(x)); }
 static double posshiftSB      (double x, double y, double z) { UNUSED(z); return y >= 0 ? double(clip<Int64, double>(x) << clip<Int64, double>(y)) : double(clip<Int64, double>(x) >> clip<Int64, double>(-y)); }
 static double negshiftSB      (double x, double y, double z) { UNUSED(z); return y >= 0 ? double(clip<Int64, double>(x) >> clip<Int64, double>(y)) : double(clip<Int64, double>(x) << clip<Int64, double>(-y)); }
+// Math
 static double cos             (double x, double y, double z) { UNUSED(y); UNUSED(z); return cos(x); }
 static double sin             (double x, double y, double z) { UNUSED(y); UNUSED(z); return sin(x); }
 static double tan             (double x, double y, double z) { UNUSED(y); UNUSED(z); return tan(x); }
@@ -49,6 +56,21 @@ static double mmax             (double x, double y, double z) { UNUSED(z); retur
 static double floor           (double x, double y, double z) { UNUSED(y); UNUSED(z); return floor(x); }
 static double ceil            (double x, double y, double z) { UNUSED(y); UNUSED(z); return ceil(x); }
 static double trunc           (double x, double y, double z) { UNUSED(y); UNUSED(z); return double(Int64(x)); }
+// bit depth conversion helpers. x:value on 8 bit scale y: bit depth
+static double upscaleByShift(double x, double y, double z)
+{
+  UNUSED(z);
+  if (y == 8) return x; // 8 bit 
+  if (y == 32) return x / 255; // float
+  return double(clip<Int64, double>(x) << clip<Int64, double>(y - 8));
+} 
+static double upscaleByStretch(double x, double y, double z) // e.g. 8->10 bit rgb: x/255*1023
+{
+  UNUSED(z);
+  if (y == 8) return x; // 8 bit 
+  if (y == 32) return x / 255; // float
+  return x / 255 * ((1 << clip<Int64, double>(y)) - 1.0);
+}
 
 Symbol Symbol::Addition       ("+" , OPERATOR, 2, addition);
 Symbol Symbol::Multiplication ("*" , OPERATOR, 2, multiplication);
@@ -81,9 +103,21 @@ Symbol Symbol::NegateSB       ("~s" , FUNCTION, 1, negateSB);
 Symbol Symbol::PosShiftSB     ("<<s", OPERATOR, 2, posshiftSB);
 Symbol Symbol::NegShiftSB     (">>s", OPERATOR, 2, negshiftSB);
 Symbol Symbol::Pi             ("pi", 3.1415927, NUMBER  , 0, NULL);
+// Lut variables
 Symbol Symbol::X              ("x" , VARIABLE_X, 0, NULL);  
 Symbol Symbol::Y              ("y" , VARIABLE_Y, 0, NULL);
 Symbol Symbol::Z              ("z" , VARIABLE_Z, 0, NULL);
+// global bitdepth parameter for autoscale
+Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE_BITDEPTH, 0, NULL); 
+// bit-depth adaptive constants
+Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE_RANGE_HALF, 0, NULL); // 128  scaled
+Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE_RANGE_MAX, 0, NULL);   // 255, 4095, .. 65535
+Symbol Symbol::RANGE_SIZE     ("range_size", VARIABLE_RANGE_SIZE, 0, NULL); // 256, 1024, 4096, 16384, 65536
+Symbol Symbol::YMIN           ("ymin", VARIABLE_YMIN, 0, NULL); // 16 scaled
+Symbol Symbol::YMAX           ("ymax", VARIABLE_YMAX, 0, NULL); // 235 or scaled
+Symbol Symbol::CMIN           ("cmin", VARIABLE_CMIN, 0, NULL); // 16 scaled = LIMITED_YMIN
+Symbol Symbol::CMAX           ("cmax", VARIABLE_CMAX, 0, NULL); // 240 scaled
+// Math
 Symbol Symbol::Cos            ("cos", FUNCTION, 1, cos);
 Symbol Symbol::Sin            ("sin", FUNCTION, 1, sin);
 Symbol Symbol::Tan            ("tan", FUNCTION, 1, tan);
@@ -100,6 +134,9 @@ Symbol Symbol::Max            ("max", FUNCTION, 2, mmax);
 Symbol Symbol::Ceil           ("ceil", FUNCTION, 1, ceil);
 Symbol Symbol::Floor          ("floor", FUNCTION, 1, floor);
 Symbol Symbol::Trunc          ("trunc", FUNCTION, 1, trunc);
+// automatic bit-depth scaling helpers
+Symbol Symbol::UpscaleByShift  ("#B", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByShift);
+Symbol Symbol::UpscaleByStretch("#F", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByStretch);
 
 Symbol::Symbol() :
 type(UNDEFINED), value(""), value2("")
@@ -137,8 +174,20 @@ double Symbol::getValue(double x, double y, double z) const
    case VARIABLE_X:
    case VARIABLE_Y:
    case VARIABLE_Z:
+
+   // automatic silent parameter of the script
+   case VARIABLE_BITDEPTH:
+   // embedded expr constants
+   case VARIABLE_RANGE_HALF:
+   case VARIABLE_RANGE_MAX:
+   case VARIABLE_RANGE_SIZE:
+   case VARIABLE_YMIN:
+   case VARIABLE_YMAX:
+   case VARIABLE_CMIN:
+   case VARIABLE_CMAX:
+
    case NUMBER:
-      return dValue;
+     return dValue;
    default:
       return process(x, y, z);
    }
@@ -171,34 +220,60 @@ double Context::rec_compute()
    case Symbol::VARIABLE_X: return x;
    case Symbol::VARIABLE_Y: return y;
    case Symbol::VARIABLE_Z: return z;
+   case Symbol::VARIABLE_BITDEPTH: return bitdepth; // bit-depth for autoscale
+
+   case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
+   case Symbol::VARIABLE_RANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+   case Symbol::VARIABLE_RANGE_SIZE: return bitdepth == 32 ? 1.0 : (1 << bitdepth); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
+   case Symbol::VARIABLE_YMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
+   case Symbol::VARIABLE_YMAX: return bitdepth == 32 ? 235.0 / 255 : (235 << (bitdepth - 8));  // 235 scaled
+   case Symbol::VARIABLE_CMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
+   case Symbol::VARIABLE_CMAX: return bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8));  // 240 scaled
+
+   case Symbol::FUNCTION_WITH_B_AS_PARAM: // silent bit-depth parameter for autoscale
+     switch (s.nParameter)
+     {
+     case 1: return s.process(rec_compute(), bitdepth, -1.0f); // automatic bit-depth parameter
+     case 2: // two original parameters + bitdepth
+     {
+       double yy = rec_compute();
+       double xx = rec_compute();
+       return s.process(xx, yy, bitdepth);
+     }
+     default:
+       return s.process(-1.0f, -1.0f, -1.0f);
+     }
    default:
       switch ( s.nParameter )
       {
       case 2 :
          {
-            double y = rec_compute();
-            double x = rec_compute();
-            return s.process(x, y, -1.0f);
+            double yy = rec_compute();
+            double xx = rec_compute();
+            return s.process(xx, yy, -1.0f);
          }
       case 1: return s.process(rec_compute(), -1.0f, -1.0f);
       case 3:
          {
-            double z = rec_compute();
-            double y = rec_compute();
-            double x = rec_compute();
-            return s.getValue(x, y, z);
+            double zz = rec_compute();
+            double yy = rec_compute();
+            double xx = rec_compute();
+            return s.getValue(xx, yy, zz);
          }
       default: return s.process(-1.0f, -1.0f, -1.0f);
       }
    }
 }
 
-double Context::compute(double x, double y, double z)
+double Context::compute(double x, double y, double z, double bitdepth)
 {
    nPos = nSymbols;
    this->x = x;
    this->y = y;
    this->z = z;
+
+   this->bitdepth = (int)bitdepth;
+   // all other expr constants are calculated from bitdepth
 
    return rec_compute();
 }
@@ -212,6 +287,7 @@ String Context::rec_infix()
     case Symbol::VARIABLE_X: 
     case Symbol::VARIABLE_Y: 
     case Symbol::VARIABLE_Z: 
+    case Symbol::VARIABLE_BITDEPTH:
     case Symbol::NUMBER: return s.value;
     case Symbol::FUNCTION:
         if (s.nParameter == 1) {
@@ -235,6 +311,13 @@ String Context::rec_infix()
             auto op2 = rec_infix();
             return "((" + rec_infix() + ") ? " + op2 + " : " + op3 + ")";
         }
+    case Symbol::FUNCTION_WITH_B_AS_PARAM:
+    {
+      if (s.nParameter == 1) {
+        return s.value + "(" + rec_infix() + "," + std::to_string(this->bitdepth) + ")";
+      }
+    }
+
     default:
         assert(0);
         return "";

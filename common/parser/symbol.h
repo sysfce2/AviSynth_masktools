@@ -17,6 +17,18 @@ public:
       VARIABLE_Y,
       VARIABLE_Z,
 
+      VARIABLE_BITDEPTH,
+      // special adaptive constants filled by bitdepth
+      VARIABLE_RANGE_HALF,
+      VARIABLE_RANGE_MAX,
+      VARIABLE_RANGE_SIZE,
+      VARIABLE_YMIN,
+      VARIABLE_YMAX,
+      VARIABLE_CMIN,
+      VARIABLE_CMAX,
+
+      FUNCTION_WITH_B_AS_PARAM,
+
       UNDEFINED
 
    } Type;
@@ -78,6 +90,17 @@ public:
    static Symbol X;
    static Symbol Y;
    static Symbol Z;
+   // Auto bitdepth conv
+   static Symbol BITDEPTH;
+   // special adaptive constants filled by bitdepth
+   static Symbol RANGE_HALF;
+   static Symbol RANGE_MAX;
+   static Symbol RANGE_SIZE;
+   static Symbol YMIN;
+   static Symbol YMAX;
+   static Symbol CMIN;
+   static Symbol CMAX;
+
    static Symbol Cos;
    static Symbol Sin;
    static Symbol Tan;
@@ -94,6 +117,10 @@ public:
    static Symbol Ceil;
    static Symbol Floor;
    static Symbol Trunc;
+   // auto bit depth conversions
+   static Symbol UpscaleByShift;
+   static Symbol UpscaleByStretch;
+
 };
 
 class Context {
@@ -103,6 +130,7 @@ class Context {
    int nPos;
 
    double x, y, z;
+   int bitdepth; // bit depth
    double rec_compute();
    String rec_infix();
 
@@ -113,10 +141,11 @@ public:
    ~Context();
 
    bool check();
-   double compute(double x, double y = -1.0f, double z = -1.0f);
+   double compute(double x, double y = -1.0f, double z = -1.0f, double bitdepth = 8);
    String infix();
-   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f) { return clip<Byte, double>( compute(_x, _y, _z) ); }
-   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f) { return clip<Word, double>( compute(_x, _y, _z) ); }
+   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f, double _b = 8) { return clip<Byte, double>( compute(_x, _y, _z, _b) ); } // byte: default 8 bit
+   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f, double _b = 16) { return clip<Word, double>( compute(_x, _y, _z, _b) ); } // word: default 16 bit
+   Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _b = 0) { return (float)(compute(_x, _y, _z, _b)); } // float: 1<<0 = 1.0 default base
 };
 
 } } // namespace Parser, Filtering
