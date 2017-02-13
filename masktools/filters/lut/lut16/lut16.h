@@ -75,13 +75,14 @@ public:
           }
 
           if (bits_per_pixel == 16 || bits_per_pixel == 8) { // real or stacked 16 bit
+            bits_per_pixel = 16;
             for (int x = 0; x <= 65535; x++)
-              luts[i][x] = ctx.compute_word(x, 0.0f);
+              luts[i][x] = ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, bits_per_pixel); // 17.02.13 4th parameter: bitdepth conversion support in expressions
           }
           else {
             for (int x = 0; x <= max_pixel_value; x++)
-              luts[i][x] = min(ctx.compute_word(x, 0.0f),Word(max_pixel_value)); // clamp to 65535 is not enough for 10-16 bit
-            for (int x = max_pixel_value; x < 65536; x++)
+              luts[i][x] = min(ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, bits_per_pixel),Word(max_pixel_value)); // clamp to 65535 is not enough for 10-16 bit
+            for (int x = max_pixel_value; x < 65536; x++) // 17.02.13 4th parameter: bitdepth conversion support in expressions
               luts[i][x] = Word(max_pixel_value);
           }
       }
