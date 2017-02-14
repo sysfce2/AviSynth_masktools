@@ -62,7 +62,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Morphologic::Deflate::Deflate>::create( env );
    Avisynth2x::Filter<Morphologic::Inpand::Inpand>::create( env );
    Avisynth2x::Filter<Morphologic::Expand::Expand>::create( env );
-   Avisynth2x::Filter<Lut::Single::Lut>::create( env );
+   Avisynth2x::Filter<Lut::Single::Lut>::create( env ); // 8-16
    Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env );
    Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env );
    Avisynth2x::Filter<Lut::Spatial::Luts>::create( env );
@@ -85,7 +85,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
 
 #ifdef ENABLE_16BIT_SUPPORT
    Avisynth2x::Filter<Binarize16::Binarize16>::create( env );
-   Avisynth2x::Filter<Lut::Single16bit::Lut16>::create( env );
+   //Avisynth2x::Filter<Lut::Single16bit::Lut16>::create( env ); // common with mt_lut
    //Avisynth2x::Filter<Merge16::Merge16>::create( env );  // common with mt_merge
    Avisynth2x::Filter<Logic16::Logic16>::create( env );
    Avisynth2x::Filter<Support::Average16::Average16>::create( env );
