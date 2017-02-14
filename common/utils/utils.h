@@ -186,6 +186,14 @@ template<> static inline Float threshold<Float, Float>(Float x, Float mini, Floa
   return convert<Float, Float>(x <= mini ? bottom : x > maxi ? top : x);
 }
 
+template<int bits_per_pixel> static inline Word threshold16(int x, int mini, int maxi)
+{ 
+  int bottom = 0;
+  int top = (1 << bits_per_pixel) - 1;
+  return convert<Word, int>(x <= mini ? bottom : x > maxi ? top : x);
+}
+
+
 /* width & height ratios, according to the colorspace */
 static const int plane_counts[COLORSPACE_COUNT] = { 0, 1, 3, 3, 3, 3, 3, 3, 
 3, // 411
