@@ -40,6 +40,11 @@ protected:
 public:
    MotionMask(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
+      if (bit_depths[C] != 8) {
+        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
+        return;
+      }
+
       nLowThresholds[0] = clip<int, int>( parameters["thY1"].toInt(), 0, 255 );
       nLowThresholds[1] = nLowThresholds[2] = clip<int, int>( parameters["thC1"].toInt(), 0, 255 );
       nHighThresholds[0] = clip<int, int>( parameters["thY2"].toInt(), 0, 255 );
