@@ -1,8 +1,8 @@
-#include "makediff16.h"
+#include "../makediff/makediff.h"
 #include "../../../common/simd.h"
 #include "../../../common/16bit.h"
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace MakeDiff16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace MakeDiff {
 
 template<int bits_per_pixel>
 static MT_FORCEINLINE Word makediff16_core_c(Word dst, Word src) {
@@ -146,9 +146,9 @@ MAKE_TEMPLATES(16)
 #undef MAKE_TEMPLATES
 
 #define MAKE_EXPORTS(bits_per_pixel) \
-Processor *makediff16_native_##bits_per_pixel##_c = &makediff16_native_c<##bits_per_pixel##>; \
-Processor *makediff16_native_##bits_per_pixel##_sse2 = &makediff16_native_simd<CPU_SSE2,##bits_per_pixel##>; \
-Processor *makediff16_native_##bits_per_pixel##_sse4_1 = &makediff16_native_simd<CPU_SSE4_1, ##bits_per_pixel##>;
+Processor16 *makediff16_native_##bits_per_pixel##_c = &makediff16_native_c<##bits_per_pixel##>; \
+Processor16 *makediff16_native_##bits_per_pixel##_sse2 = &makediff16_native_simd<CPU_SSE2,##bits_per_pixel##>; \
+Processor16 *makediff16_native_##bits_per_pixel##_sse4_1 = &makediff16_native_simd<CPU_SSE4_1, ##bits_per_pixel##>;
 
 MAKE_EXPORTS(10)
 MAKE_EXPORTS(12)
