@@ -1,8 +1,8 @@
-#include "average16.h"
+#include "../average/average.h"
 #include "../../../common/simd.h"
 #include "../../../common/16bit.h"
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace Average16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace Average {
 
 void average16_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight)
 {
