@@ -18,10 +18,6 @@ public:
             stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(deflate_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         } else {
             interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(deflate_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-/* sample from 8 bit deflate:
-processors.push_back(Filtering::Processor<Processor>(deflate_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-processors.push_back(Filtering::Processor<Processor>(deflate_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
-*/
         }
     }
 
