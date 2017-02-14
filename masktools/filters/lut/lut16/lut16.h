@@ -1,20 +1,21 @@
 #ifndef __Mt_Lut16_H__
 #define __Mt_Lut16_H__
 
+#if 0
 #include "../../../common/base/filter.h"
 #include "../../../../common/parser/parser.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Single16bit {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked);
 
-Processor lut16_c;
-Processor lut16_c_stacked;
+Processor16 lut16_c_native;
+Processor16 lut16_c_stacked;
 
 class Lut16 : public MaskTools::Filter
 {
-   Word luts[3][65536]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
-   Processor* processor;
+   Word luts16[3][65536]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
+   Processor16* processor16;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
@@ -22,7 +23,7 @@ protected:
         UNUSED(n);
         UNUSED(constraints);
         UNUSED(frames);
-        processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane], dst.origheight());
+        processor16(dst.data(), dst.pitch(), dst.width(), dst.height(), luts16[nPlane], dst.origheight());
     }
 
 public:
@@ -49,7 +50,7 @@ public:
         return;
       }
 
-      /* compute the luts */
+      /* compute the luts16 */
       for ( int i = 0; i < 3; i++ )
       {
           if (operators[i] != PROCESS) {
@@ -77,20 +78,20 @@ public:
           if (bits_per_pixel == 16 || bits_per_pixel == 8) { // real or stacked 16 bit
             bits_per_pixel = 16;
             for (int x = 0; x <= 65535; x++)
-              luts[i][x] = ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, bits_per_pixel); // 17.02.13 4th parameter: bitdepth conversion support in expressions
+              luts16[i][x] = ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, bits_per_pixel); // 17.02.13 4th parameter: bitdepth conversion support in expressions
           }
           else {
             for (int x = 0; x <= max_pixel_value; x++)
-              luts[i][x] = min(ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, bits_per_pixel),Word(max_pixel_value)); // clamp to 65535 is not enough for 10-16 bit
+              luts16[i][x] = min(ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, bits_per_pixel),Word(max_pixel_value)); // clamp to 65535 is not enough for 10-16 bit
             for (int x = max_pixel_value; x < 65536; x++) // 17.02.13 4th parameter: bitdepth conversion support in expressions
-              luts[i][x] = Word(max_pixel_value);
+              luts16[i][x] = Word(max_pixel_value);
           }
       }
 
       if (isStacked) {
-          processor = lut16_c_stacked;
+          processor16 = lut16_c_stacked;
       } else {
-          processor = lut16_c;
+          processor16 = lut16_c_native;
       }
    }
 
@@ -111,7 +112,7 @@ public:
    }
 };
 
-
 } } } } }
+#endif
 
 #endif

@@ -1,12 +1,8 @@
-#if 0
-#include "lut16.h"
+#include "lut.h"
 
 using namespace Filtering;
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Single { 
-
-
-void lut16_c_native(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int)
+void Filtering::MaskTools::Filters::Lut::Single::lut16_c_native(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int)
 {
     for ( int y = 0; y < nHeight; y++ )
     {
@@ -17,7 +13,7 @@ void lut16_c_native(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, co
     }
 }
 
-void lut16_c_stacked(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked)
+void Filtering::MaskTools::Filters::Lut::Single::lut16_c_stacked(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked)
 {
     auto pLsb = pDst + nDstPitch * nOrigHeightForStacked / 2;
 
@@ -32,6 +28,3 @@ void lut16_c_stacked(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, c
         pLsb += nDstPitch;
     }
 }
-
-} } } } }
-#endif
