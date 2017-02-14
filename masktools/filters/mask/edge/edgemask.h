@@ -39,65 +39,32 @@ extern Processor *morpho_c;
 extern Processor *morpho_sse2;
 
 // uint16_t
-extern Processor16 *convolution_16_c;
-//extern Processor16 *convolution_sse2;
+#define DEFINE_EXTERNS(name) \
+extern Processor16 *name##_10_c; \
+extern Processor16 *name##_12_c; \
+extern Processor16 *name##_14_c; \
+extern Processor16 *name##_16_c;
 
-extern Processor16 *sobel_16_c;
-//extern Processor16 *sobel_sse2;
-//extern Processor16 *sobel_ssse3;
+DEFINE_EXTERNS(convolution)
+DEFINE_EXTERNS(sobel)
+DEFINE_EXTERNS(roberts)
+DEFINE_EXTERNS(laplace)
+DEFINE_EXTERNS(cartoon)
+DEFINE_EXTERNS(half_prewitt)
+DEFINE_EXTERNS(prewitt)
+DEFINE_EXTERNS(morpho)
 
-extern Processor16 *roberts_16_c;
-//extern Processor16 *roberts_sse2;
-//extern Processor16 *roberts_ssse3;
-
-extern Processor16 *laplace_16_c;
-//extern Processor16 *laplace_sse2;
-//extern Processor16 *laplace_ssse3;
-
-extern Processor16 *cartoon_16_c;
-//extern Processor16 *cartoon_sse2;
-
-extern Processor16 *half_prewitt_16_c;
-//extern Processor16 *half_prewitt_sse2;
-//extern Processor16 *half_prewitt_ssse3;
-
-extern Processor16 *prewitt_16_c;
-//extern Processor16 *prewitt_sse2;
-//extern Processor16 *prewitt_ssse3;
-
-extern Processor16 *morpho_16_c;
-//extern Processor16 *morpho_16_sse2;
+#undef DEFINE_EXTERNS
 
 // float
 extern Processor32 *convolution_32_c;
-//extern Processor32 *convolution_sse2;
-
 extern Processor32 *sobel_32_c;
-//extern Processor32 *sobel_sse2;
-//extern Processor32 *sobel_ssse3;
-
 extern Processor32 *roberts_32_c;
-//extern Processor32 *roberts_sse2;
-//extern Processor32 *roberts_ssse3;
-
 extern Processor32 *laplace_32_c;
-//extern Processor32 *laplace_sse2;
-//extern Processor32 *laplace_ssse3;
-
 extern Processor32 *cartoon_32_c;
-//extern Processor32 *cartoon_sse2;
-
 extern Processor32 *half_prewitt_32_c;
-//extern Processor32 *half_prewitt_sse2;
-//extern Processor32 *half_prewitt_ssse3;
-
 extern Processor32 *prewitt_32_c;
-//extern Processor32 *prewitt_sse2;
-//extern Processor32 *prewitt_ssse3;
-
 extern Processor32 *morpho_32_c;
-//extern Processor32 *morpho_32_sse2;
-
 
 
 class EdgeMask : public MaskTools::Filter
@@ -140,33 +107,18 @@ protected:
 public:
    EdgeMask(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
    {
-     bool isStacked = parameters["stacked"].toBool();
      int bits_per_pixel = bit_depths[C];
      bool isFloat = bits_per_pixel == 32;
-     if (isStacked && bits_per_pixel != 8) {
-       error = "Stacked specified for a non-8 bit clip";
-       return;
-     }
-     if (isStacked) {
-       error = "stacked=true not supported";
-       return;
-     }
-     /*
-     if (isFloat) {
-       error = "32 bit float clip is not supported yet";
-       return;
-     }
-     */
+
      if (!isFloat) {
        // default value of 10 scaled by bit depth
        int nLow0, nLow1;
        int nHigh0, nHigh1;
-       int effective_bits_per_pixel = isStacked ? 16 : bits_per_pixel;
-       int max_pixel_value = (1 << effective_bits_per_pixel) - 1;
-       nLow0 = parameters["thY1"].is_defined() ? parameters["thY1"].toInt() : (10 << (effective_bits_per_pixel - 8));
-       nLow1 = parameters["thC1"].is_defined() ? parameters["thC1"].toInt() : (10 << (effective_bits_per_pixel - 8));
-       nHigh0 = parameters["thY2"].is_defined() ? parameters["thY2"].toInt() : (10 << (effective_bits_per_pixel - 8));
-       nHigh1 = parameters["thC2"].is_defined() ? parameters["thC2"].toInt() : (10 << (effective_bits_per_pixel - 8));
+       int max_pixel_value = (1 << bits_per_pixel) - 1;
+       nLow0 = parameters["thY1"].is_defined() ? parameters["thY1"].toInt() : (10 << (bits_per_pixel - 8));
+       nLow1 = parameters["thC1"].is_defined() ? parameters["thC1"].toInt() : (10 << (bits_per_pixel - 8));
+       nHigh0 = parameters["thY2"].is_defined() ? parameters["thY2"].toInt() : (10 << (bits_per_pixel - 8));
+       nHigh1 = parameters["thC2"].is_defined() ? parameters["thC2"].toInt() : (10 << (bits_per_pixel - 8));
 
        nLowThresholds[0] = min(max(nLow0, 0), max_pixel_value);
        nLowThresholds[1] = nLowThresholds[2] = min(max(nLow1, 0), max_pixel_value);
@@ -176,10 +128,10 @@ public:
      else {
        float nLow0, nLow1;
        float nHigh0, nHigh1;
-       nLow0 = parameters["thY1"].is_defined() ? parameters["thY1"].toFloat() : (10.0f / 255);
-       nLow1 = parameters["thC1"].is_defined() ? parameters["thC1"].toFloat() : (10.0f / 255);
-       nHigh0 = parameters["thY2"].is_defined() ? parameters["thY2"].toFloat() : (10.0f / 255);
-       nHigh1 = parameters["thC2"].is_defined() ? parameters["thC2"].toFloat() : (10.0f / 255);
+       nLow0 = parameters["thY1"].is_defined() ? (float)parameters["thY1"].toFloat() : (10.0f / 255);
+       nLow1 = parameters["thC1"].is_defined() ? (float)parameters["thC1"].toFloat() : (10.0f / 255);
+       nHigh0 = parameters["thY2"].is_defined() ? (float)parameters["thY2"].toFloat() : (10.0f / 255);
+       nHigh1 = parameters["thC2"].is_defined() ? (float)parameters["thC2"].toFloat() : (10.0f / 255);
 
        nLowThresholds_f[0] = nLow0;
        nLowThresholds_f[1] = nLowThresholds_f[2] = nLow1;
@@ -191,125 +143,181 @@ public:
       if ( parameters["mode"].toString() == "sobel" )
       {
          print(LOG_DEBUG, "Edge : using sobel detector");
-         if (bit_depths[C] == 8) {
+         switch (bits_per_pixel) {
+         case 8:
            processors.push_back(Filtering::Processor<Processor>(sobel_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(sobel_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
            processors.push_back(Filtering::Processor<Processor>(sobel_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-         }
-         else if (bit_depths[C] <= 16) {
+           break;
+         case 10: 
+           processors16.push_back(Filtering::Processor<Processor16>(sobel_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 12:
+           processors16.push_back(Filtering::Processor<Processor16>(sobel_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 14:
+           processors16.push_back(Filtering::Processor<Processor16>(sobel_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 16:
            processors16.push_back(Filtering::Processor<Processor16>(sobel_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           //processors.push_back(Filtering::Processor<Processor16>(sobel_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-           //processors.push_back(Filtering::Processor<Processor16>(sobel_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-         } 
-         else { // float
+           break;
+         case 32: 
            processors32.push_back(Filtering::Processor<Processor32>(sobel_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           //processors.push_back(Filtering::Processor<Processor16>(sobel_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-           //processors.push_back(Filtering::Processor<Processor16>(sobel_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+           break;
          }
       }
       else if ( parameters["mode"].toString() == "roberts" )
       {
          print(LOG_DEBUG, "Edge : using roberts detector");
-         if (bit_depths[C] == 8) {
+         switch(bits_per_pixel) {
+         case 8: 
            processors.push_back(Filtering::Processor<Processor>(roberts_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            processors.push_back(Filtering::Processor<Processor>(roberts_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
            processors.push_back(Filtering::Processor<Processor>(roberts_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-         }
-         else if (bit_depths[C] <= 16) {
+           break;
+         case 10:
+           processors16.push_back(Filtering::Processor<Processor16>(roberts_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 12:
+           processors16.push_back(Filtering::Processor<Processor16>(roberts_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 14:
+           processors16.push_back(Filtering::Processor<Processor16>(roberts_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 16:
            processors16.push_back(Filtering::Processor<Processor16>(roberts_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           //processors16.push_back(Filtering::Processor<Processor>(roberts_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-           //processors16.push_back(Filtering::Processor<Processor>(roberts_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-         }
-         else { // float
+           break;
+         case 32: 
            processors32.push_back(Filtering::Processor<Processor32>(roberts_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           //processors16.push_back(Filtering::Processor<Processor>(roberts_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-           //processors16.push_back(Filtering::Processor<Processor>(roberts_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+           break;
          }
       }
       else if (parameters["mode"].toString() == "laplace")
       {
         print(LOG_DEBUG, "Edge : using laplace detector");
-        if (bit_depths[C] == 8) {
+        switch (bits_per_pixel) {
+        case 8:
           processors.push_back(Filtering::Processor<Processor>(laplace_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(laplace_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           processors.push_back(Filtering::Processor<Processor>(laplace_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else if (bit_depths[C] <= 16) {
+          break;
+        case 10: 
+          processors16.push_back(Filtering::Processor<Processor16>(laplace_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 12:
+          processors16.push_back(Filtering::Processor<Processor16>(laplace_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 14:
+          processors16.push_back(Filtering::Processor<Processor16>(laplace_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 16:
           processors16.push_back(Filtering::Processor<Processor16>(laplace_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-          //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else { // float
+          break;
+        case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(laplace_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-          //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+          break;
         }
       }
       else if (parameters["mode"].toString() == "cartoon")
       {
         print(LOG_DEBUG, "Edge : using cartoon detector");
-        if (bit_depths[C] == 8) {
+        switch (bits_per_pixel) {
+        case 8:
           processors.push_back(Filtering::Processor<Processor>(cartoon_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(cartoon_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else if (bit_depths[C] <= 16) {
+          break;
+        case 10: 
+          processors16.push_back(Filtering::Processor<Processor16>(cartoon_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 12:
+          processors16.push_back(Filtering::Processor<Processor16>(cartoon_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 14:
+          processors16.push_back(Filtering::Processor<Processor16>(cartoon_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 16:
           processors16.push_back(Filtering::Processor<Processor16>(cartoon_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(cartoon_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else { // float
+          break;
+        case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(cartoon_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(cartoon_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+          break;
         }
       }
       else if (parameters["mode"].toString() == "min/max")
       {
         print(LOG_DEBUG, "Edge : using morphologic detector");
-        if (bit_depths[C] == 8) {
+        switch (bits_per_pixel) {
+        case 8:
           processors.push_back(Filtering::Processor<Processor>(morpho_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(morpho_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else if (bit_depths[C] <= 16) {
+          break;
+        case 10: 
+          processors16.push_back(Filtering::Processor<Processor16>(morpho_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 12:
+          processors16.push_back(Filtering::Processor<Processor16>(morpho_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 14:
+          processors16.push_back(Filtering::Processor<Processor16>(morpho_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 16:
           processors16.push_back(Filtering::Processor<Processor16>(morpho_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(morpho_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else { // float
+          break;
+        case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(morpho_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(morpho_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+          break;
         }
       }
       else if (parameters["mode"].toString() == "prewitt")
       {
         print(LOG_DEBUG, "Edge : using prewitt detector");
-        if (bit_depths[C] == 8) {
+        switch (bits_per_pixel) {
+        case 8:
           processors.push_back(Filtering::Processor<Processor>(prewitt_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(prewitt_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           processors.push_back(Filtering::Processor<Processor>(prewitt_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else if (bit_depths[C] <= 16) {
+          break;
+        case 10: 
+          processors16.push_back(Filtering::Processor<Processor16>(prewitt_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 12:
+          processors16.push_back(Filtering::Processor<Processor16>(prewitt_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 14:
+          processors16.push_back(Filtering::Processor<Processor16>(prewitt_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 16:
           processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-          //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else { // float
+          break;
+        case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(prewitt_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-          //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+          break;
         }
       }
       else if (parameters["mode"].toString() == "hprewitt")
       {
         print(LOG_DEBUG, "Edge : using hprewitt detector");
-        if (bit_depths[C] == 8) {
+        switch (bits_per_pixel) {
+        case 8:
           processors.push_back(Filtering::Processor<Processor>(half_prewitt_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(half_prewitt_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           processors.push_back(Filtering::Processor<Processor>(half_prewitt_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else if (bit_depths[C] <= 16) {
+          break;
+        case 10: 
+          processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 12:
+          processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 14:
+          processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
+        case 16:
           processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-          //processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
-          //processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
-        }
-        else { // float
+          break;
+        case 32:
+          processors32.push_back(Filtering::Processor<Processor32>(half_prewitt_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          break;
         }
       }
       else
@@ -425,24 +433,29 @@ public:
                         "       %3i %3i %3i\n"
                         "       %3i %3i %3i\n"
                         "normalize: %3i", matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9]);
-         if (bit_depths[C] == 8) {
+         switch(bits_per_pixel) {
+         case 8: 
            processors.push_back(Filtering::Processor<Processor>(convolution_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            if (isAsmOk)
            {
              processors.push_back(Filtering::Processor<Processor>(convolution_sse2, Constraint(CPU_SSE2, 8, 1, 1, 1), 2));
            }
-         }
-         else if (bit_depths[C] <= 16) {
+           break;
+         case 10: 
+           processors16.push_back(Filtering::Processor<Processor16>(convolution_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 12:
+           processors16.push_back(Filtering::Processor<Processor16>(convolution_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 14:
+           processors16.push_back(Filtering::Processor<Processor16>(convolution_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
+         case 16:
            processors16.push_back(Filtering::Processor<Processor16>(convolution_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           /*
-           if (isAsmOk)
-           {
-             processors.push_back(Filtering::Processor<Processor>(convolution_16_sse2, Constraint(CPU_SSE2, 8, 1, 1, 1), 2));
-           }
-           */
-         }
-         else { // float
+           break;
+         case 32:
            processors32.push_back(Filtering::Processor<Processor32>(convolution_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           break;
          }
       }
    }
@@ -459,7 +472,6 @@ public:
       signature.add(Parameter(TYPE_FLOAT, "thY2"));
       signature.add(Parameter(TYPE_FLOAT, "thC1"));
       signature.add(Parameter(TYPE_FLOAT, "thC2"));
-      signature.add(Parameter(false, "stacked")); 
 
       return add_defaults( signature );
    }

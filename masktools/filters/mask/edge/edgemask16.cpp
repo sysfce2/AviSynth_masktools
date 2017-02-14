@@ -6,31 +6,36 @@ using namespace Filtering;
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask { namespace Edge {
 
+template<int bits_per_pixel>
 inline Word convolution(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
-   return threshold<Word, int>(abs((a11 * matrix[0] + a21 * matrix[1] + a31 * matrix[2] + 
+   return threshold16<bits_per_pixel>(abs((a11 * matrix[0] + a21 * matrix[1] + a31 * matrix[2] + 
                                     a12 * matrix[3] + a22 * matrix[4] + a32 * matrix[5] +
                                     a13 * matrix[6] + a23 * matrix[7] + a33 * matrix[8]) / matrix[9]), nLowThreshold, nHighThreshold);
 }
 
+template<int bits_per_pixel>
 inline Word sobel(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    UNUSED(a11); UNUSED(a13); UNUSED(a22); UNUSED(a31); UNUSED(a33); UNUSED(matrix); 
-   return threshold<Word, int>(abs( (int)a32 + a23 - a12 - a21 ) >> 1, nLowThreshold, nHighThreshold);
+   return threshold16<bits_per_pixel>(abs( (int)a32 + a23 - a12 - a21 ) >> 1, nLowThreshold, nHighThreshold);
 }
 
+template<int bits_per_pixel>
 inline Word roberts(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    UNUSED(a11); UNUSED(a12); UNUSED(a13); UNUSED(a21); UNUSED(a31); UNUSED(a33); UNUSED(matrix); 
-   return threshold<Word, int>(abs( ((int)a22 << 1) - a32 - a23 ) >> 1, nLowThreshold, nHighThreshold);
+   return threshold16<bits_per_pixel>(abs( ((int)a22 << 1) - a32 - a23 ) >> 1, nLowThreshold, nHighThreshold);
 }
 
+template<int bits_per_pixel>
 inline Word laplace(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    UNUSED(matrix); 
-   return threshold<Word, int>(abs( ((int)a22 << 3) - a32 - a23 - a11 - a21 - a31 - a12 - a13 - a33 ) >> 3, nLowThreshold, nHighThreshold);
+   return threshold16<bits_per_pixel>(abs( ((int)a22 << 3) - a32 - a23 - a11 - a21 - a31 - a12 - a13 - a33 ) >> 3, nLowThreshold, nHighThreshold);
 }
 
+template<int bits_per_pixel>
 inline Word morpho(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    int nMin = a11, nMax = a11;
@@ -54,18 +59,20 @@ inline Word morpho(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, W
    nMin = min<int>( nMin, a33 );
    nMax = max<int>( nMax, a33 );
 
-   return threshold<Word, int>( nMax - nMin, nLowThreshold, nHighThreshold );
+   return threshold16<bits_per_pixel>( nMax - nMin, nLowThreshold, nHighThreshold );
 }
 
+template<int bits_per_pixel>
 inline Word cartoon(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    int val = ((int)a21 << 1) - a22 - a31;
 
    UNUSED(a11); UNUSED(a12); UNUSED(a13); UNUSED(a23); UNUSED(a32); UNUSED(a33); UNUSED(matrix); 
 
-   return val > 0 ? 0 : threshold<Word, int>( -val, nLowThreshold, nHighThreshold );
+   return val > 0 ? 0 : threshold16<bits_per_pixel>( -val, nLowThreshold, nHighThreshold );
 }
 
+template<int bits_per_pixel>
 inline Word prewitt(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    const int p90 = a11 + a21 + a31 - a13 - a23 - a33;
@@ -79,9 +86,10 @@ inline Word prewitt(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, 
 
    UNUSED(a22); UNUSED(matrix); 
 
-   return threshold<Word, int>( maxv, nLowThreshold, nHighThreshold );
+   return threshold16<bits_per_pixel>( maxv, nLowThreshold, nHighThreshold );
 }
 
+template<int bits_per_pixel>
 inline Word half_prewitt(Word a11, Word a21, Word a31, Word a12, Word a22, Word a32, Word a13, Word a23, Word a33, const Short matrix[10], int nLowThreshold, int nHighThreshold)
 {
    const int p90 = a11 + 2 * a21 + a31 - a13 - 2 * a23 - a33;
@@ -90,7 +98,7 @@ inline Word half_prewitt(Word a11, Word a21, Word a31, Word a12, Word a22, Word 
 
    UNUSED(a22); UNUSED(matrix);
    
-   return threshold<Word, int>( maxv, nLowThreshold, nHighThreshold );
+   return threshold16<bits_per_pixel>( maxv, nLowThreshold, nHighThreshold );
 }
 
 class Thresholds {
@@ -663,8 +671,10 @@ static MT_FORCEINLINE void process_line_half_prewitt_sse2(Byte *pDst, const Byte
 using namespace Filters::Mask;
 
 #define DEFINE_C_AND_SSE2_VERSIONS(name) \
-Processor16 *name##_16_c          = &mask16_t<name>;
-
+Processor16 *name##_10_c = &mask16_t<name<10>>; \
+Processor16 *name##_12_c = &mask16_t<name<12>>; \
+Processor16 *name##_14_c = &mask16_t<name<14>>; \
+Processor16 *name##_16_c = &mask16_t<name<16>>;
 
 #define DEFINE_ALL_VERSIONS(name) \
 DEFINE_C_AND_SSE2_VERSIONS(name)
