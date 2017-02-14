@@ -31,7 +31,7 @@
 //#include "../filters/merge/merge16.h"
 //#include "../filters/lut/lut16/lut16.h"
 #include "../filters/logic/logic16.h"
-#include "../filters/support/clamp16/clamp16.h"
+//#include "../filters/support/clamp16/clamp16.h"
 //#include "../filters/support/average16/average16.h"
 //#include "../filters/support/adddiff16/adddiff16.h"
 //#include "../filters/support/makediff16/makediff16.h"
@@ -91,7 +91,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    //Avisynth2x::Filter<Support::Average16::Average16>::create( env ); common with mt_average
    //Avisynth2x::Filter<Support::MakeDiff16::MakeDiff16>::create( env );
    //Avisynth2x::Filter<Support::AddDiff16::AddDiff16>::create( env ); common with adddiff
-   Avisynth2x::Filter<Support::Clamp16::Clamp16>::create( env );
+   //Avisynth2x::Filter<Support::Clamp16::Clamp16>::create( env );
    Avisynth2x::Filter<Morphologic16::Inflate16::Inflate16>::create( env );
    Avisynth2x::Filter<Morphologic16::Deflate16::Deflate16>::create( env );
    Avisynth2x::Filter<Morphologic16::Inpand16::Inpand16>::create( env );

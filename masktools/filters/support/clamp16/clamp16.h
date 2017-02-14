@@ -1,43 +1,43 @@
 #ifndef __Mt_Clamp16_H__
 #define __Mt_Clamp16_H__
-
+#if 0
 #include "../../../common/base/filter.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Support { namespace Clamp16 {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot);
 
-Processor clamp16_stacked_c;
-extern Processor *clamp16_stacked_sse2;
-extern Processor *clamp16_stacked_sse4_1;
+Processor16 clamp16_stacked_c;
+extern Processor16 *clamp16_stacked_sse2;
+extern Processor16 *clamp16_stacked_sse4_1;
 
-extern Processor *clamp16_native_10_c;
-extern Processor *clamp16_native_12_c;
-extern Processor *clamp16_native_14_c;
-extern Processor *clamp16_native_16_c;
+extern Processor16 *clamp16_native_10_c;
+extern Processor16 *clamp16_native_12_c;
+extern Processor16 *clamp16_native_14_c;
+extern Processor16 *clamp16_native_16_c;
 
-extern Processor *clamp16_native_10_sse2;
-extern Processor *clamp16_native_12_sse2;
-extern Processor *clamp16_native_14_sse2;
-extern Processor *clamp16_native_16_sse2;
+extern Processor16 *clamp16_native_10_sse2;
+extern Processor16 *clamp16_native_12_sse2;
+extern Processor16 *clamp16_native_14_sse2;
+extern Processor16 *clamp16_native_16_sse2;
 
-extern Processor *clamp16_native_10_sse4_1;
-extern Processor *clamp16_native_12_sse4_1;
-extern Processor *clamp16_native_14_sse4_1;
-extern Processor *clamp16_native_16_sse4_1;
+extern Processor16 *clamp16_native_10_sse4_1;
+extern Processor16 *clamp16_native_12_sse4_1;
+extern Processor16 *clamp16_native_14_sse4_1;
+extern Processor16 *clamp16_native_16_sse4_1;
 
 class Clamp16 : public MaskTools::Filter
 {
 
    int nOvershoot, nUndershoot;
-   ProcessorList<Processor> processors;
+   ProcessorList<Processor16> processors16;
 
 protected:
 
    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
    {
       UNUSED(n);
-      processors.best_processor( constraints[nPlane] )( dst.data(), dst.pitch(), 
+      processors16.best_processor( constraints[nPlane] )( dst.data(), dst.pitch(), 
           frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
           frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(), 
           dst.width(), dst.height(), dst.origheight(), nOvershoot, nUndershoot );
@@ -67,30 +67,30 @@ public:
 
         /* add the processors */
         if (isStacked) {
-            processors.push_back(Filtering::Processor<Processor>(clamp16_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_stacked_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_stacked_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_stacked_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_stacked_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
         } else {
           switch (bit_depths[C]) {
           case 10:
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_10_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_10_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_10_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_10_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
             break;
           case 12:
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_12_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_12_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_12_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_12_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
             break;
           case 14:
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_14_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_14_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_14_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_14_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
             break;
           case 16:
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            processors.push_back(Filtering::Processor<Processor>(clamp16_native_16_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+            processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_16_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
             break;
           }
         }
@@ -116,4 +116,5 @@ public:
 
 } } } } }
 
+#endif
 #endif

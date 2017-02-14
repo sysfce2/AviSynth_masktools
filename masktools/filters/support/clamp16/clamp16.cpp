@@ -1,8 +1,8 @@
-#include "clamp16.h"
+#include "../clamp/clamp.h"
 #include "../../../common/simd.h"
 #include "../../../common/16bit.h"
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace Clamp16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Support  { namespace Clamp {
 
 template<int bits_per_pixel>
 static Word MT_FORCEINLINE clamp16_core_c(Word dst, Word upperLimit, Word lowerLimit, int overshoot, int undershoot) {
@@ -162,22 +162,22 @@ template void clamp16_native_simd<CPU_SSE4_1,12>(Byte *pDst, ptrdiff_t nDstPitch
 template void clamp16_native_simd<CPU_SSE4_1,14>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot);
 template void clamp16_native_simd<CPU_SSE4_1,16>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot);
 
-Processor *clamp16_stacked_sse2 = &clamp16_stacked_simd<CPU_SSE2>;
-Processor *clamp16_stacked_sse4_1 = &clamp16_stacked_simd<CPU_SSE4_1>;
+Processor16 *clamp16_stacked_sse2 = &clamp16_stacked_simd<CPU_SSE2>;
+Processor16 *clamp16_stacked_sse4_1 = &clamp16_stacked_simd<CPU_SSE4_1>;
 
-Processor *clamp16_native_10_c = &clamp16_native_c<10>;
-Processor *clamp16_native_12_c = &clamp16_native_c<12>;
-Processor *clamp16_native_14_c = &clamp16_native_c<14>;
-Processor *clamp16_native_16_c = &clamp16_native_c<16>;
+Processor16 *clamp16_native_10_c = &clamp16_native_c<10>;
+Processor16 *clamp16_native_12_c = &clamp16_native_c<12>;
+Processor16 *clamp16_native_14_c = &clamp16_native_c<14>;
+Processor16 *clamp16_native_16_c = &clamp16_native_c<16>;
 
-Processor *clamp16_native_10_sse2 = &clamp16_native_simd<CPU_SSE2,10>;
-Processor *clamp16_native_10_sse4_1 = &clamp16_native_simd<CPU_SSE4_1,10>;
-Processor *clamp16_native_12_sse2 = &clamp16_native_simd<CPU_SSE2, 12>;
-Processor *clamp16_native_12_sse4_1 = &clamp16_native_simd<CPU_SSE4_1, 12>;
-Processor *clamp16_native_14_sse2 = &clamp16_native_simd<CPU_SSE2, 14>;
-Processor *clamp16_native_14_sse4_1 = &clamp16_native_simd<CPU_SSE4_1, 14>;
-Processor *clamp16_native_16_sse2 = &clamp16_native_simd<CPU_SSE2, 16>;
-Processor *clamp16_native_16_sse4_1 = &clamp16_native_simd<CPU_SSE4_1, 16>;
+Processor16 *clamp16_native_10_sse2 = &clamp16_native_simd<CPU_SSE2,10>;
+Processor16 *clamp16_native_10_sse4_1 = &clamp16_native_simd<CPU_SSE4_1,10>;
+Processor16 *clamp16_native_12_sse2 = &clamp16_native_simd<CPU_SSE2, 12>;
+Processor16 *clamp16_native_12_sse4_1 = &clamp16_native_simd<CPU_SSE4_1, 12>;
+Processor16 *clamp16_native_14_sse2 = &clamp16_native_simd<CPU_SSE2, 14>;
+Processor16 *clamp16_native_14_sse4_1 = &clamp16_native_simd<CPU_SSE4_1, 14>;
+Processor16 *clamp16_native_16_sse2 = &clamp16_native_simd<CPU_SSE2, 16>;
+Processor16 *clamp16_native_16_sse4_1 = &clamp16_native_simd<CPU_SSE4_1, 16>;
 
 
 
