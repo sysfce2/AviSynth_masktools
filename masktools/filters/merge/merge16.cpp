@@ -1,7 +1,7 @@
-#include "merge16.h"
+#include "merge.h"
 #include "../../common/simd.h"
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge {
 
 /* Common */
 
@@ -12,7 +12,7 @@ enum MaskMode {
 };
 
 template<int bits_per_pixel>
-MT_FORCEINLINE static Word merge_core_c(Word dst, Word src, Word mask) {
+MT_FORCEINLINE static Word merge16_core_c(Word dst, Word src, Word mask) {
     if (mask == 0) {
         return dst;
     } else if (mask == ((1 << bits_per_pixel) - 1)) {
@@ -159,7 +159,7 @@ void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptr
               mask = get_value_stacked_c(pMask, pMaskLsb, x);
             }
 
-            Word output = merge_core_c<16>(dst, src, mask);
+            Word output = merge16_core_c<16>(dst, src, mask);
 
             pDst[x] = output >> 8;
             pDstLsb[x] = output & 0xFF;
@@ -201,7 +201,7 @@ MT_FORCEINLINE static __m128i get_mask_422_stacked_simd(const Byte *pMsb, const 
   return get_single_mask_value_422<flags>(row1_lo, row1_hi);
 }
 
-template <CpuFlags flags, MaskMode mode, Processor merge_c>
+template <CpuFlags flags, MaskMode mode, Processor16 merge_c>
 void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                                                    const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
 {
@@ -292,7 +292,7 @@ void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t n
                 mask = reinterpret_cast<const Word*>(pMask)[x];
             }
 
-            Word output = merge_core_c<bits_per_pixel>(dst, src, mask);
+            Word output = merge16_core_c<bits_per_pixel>(dst, src, mask);
 
             reinterpret_cast<Word*>(pDst)[x] = output;
         }
@@ -330,7 +330,7 @@ MT_FORCEINLINE static __m128i get_mask_422_simd(const Byte *ptr, int x) {
   return get_single_mask_value_422<flags>(row1_lo, row1_hi);
 }
 
-template <CpuFlags flags, MaskMode mode, Processor merge_c, int bits_per_pixel>
+template <CpuFlags flags, MaskMode mode, Processor16 merge_c, int bits_per_pixel>
 void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                             const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
 {
@@ -388,20 +388,20 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
 }
 
 /* Stacked, always 16 bit */
-Processor *merge16_c_stacked = &merge16_t_stacked_c<MASK444>;
-Processor *merge16_luma_420_c_stacked = &merge16_t_stacked_c<MASK420>;
-Processor *merge16_luma_422_c_stacked = &merge16_t_stacked_c<MASK422>;
+Processor16 *merge16_c_stacked = &merge16_t_stacked_c<MASK444>;
+Processor16 *merge16_luma_420_c_stacked = &merge16_t_stacked_c<MASK420>;
+Processor16 *merge16_luma_422_c_stacked = &merge16_t_stacked_c<MASK422>;
 
-Processor *merge16_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK444, merge16_t_stacked_c<MASK444>>;
-Processor *merge16_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK444, merge16_t_stacked_c<MASK444>>;
+Processor16 *merge16_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK444, merge16_t_stacked_c<MASK444>>;
+Processor16 *merge16_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK444, merge16_t_stacked_c<MASK444>>;
 
-Processor *merge16_luma_420_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK420, merge16_t_stacked_c<MASK420>>;
-Processor *merge16_luma_420_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK420, merge16_t_stacked_c<MASK420>>;
-Processor *merge16_luma_420_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK420, merge16_t_stacked_c<MASK420>>;
+Processor16 *merge16_luma_420_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK420, merge16_t_stacked_c<MASK420>>;
+Processor16 *merge16_luma_420_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK420, merge16_t_stacked_c<MASK420>>;
+Processor16 *merge16_luma_420_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK420, merge16_t_stacked_c<MASK420>>;
 
-Processor *merge16_luma_422_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK422, merge16_t_stacked_c<MASK422>>;
-Processor *merge16_luma_422_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK422, merge16_t_stacked_c<MASK422>>;
-Processor *merge16_luma_422_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK422, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK422, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK422, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK422, merge16_t_stacked_c<MASK422>>;
 
 /* Native */
 // specialize them
@@ -425,17 +425,17 @@ MAKE_TEMPLATES(16)
 #undef MAKE_TEMPLATES
 
 #define MAKE_EXPORTS(bits_per_pixel) \
-Processor *merge16_##bits_per_pixel##_c = &merge16_t_c<MASK444, bits_per_pixel>; \
-Processor *merge16_luma_420_##bits_per_pixel##_c = &merge16_t_c<MASK420, bits_per_pixel>; \
-Processor *merge16_luma_422_##bits_per_pixel##_c = &merge16_t_c<MASK422, bits_per_pixel>; \
-Processor *merge16_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK444, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK444, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_luma_420_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_luma_420_##bits_per_pixel##_ssse3 = merge16_t_simd<CPU_SSSE3, MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_luma_420_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_luma_422_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_luma_422_##bits_per_pixel##_ssse3 = merge16_t_simd<CPU_SSSE3, MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
-Processor *merge16_luma_422_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>;
+Processor16 *merge16_##bits_per_pixel##_c = &merge16_t_c<MASK444, bits_per_pixel>; \
+Processor16 *merge16_luma_420_##bits_per_pixel##_c = &merge16_t_c<MASK420, bits_per_pixel>; \
+Processor16 *merge16_luma_422_##bits_per_pixel##_c = &merge16_t_c<MASK422, bits_per_pixel>; \
+Processor16 *merge16_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK444, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK444, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_420_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_420_##bits_per_pixel##_ssse3 = merge16_t_simd<CPU_SSSE3, MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_420_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_422_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_422_##bits_per_pixel##_ssse3 = merge16_t_simd<CPU_SSSE3, MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_422_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>;
 
 MAKE_EXPORTS(10)
 MAKE_EXPORTS(12)
