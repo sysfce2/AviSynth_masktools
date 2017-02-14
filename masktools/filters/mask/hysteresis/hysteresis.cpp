@@ -12,13 +12,18 @@ struct Coordinates {
 
 typedef std::vector<Coordinates> CoordinatesList;
 
-static void expand_mask(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int x, int y, int nWidth, int nHeight, CoordinatesList &coordinates)
+template<typename pixel_t, int bits_per_pixel>
+static void expand_mask(pixel_t *pDst, ptrdiff_t nDstPitch, const pixel_t *pSrc2, ptrdiff_t nSrc2Pitch, pixel_t *pTemp, int x, int y, int nWidth, int nHeight, CoordinatesList &coordinates)
 {
     //CoordinatesList coordinates;
     coordinates.clear();
+    
+    const pixel_t mask_value = sizeof(pixel_t) == 4 ? (pixel_t)1.0f : (pixel_t)((1 << bits_per_pixel) - 1);
+    nDstPitch /= sizeof(pixel_t);
+    nSrc2Pitch /= sizeof(pixel_t);
 
-    pTemp[0] = 255;
-    pDst[0] = 255;
+    pTemp[0] = mask_value;
+    pDst[0] = mask_value;
 
     coordinates.emplace_back(0, 0);
 
@@ -38,32 +43,50 @@ static void expand_mask(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc2, ptrd
             for (int j = x_min; j < x_max; j++) {
                 if (!pTemp[j + i * nWidth] && pSrc2[j + i * nSrc2Pitch]) {
                     coordinates.emplace_back(j, i);
-                    pTemp[j + i * nWidth] = 255;
-                    pDst[j + i * nDstPitch] = 255;
+                    pTemp[j + i * nWidth] = mask_value;
+                    pDst[j + i * nDstPitch] = mask_value;
                 }
             }
         }
     }
 }
 
-void Filtering::MaskTools::Filters::Mask::Hysteresis::hysteresis_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
-    const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height)
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask { namespace Hysteresis {
+template<typename pixel_t, int bits_per_pixel>
+void hysteresis_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+  const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height)
 {
 
-    memset(pDst, 0, nDstPitch * height * sizeof(Byte));
-    memset(pTemp, 0, width   * height * sizeof(Byte));
-    CoordinatesList coordinates;
+  memset(pDst, 0, nDstPitch * height); // dstPitch is byte size
+  memset(pTemp, 0, width * height * sizeof(pixel_t));
+  CoordinatesList coordinates;
 
-    for (int y = 0; y < height; y++)
-    {
-        for (int x = 0; x < width; x++)  {
-            if (!pTemp[x] && pSrc1[x] && pSrc2[x]) {
-                expand_mask(pDst + x, nDstPitch, pSrc2 + x, nSrc2Pitch, pTemp + x, x, y, width, height, coordinates);
-            }
-        }
-        pTemp += width;
-        pSrc1 += nSrc1Pitch;
-        pSrc2 += nSrc2Pitch;
-        pDst += nDstPitch;
+  for (int y = 0; y < height; y++)
+  {
+    for (int x = 0; x < width; x++) {
+      if (!(pixel_t *)(pTemp)[x] && (pixel_t *)(pSrc1)[x] && (pixel_t *)(pSrc2)[x]) {
+        expand_mask<pixel_t, bits_per_pixel>((pixel_t *)pDst + x, nDstPitch, (pixel_t *)pSrc2 + x, nSrc2Pitch, (pixel_t *)pTemp + x, x, y, width, height, coordinates);
+      }
     }
+    pTemp += width * sizeof(pixel_t);
+    pSrc1 += nSrc1Pitch;
+    pSrc2 += nSrc2Pitch;
+    pDst += nDstPitch;
+  }
 }
+
+template void hysteresis_c<Byte, 8>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height);
+template void hysteresis_c<Word, 10>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height);
+template void hysteresis_c<Word, 12>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height);
+template void hysteresis_c<Word, 14>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height);
+template void hysteresis_c<Word, 16>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height);
+template void hysteresis_c<Float, 0>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int width, int height);
+
+Processor *hysteresis_8_c = &hysteresis_c<Byte, 8>;
+Processor *hysteresis_10_c = &hysteresis_c<Word, 10>;
+Processor *hysteresis_12_c = &hysteresis_c<Word, 12>;
+Processor *hysteresis_14_c = &hysteresis_c<Word, 14>;
+Processor *hysteresis_16_c = &hysteresis_c<Word, 16>;
+Processor *hysteresis_32_c = &hysteresis_c<Float, 0>; // float: bit_per_pixel n/a
+
+} } } } }

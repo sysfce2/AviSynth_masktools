@@ -8,18 +8,24 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                         const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int nWidth, int nHeight);
 
-Processor hysteresis_c;
+extern Processor *hysteresis_8_c;
+extern Processor *hysteresis_10_c;
+extern Processor *hysteresis_12_c;
+extern Processor *hysteresis_14_c;
+extern Processor *hysteresis_16_c;
+extern Processor *hysteresis_32_c;
 
 class Hysteresis : public MaskTools::Filter
 {
     Byte *stack;
+    Processor *processor;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
         UNUSED(constraints);
-        hysteresis_c(dst.data(), dst.pitch(),
+        processor(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
             stack, dst.width(), dst.height());
@@ -27,7 +33,18 @@ protected:
 
 public:
     Hysteresis(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::CHILD), stack(nullptr) {
-        stack = reinterpret_cast<Byte*>(_aligned_malloc(nWidth*nHeight, 16));
+      int bits_per_pixel = bit_depths[C];
+      int pixelsize = bits_per_pixel == 8 ? 1 : (bits_per_pixel == 32 ? 4 : 2);
+      switch (bits_per_pixel) {
+      case 8: processor = hysteresis_8_c; break;
+      case 10: processor = hysteresis_10_c; break;
+      case 12: processor = hysteresis_12_c; break;
+      case 14: processor = hysteresis_14_c; break;
+      case 16: processor = hysteresis_16_c; break;
+      case 32: processor = hysteresis_32_c; break;
+      }
+
+      stack = reinterpret_cast<Byte*>(_aligned_malloc(nWidth*nHeight*pixelsize, 16));
     }
 
     ~Hysteresis() {
