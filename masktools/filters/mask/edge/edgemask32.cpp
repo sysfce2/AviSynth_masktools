@@ -686,33 +686,6 @@ DEFINE_C_AND_SSE2_VERSIONS(cartoon)
 
 #undef DEFINE_ALL_VERSIONS
 #undef DEFINE_C_AND_SSE2_VERSIONS
-/*
-#define DEFINE_C_AND_SSE2_VERSIONS(name) \
-Processor *name##_c          = &mask_t<name>; \
-Processor *name##_sse2 = &generic_sse2< \
-    process_line_##name##_sse2<CPU_SSE2, Border::Left, MemoryMode::SSE2_UNALIGNED>, \
-    process_line_##name##_sse2<CPU_SSE2, Border::None, MemoryMode::SSE2_UNALIGNED>, \
-    process_line_##name##_sse2<CPU_SSE2, Border::Right, MemoryMode::SSE2_UNALIGNED> \
->; 
 
-
-#define DEFINE_ALL_VERSIONS(name) \
-DEFINE_C_AND_SSE2_VERSIONS(name) \
-Processor *name##_ssse3 = &generic_sse2< \
-    process_line_##name##_sse2<CPU_SSSE3, Border::Left, MemoryMode::SSE2_UNALIGNED>, \
-    process_line_##name##_sse2<CPU_SSSE3, Border::None, MemoryMode::SSE2_UNALIGNED>, \
-    process_line_##name##_sse2<CPU_SSSE3, Border::Right, MemoryMode::SSE2_UNALIGNED> \
->;
-
-DEFINE_ALL_VERSIONS(sobel)
-DEFINE_ALL_VERSIONS(roberts)
-DEFINE_ALL_VERSIONS(laplace)
-DEFINE_ALL_VERSIONS(prewitt)
-DEFINE_ALL_VERSIONS(half_prewitt)
-
-DEFINE_C_AND_SSE2_VERSIONS(convolution)
-DEFINE_C_AND_SSE2_VERSIONS(morpho)
-DEFINE_C_AND_SSE2_VERSIONS(cartoon)
-*/
 
 } } } } }
