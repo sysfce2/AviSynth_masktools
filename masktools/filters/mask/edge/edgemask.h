@@ -7,7 +7,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Short matrix[10], int nLowThreshold, int nHighThreshold, int nWidth, int nHeight);
 typedef void(Processor16)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, const Short matrix[10], int nLowThreshold, int nHighThreshold, int nWidth, int nHeight);
-typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, const Short matrix[10], int nLowThreshold, int nHighThreshold, int nWidth, int nHeight);
+typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, const Float matrix[10], Float nLowThreshold, Float nHighThreshold, int nWidth, int nHeight);
 
 extern Processor *convolution_c;
 extern Processor *convolution_sse2;
@@ -68,6 +68,37 @@ extern Processor16 *prewitt_16_c;
 extern Processor16 *morpho_16_c;
 //extern Processor16 *morpho_16_sse2;
 
+// float
+extern Processor32 *convolution_32_c;
+//extern Processor32 *convolution_sse2;
+
+extern Processor32 *sobel_32_c;
+//extern Processor32 *sobel_sse2;
+//extern Processor32 *sobel_ssse3;
+
+extern Processor32 *roberts_32_c;
+//extern Processor32 *roberts_sse2;
+//extern Processor32 *roberts_ssse3;
+
+extern Processor32 *laplace_32_c;
+//extern Processor32 *laplace_sse2;
+//extern Processor32 *laplace_ssse3;
+
+extern Processor32 *cartoon_32_c;
+//extern Processor32 *cartoon_sse2;
+
+extern Processor32 *half_prewitt_32_c;
+//extern Processor32 *half_prewitt_sse2;
+//extern Processor32 *half_prewitt_ssse3;
+
+extern Processor32 *prewitt_32_c;
+//extern Processor32 *prewitt_sse2;
+//extern Processor32 *prewitt_ssse3;
+
+extern Processor32 *morpho_32_c;
+//extern Processor32 *morpho_32_sse2;
+
+
 
 class EdgeMask : public MaskTools::Filter
 {
@@ -78,6 +109,7 @@ class EdgeMask : public MaskTools::Filter
    float nHighThresholds_f[3];
 
    Short matrix[10];
+   Float matrix_f[10];
 
    ProcessorList<Processor> processors;
    ProcessorList<Processor16> processors16;
@@ -99,11 +131,9 @@ protected:
             matrix, nLowThresholds[nPlane], nHighThresholds[nPlane], dst.width(), dst.height());
         }
         else { // float
-          /*
           processors32.best_processor(constraints[nPlane])((Float *)dst.data(), dst.pitch(),
             (Float *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            matrix, nLowThresholds_f[nPlane], nHighThresholds_f[nPlane], dst.width(), dst.height());
-          */
+            matrix_f, nLowThresholds_f[nPlane], nHighThresholds_f[nPlane], dst.width(), dst.height());
         }
     }
 
@@ -121,11 +151,12 @@ public:
        error = "stacked=true not supported";
        return;
      }
+     /*
      if (isFloat) {
        error = "32 bit float clip is not supported yet";
        return;
      }
-
+     */
      if (!isFloat) {
        // default value of 10 scaled by bit depth
        int nLow0, nLow1;
@@ -151,9 +182,9 @@ public:
        nHigh1 = parameters["thC2"].is_defined() ? parameters["thC2"].toFloat() : (10.0f / 255);
 
        nLowThresholds_f[0] = nLow0;
-       nLowThresholds_f[1] = nLow1;
+       nLowThresholds_f[1] = nLowThresholds_f[2] = nLow1;
        nHighThresholds_f[0] = nHigh0;
-       nHighThresholds_f[1] = nHigh1;
+       nHighThresholds_f[1] = nHighThresholds_f[2] = nHigh1;
      }
 
       /* add the processors */
@@ -165,8 +196,13 @@ public:
            processors.push_back(Filtering::Processor<Processor>(sobel_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
            processors.push_back(Filtering::Processor<Processor>(sobel_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
          }
-         else {
+         else if (bit_depths[C] <= 16) {
            processors16.push_back(Filtering::Processor<Processor16>(sobel_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           //processors.push_back(Filtering::Processor<Processor16>(sobel_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+           //processors.push_back(Filtering::Processor<Processor16>(sobel_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+         } 
+         else { // float
+           processors32.push_back(Filtering::Processor<Processor32>(sobel_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            //processors.push_back(Filtering::Processor<Processor16>(sobel_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
            //processors.push_back(Filtering::Processor<Processor16>(sobel_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
          }
@@ -179,8 +215,13 @@ public:
            processors.push_back(Filtering::Processor<Processor>(roberts_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
            processors.push_back(Filtering::Processor<Processor>(roberts_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
          }
-         else {
+         else if (bit_depths[C] <= 16) {
            processors16.push_back(Filtering::Processor<Processor16>(roberts_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           //processors16.push_back(Filtering::Processor<Processor>(roberts_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+           //processors16.push_back(Filtering::Processor<Processor>(roberts_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+         }
+         else { // float
+           processors32.push_back(Filtering::Processor<Processor32>(roberts_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            //processors16.push_back(Filtering::Processor<Processor>(roberts_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
            //processors16.push_back(Filtering::Processor<Processor>(roberts_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
          }
@@ -193,8 +234,13 @@ public:
           processors.push_back(Filtering::Processor<Processor>(laplace_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           processors.push_back(Filtering::Processor<Processor>(laplace_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
-        else {
+        else if (bit_depths[C] <= 16) {
           processors16.push_back(Filtering::Processor<Processor16>(laplace_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+        }
+        else { // float
+          processors32.push_back(Filtering::Processor<Processor32>(laplace_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           //processors16.push_back(Filtering::Processor<Processor16>(laplace_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
@@ -206,8 +252,12 @@ public:
           processors.push_back(Filtering::Processor<Processor>(cartoon_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(cartoon_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
-        else {
+        else if (bit_depths[C] <= 16) {
           processors16.push_back(Filtering::Processor<Processor16>(cartoon_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          //processors16.push_back(Filtering::Processor<Processor16>(cartoon_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+        }
+        else { // float
+          processors32.push_back(Filtering::Processor<Processor32>(cartoon_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           //processors16.push_back(Filtering::Processor<Processor16>(cartoon_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
       }
@@ -218,8 +268,12 @@ public:
           processors.push_back(Filtering::Processor<Processor>(morpho_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(morpho_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
-        else {
+        else if (bit_depths[C] <= 16) {
           processors16.push_back(Filtering::Processor<Processor16>(morpho_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          //processors16.push_back(Filtering::Processor<Processor16>(morpho_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+        }
+        else { // float
+          processors32.push_back(Filtering::Processor<Processor32>(morpho_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           //processors16.push_back(Filtering::Processor<Processor16>(morpho_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
       }
@@ -231,8 +285,13 @@ public:
           processors.push_back(Filtering::Processor<Processor>(prewitt_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           processors.push_back(Filtering::Processor<Processor>(prewitt_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
-        else {
+        else if (bit_depths[C] <= 16) {
           processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+        }
+        else { // float
+          processors32.push_back(Filtering::Processor<Processor32>(prewitt_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           //processors16.push_back(Filtering::Processor<Processor16>(prewitt_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
@@ -245,65 +304,122 @@ public:
           processors.push_back(Filtering::Processor<Processor>(half_prewitt_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           processors.push_back(Filtering::Processor<Processor>(half_prewitt_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
         }
-        else {
+        else if (bit_depths[C] <= 16) {
           processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           //processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
           //processors16.push_back(Filtering::Processor<Processor16>(half_prewitt_16_ssse3, Constraint(CPU_SSSE3, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 2));
+        }
+        else { // float
         }
       }
       else
       {
          print(LOG_DEBUG, "Edge : using custom detector");
          auto coeffs = Parser::getDefaultParser().parse(parameters["mode"].toString(), " ").getExpression();
-         memset(matrix, 0, sizeof(matrix));
-         int nNegative = 0, nPositive = 0;
-         for ( int i = 0; i < 9; i++ )
-         {
-            Short coefficient;
+         bool isAsmOk = true;
+         if (isFloat) {
+           memset(matrix_f, 0, sizeof(matrix_f));
+           Float nNegative = 0, nPositive = 0;
+           for (int i = 0; i < 9; i++)
+           {
+             Float coefficient;
 
-            if ( !coeffs.size() )
-            {
+             if (!coeffs.size())
+             {
                error = "invalid mode";
                return;
-            }
+             }
 
-            print( LOG_DEBUG, "%i\n", coeffs.size());
-            matrix[i] = coefficient = static_cast<Short>(coeffs.front().getValue(0,0,0));
+             print(LOG_DEBUG, "%i\n", coeffs.size());
+             matrix_f[i] = coefficient = static_cast<Float>(coeffs.front().getValue(0, 0, 0));
 
-            nNegative += coefficient < 0 ? -coefficient : 0;
-            nPositive += coefficient > 0 ? +coefficient : 0;
-            coeffs.pop_front();
-         }
-         int nSum = max<int>(nNegative, nPositive);
+             nNegative = nNegative + (coefficient < 0 ? -coefficient : 0);
+             nPositive = nPositive + (coefficient > 0 ? +coefficient : 0);
+             coeffs.pop_front();
+           }
+           Float nSum = max<Float>(nNegative, nPositive);
 
-         bool isAsmOk = true;
-         if (coeffs.size())
-            nSum = static_cast<Short>(coeffs.front().getValue(0,0,0));
+           if (coeffs.size())
+             nSum = static_cast<Float>(coeffs.front().getValue(0, 0, 0));
 
-         /* disable asm if sum of coefficients indicates a risk of overflow */
-         if (nNegative > 128 || nPositive > 128)
-            isAsmOk = false;
-         
-         /* find the upper power of 2, if possible */
-         int i;
-         for (i = 0; i < 15; i++)
-         {
-            if ((1 << i) >= nSum)
-            {
+           /* disable asm if sum of coefficients indicates a risk of overflow */
+#if 0
+           // float: no overflow
+           if (nNegative > 128 || nPositive > 128)
+             isAsmOk = false;
+#endif
+
+           /* find the upper power of 2, if possible */
+           int i;
+           for (i = 0; i < 15; i++)
+           {
+             if ((1 << i) >= nSum)
+             {
                if (!coeffs.size())
-                  nSum = 1 << i;
+                 nSum = (Float)(1 << i);
                break;
-            }
+             }
+           }
+
+           matrix_f[9] = static_cast<Float>(nSum);
+
+           if (i >= 15)
+             error = "Too high divisor, please specify a divisor between 1 and 32767";
+           if (1 << i != matrix_f[9])
+             isAsmOk = false;
+           if (matrix_f[9] <= 0)
+             error = "Divisor must be positive";
          }
+         else { // integer matrix
+           memset(matrix, 0, sizeof(matrix));
+           int nNegative = 0, nPositive = 0;
+           for (int i = 0; i < 9; i++)
+           {
+             Short coefficient;
 
-         matrix[9] = static_cast<Short>(nSum);
+             if (!coeffs.size())
+             {
+               error = "invalid mode";
+               return;
+             }
 
-         if (i >= 15)
-            error = "Too high divisor, please specify a divisor between 1 and 32767";
-         if (1 << i != matrix[9])
-            isAsmOk = false;
-         if (matrix[9] <= 0)
-            error = "Divisor must be positive";
+             print(LOG_DEBUG, "%i\n", coeffs.size());
+             matrix[i] = coefficient = static_cast<Short>(coeffs.front().getValue(0, 0, 0));
+
+             nNegative += coefficient < 0 ? -coefficient : 0;
+             nPositive += coefficient > 0 ? +coefficient : 0;
+             coeffs.pop_front();
+           }
+           int nSum = max<int>(nNegative, nPositive);
+
+           if (coeffs.size())
+             nSum = static_cast<Short>(coeffs.front().getValue(0, 0, 0));
+
+           /* disable asm if sum of coefficients indicates a risk of overflow */
+           if (nNegative > 128 || nPositive > 128)
+             isAsmOk = false;
+
+           /* find the upper power of 2, if possible */
+           int i;
+           for (i = 0; i < 15; i++)
+           {
+             if ((1 << i) >= nSum)
+             {
+               if (!coeffs.size())
+                 nSum = 1 << i;
+               break;
+             }
+           }
+
+           matrix[9] = static_cast<Short>(nSum);
+
+           if (i >= 15)
+             error = "Too high divisor, please specify a divisor between 1 and 32767";
+           if (1 << i != matrix[9])
+             isAsmOk = false;
+           if (matrix[9] <= 0)
+             error = "Divisor must be positive";
+         }
 
          print(LOG_DEBUG, "Edge : %3i %3i %3i\n"
                         "       %3i %3i %3i\n"
@@ -316,7 +432,7 @@ public:
              processors.push_back(Filtering::Processor<Processor>(convolution_sse2, Constraint(CPU_SSE2, 8, 1, 1, 1), 2));
            }
          }
-         else {
+         else if (bit_depths[C] <= 16) {
            processors16.push_back(Filtering::Processor<Processor16>(convolution_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            /*
            if (isAsmOk)
@@ -324,6 +440,9 @@ public:
              processors.push_back(Filtering::Processor<Processor>(convolution_16_sse2, Constraint(CPU_SSE2, 8, 1, 1, 1), 2));
            }
            */
+         }
+         else { // float
+           processors32.push_back(Filtering::Processor<Processor32>(convolution_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
          }
       }
    }
