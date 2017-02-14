@@ -1,23 +1,23 @@
 #ifndef __Mt_Binarize16_H__
 #define __Mt_Binarize16_H__
-
+#if 0
 #include "../../common/base/filter.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Binarize16 {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight);
 
 #define DEFINE_PROCESSOR(name) \
-extern Processor *binarize_##name##_stacked_16_c; \
-extern Processor *binarize_##name##_stacked_16_sse2; \
-extern Processor *binarize_##name##_native_10_c; \
-extern Processor *binarize_##name##_native_10_sse2; \
-extern Processor *binarize_##name##_native_12_c; \
-extern Processor *binarize_##name##_native_12_sse2; \
-extern Processor *binarize_##name##_native_14_c; \
-extern Processor *binarize_##name##_native_14_sse2; \
-extern Processor *binarize_##name##_native_16_c; \
-extern Processor *binarize_##name##_native_16_sse2;
+extern Processor16 *binarize_##name##_stacked_16_c; \
+extern Processor16 *binarize_##name##_stacked_16_sse2; \
+extern Processor16 *binarize_##name##_native_10_c; \
+extern Processor16 *binarize_##name##_native_10_sse2; \
+extern Processor16 *binarize_##name##_native_12_c; \
+extern Processor16 *binarize_##name##_native_12_sse2; \
+extern Processor16 *binarize_##name##_native_14_c; \
+extern Processor16 *binarize_##name##_native_14_sse2; \
+extern Processor16 *binarize_##name##_native_16_c; \
+extern Processor16 *binarize_##name##_native_16_sse2;
 
 DEFINE_PROCESSOR(upper);
 DEFINE_PROCESSOR(lower);
@@ -37,14 +37,14 @@ DEFINE_PROCESSOR(255_t);
 class Binarize16 : public MaskTools::Filter
 {
     Word nThreshold;
-    ProcessorList<Processor> processors;
+    ProcessorList<Processor16> processors16;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
         UNUSED(frames);
-        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height(), dst.origheight());
+        processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height(), dst.origheight());
     }
 
     bool isMode(const char *mode) {
@@ -82,21 +82,21 @@ public:
 
 #define SET_MODE(mode) \
     if (isStacked) { \
-        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
-        processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_stacked_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( binarize_##mode##_stacked_16_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( binarize_##mode##_stacked_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     } else { \
         switch(bit_depths[C]) { \
-        case 10: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_10_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 10: processors16.push_back(Filtering::Processor<Processor16>(binarize_##mode##_native_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors16.push_back( Filtering::Processor<Processor16>( binarize_##mode##_native_10_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
-        case 12: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_12_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 12: processors16.push_back(Filtering::Processor<Processor16>(binarize_##mode##_native_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors16.push_back( Filtering::Processor<Processor16>( binarize_##mode##_native_12_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
-        case 14: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_14_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 14: processors16.push_back(Filtering::Processor<Processor16>(binarize_##mode##_native_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors16.push_back( Filtering::Processor<Processor16>( binarize_##mode##_native_14_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
-        case 16: processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_native_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
-                 processors.push_back( Filtering::Processor<Processor>( binarize_##mode##_native_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        case 16: processors16.push_back(Filtering::Processor<Processor16>(binarize_##mode##_native_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+                 processors16.push_back( Filtering::Processor<Processor16>( binarize_##mode##_native_16_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
                  break; \
         }\
     }
@@ -140,4 +140,5 @@ public:
 
 } } } } // namespace Binarize, Filter, MaskTools, Filtering
 
+#endif
 #endif

@@ -27,7 +27,7 @@
 #include "../filters/support/clamp/clamp.h"
 
 #ifdef ENABLE_16BIT_SUPPORT
-#include "../filters/binarize/binarize16.h"
+//#include "../filters/binarize/binarize16.h"
 //#include "../filters/merge/merge16.h"
 //#include "../filters/lut/lut16/lut16.h"
 #include "../filters/logic/logic16.h"
@@ -57,7 +57,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
 #endif
 
    Avisynth2x::Filter<Invert::Invert>::create( env );
-   Avisynth2x::Filter<Binarize::Binarize>::create( env );
+   Avisynth2x::Filter<Binarize::Binarize>::create( env ); // 8-16
    Avisynth2x::Filter<Morphologic::Inflate::Inflate>::create( env );
    Avisynth2x::Filter<Morphologic::Deflate::Deflate>::create( env );
    Avisynth2x::Filter<Morphologic::Inpand::Inpand>::create( env );
@@ -71,20 +71,20 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env );
    Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16
    Avisynth2x::Filter<Logic::Logic>::create( env );
-   Avisynth2x::Filter<Convolution::Convolution>::create( env );
+   Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8-32
    Avisynth2x::Filter<Blur::MappedBlur>::create( env );
    Avisynth2x::Filter<Gradient::Gradient>::create( env );
-   Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env );
-   Avisynth2x::Filter<Support::Average::Average>::create( env );
-   Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env );
-   Avisynth2x::Filter<Support::Clamp::Clamp>::create( env );
+   Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-16
+   Avisynth2x::Filter<Support::Average::Average>::create( env ); // 8-16
+   Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env ); // 8-16
+   Avisynth2x::Filter<Support::Clamp::Clamp>::create( env ); // 8-16
    Avisynth2x::Filter<Mask::Motion::MotionMask>::create( env ); // 8 bit only
    Avisynth2x::Filter<Mask::Edge::EdgeMask>::create( env ); // 8-32
    Avisynth2x::Filter<Mask::Hysteresis::Hysteresis>::create( env ); // 8-32
    MaskTools::Avs2x::Helpers::DeclareHelpers(env);
 
 #ifdef ENABLE_16BIT_SUPPORT
-   Avisynth2x::Filter<Binarize16::Binarize16>::create( env );
+   //Avisynth2x::Filter<Binarize16::Binarize16>::create( env );
    //Avisynth2x::Filter<Lut::Single16bit::Lut16>::create( env ); // common with mt_lut
    //Avisynth2x::Filter<Merge16::Merge16>::create( env );  // common with mt_merge
    Avisynth2x::Filter<Logic16::Logic16>::create( env );

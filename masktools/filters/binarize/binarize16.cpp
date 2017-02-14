@@ -1,4 +1,4 @@
-#include "binarize16.h"
+#include "binarize.h"
 #include "../../common/simd.h"
 #include "../../common/16bit.h"
 
@@ -219,34 +219,34 @@ void binarize_sse2_native_t(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, in
     }
 }
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Binarize16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Binarize {
 
 #define DEFINE_PROCESSORS(layout,bits_per_pixel) \
-Processor *binarize_upper_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_upper<##bits_per_pixel##>>;  \
-Processor *binarize_lower_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_lower<##bits_per_pixel##>>;  \
-Processor *binarize_0_x_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_0_x<##bits_per_pixel##>>;    \
-Processor *binarize_t_x_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_t_x<##bits_per_pixel##>>;    \
-Processor *binarize_x_0_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_x_0<##bits_per_pixel##>>;    \
-Processor *binarize_x_t_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_x_t<##bits_per_pixel##>>;    \
-Processor *binarize_t_0_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_t_0<##bits_per_pixel##>>;    \
-Processor *binarize_0_t_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_0_t<##bits_per_pixel##>>;    \
-Processor *binarize_x_255_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_x_255<##bits_per_pixel##>>;  \
-Processor *binarize_t_255_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_t_255<##bits_per_pixel##>>;  \
-Processor *binarize_255_x_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_255_x<##bits_per_pixel##>>;  \
-Processor *binarize_255_t_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_255_t<##bits_per_pixel##>>;  \
+Processor16 *binarize_upper_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_upper<##bits_per_pixel##>>;  \
+Processor16 *binarize_lower_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_lower<##bits_per_pixel##>>;  \
+Processor16 *binarize_0_x_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_0_x<##bits_per_pixel##>>;    \
+Processor16 *binarize_t_x_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_t_x<##bits_per_pixel##>>;    \
+Processor16 *binarize_x_0_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_x_0<##bits_per_pixel##>>;    \
+Processor16 *binarize_x_t_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_x_t<##bits_per_pixel##>>;    \
+Processor16 *binarize_t_0_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_t_0<##bits_per_pixel##>>;    \
+Processor16 *binarize_0_t_##layout##_##bits_per_pixel##_c   = &binarize_##layout##_t<binarize_0_t<##bits_per_pixel##>>;    \
+Processor16 *binarize_x_255_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_x_255<##bits_per_pixel##>>;  \
+Processor16 *binarize_t_255_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_t_255<##bits_per_pixel##>>;  \
+Processor16 *binarize_255_x_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_255_x<##bits_per_pixel##>>;  \
+Processor16 *binarize_255_t_##layout##_##bits_per_pixel##_c = &binarize_##layout##_t<binarize_255_t<##bits_per_pixel##>>;  \
     \
-Processor *binarize_upper_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_upper_sse2_op<##bits_per_pixel##>, binarize_upper<##bits_per_pixel##>>; \
-Processor *binarize_lower_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_lower_sse2_op<##bits_per_pixel##>, binarize_lower<##bits_per_pixel##>>; \
-Processor *binarize_0_x_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_0_x_sse2_op<##bits_per_pixel##>,   binarize_0_x<##bits_per_pixel##>>;     \
-Processor *binarize_t_x_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_t_x_sse2_op<##bits_per_pixel##>,   binarize_t_x<##bits_per_pixel##>>;     \
-Processor *binarize_x_0_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_x_0_sse2_op<##bits_per_pixel##>,   binarize_x_0<##bits_per_pixel##>>;     \
-Processor *binarize_x_t_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_x_t_sse2_op<##bits_per_pixel##>,   binarize_x_t<##bits_per_pixel##>>;     \
-Processor *binarize_t_0_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_t_0_sse2_op<##bits_per_pixel##>,   binarize_t_0<##bits_per_pixel##>>;     \
-Processor *binarize_0_t_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_0_t_sse2_op<##bits_per_pixel##>,   binarize_0_t<##bits_per_pixel##>>;     \
-Processor *binarize_x_255_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_x_255_sse2_op<##bits_per_pixel##>, binarize_x_255<##bits_per_pixel##>>; \
-Processor *binarize_t_255_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_t_255_sse2_op<##bits_per_pixel##>, binarize_t_255<##bits_per_pixel##>>; \
-Processor *binarize_255_x_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_255_x_sse2_op<##bits_per_pixel##>, binarize_255_x<##bits_per_pixel##>>; \
-Processor *binarize_255_t_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_255_t_sse2_op<##bits_per_pixel##>, binarize_255_t<##bits_per_pixel##>>; \
+Processor16 *binarize_upper_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_upper_sse2_op<##bits_per_pixel##>, binarize_upper<##bits_per_pixel##>>; \
+Processor16 *binarize_lower_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_lower_sse2_op<##bits_per_pixel##>, binarize_lower<##bits_per_pixel##>>; \
+Processor16 *binarize_0_x_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_0_x_sse2_op<##bits_per_pixel##>,   binarize_0_x<##bits_per_pixel##>>;     \
+Processor16 *binarize_t_x_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_t_x_sse2_op<##bits_per_pixel##>,   binarize_t_x<##bits_per_pixel##>>;     \
+Processor16 *binarize_x_0_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_x_0_sse2_op<##bits_per_pixel##>,   binarize_x_0<##bits_per_pixel##>>;     \
+Processor16 *binarize_x_t_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_x_t_sse2_op<##bits_per_pixel##>,   binarize_x_t<##bits_per_pixel##>>;     \
+Processor16 *binarize_t_0_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_t_0_sse2_op<##bits_per_pixel##>,   binarize_t_0<##bits_per_pixel##>>;     \
+Processor16 *binarize_0_t_##layout##_##bits_per_pixel##_sse2   = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_0_t_sse2_op<##bits_per_pixel##>,   binarize_0_t<##bits_per_pixel##>>;     \
+Processor16 *binarize_x_255_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_x_255_sse2_op<##bits_per_pixel##>, binarize_x_255<##bits_per_pixel##>>; \
+Processor16 *binarize_t_255_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_t_255_sse2_op<##bits_per_pixel##>, binarize_t_255<##bits_per_pixel##>>; \
+Processor16 *binarize_255_x_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_255_x_sse2_op<##bits_per_pixel##>, binarize_255_x<##bits_per_pixel##>>; \
+Processor16 *binarize_255_t_##layout##_##bits_per_pixel##_sse2 = &binarize_sse2_##layout##_t<##bits_per_pixel##,binarize_255_t_sse2_op<##bits_per_pixel##>, binarize_255_t<##bits_per_pixel##>>; \
 
 
 DEFINE_PROCESSORS(stacked,16)
