@@ -133,11 +133,13 @@ template<typename T> T abs(T x) { return x < 0 ? -x : x; }
 template<> static inline Byte abs<Byte>(Byte x) { return x; } // unsigned abs = nop
 
 /* max_value, for integer type */
-template<typename T> T max_value() { return T(-1); } // unsigned only
+// for threshold and clip (clamp)
+template<typename T> T max_value() { return T(-1); } // unsigned only, all bits to 1!
 template<> static inline int max_value<int>() { return 0x7fffffff; }
 template<> static inline Short max_value<Short>() { return (1 << 15) - 1; }
 template<> static inline Char max_value<Char>() { return (1 << 7) - 1; }
 template<> static inline Int64 max_value<Int64>() { return 0x7FFFFFFFFFFFFFFFLL; }
+template<> static inline Float max_value<Float>() { return 1.0f; } // for mask
 
 /* min_value, for integer type */
 template<typename T> T min_value() { return 0; } // unsigned only
@@ -171,10 +173,17 @@ template<> static inline Int64 rounded_division<Int64>(Int64 x, Int64 y) { retur
 /* clip */
 template<typename T, typename U> T clip(U x, U mini = U(min_value<T>()), U maxi = U(max_value<T>())) { return convert<T, U>( min<U>( maxi, max<U>( mini, x ) ) ); }
 
-/* threshold */
+/* threshold for creating mask */
 template<typename T, typename U> T threshold(U x, U mini, U maxi, U bottom = U(min_value<T>()), U top = U(max_value<T>()))
 {
    return convert<T, U>( x <= mini ? bottom : x > maxi ? top : x );
+}
+// specialize template
+template<> static inline Float threshold<Float, Float>(Float x, Float mini, Float maxi, Float bottom, Float top)
+{ // todo: proper non-clamping for float?
+  bottom = Float(0.0f);
+  top = Float(1.0f);
+  return convert<Float, Float>(x <= mini ? bottom : x > maxi ? top : x);
 }
 
 /* width & height ratios, according to the colorspace */
