@@ -69,7 +69,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Lut::Frame::Lutf>::create( env );
    Avisynth2x::Filter<Lut::SpatialExtended::Lutsx>::create( env );
    Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env );
-   Avisynth2x::Filter<Merge::Merge>::create( env );
+   Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16
    Avisynth2x::Filter<Logic::Logic>::create( env );
    Avisynth2x::Filter<Convolution::Convolution>::create( env );
    Avisynth2x::Filter<Blur::MappedBlur>::create( env );
@@ -78,15 +78,15 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Support::Average::Average>::create( env );
    Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env );
    Avisynth2x::Filter<Support::Clamp::Clamp>::create( env );
-   Avisynth2x::Filter<Mask::Motion::MotionMask>::create( env );
-   Avisynth2x::Filter<Mask::Edge::EdgeMask>::create( env );
-   Avisynth2x::Filter<Mask::Hysteresis::Hysteresis>::create( env );
+   Avisynth2x::Filter<Mask::Motion::MotionMask>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Mask::Edge::EdgeMask>::create( env ); // 8-32
+   Avisynth2x::Filter<Mask::Hysteresis::Hysteresis>::create( env ); // 8-32
    MaskTools::Avs2x::Helpers::DeclareHelpers(env);
 
 #ifdef ENABLE_16BIT_SUPPORT
    Avisynth2x::Filter<Binarize16::Binarize16>::create( env );
    Avisynth2x::Filter<Lut::Single16bit::Lut16>::create( env );
-   Avisynth2x::Filter<Merge16::Merge16>::create( env );
+   //Avisynth2x::Filter<Merge16::Merge16>::create( env );  // common with mt_merge
    Avisynth2x::Filter<Logic16::Logic16>::create( env );
    Avisynth2x::Filter<Support::Average16::Average16>::create( env );
    Avisynth2x::Filter<Support::MakeDiff16::MakeDiff16>::create( env );
