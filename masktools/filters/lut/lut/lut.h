@@ -17,7 +17,7 @@ Processor16 lut16_c_stacked;
 class Lut : public MaskTools::Filter
 {
    Byte luts[3][256];
-   Word luts16[3][65536]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
+   Word *luts16[3]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
    Processor *processor;
    Processor16 *processor16;
 
@@ -43,6 +43,9 @@ protected:
 public:
    Lut(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
+      for (int i = 0; i < 3; i++)
+        luts16[i] = nullptr;
+
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X);
@@ -88,6 +91,10 @@ public:
           error = "invalid expression in the lut";
           return;
         }
+
+        if(bits_per_pixel >=8 && bits_per_pixel <= 16) 
+          luts16[i] = reinterpret_cast<Word*>(_aligned_malloc(65536*sizeof(uint16_t), 16));
+
         if (bits_per_pixel == 8) {
           for (int x = 0; x < 256; x++)
             luts[i][x] = ctx.compute_byte(x, 0.0f);
@@ -113,6 +120,13 @@ public:
             processor16 = lut16_c_native;
         }
       }
+   }
+
+   ~Lut()
+   {
+     for (int i = 0; i < 3; i++) {
+       _aligned_free(luts16[i]);
+     }
    }
 
    InputConfiguration &input_configuration() const { return InPlaceOneFrame(); }
