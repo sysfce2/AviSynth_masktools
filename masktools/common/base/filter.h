@@ -167,6 +167,7 @@ public:
         {
         case COPY:
           if (isStacked) {
+            // in two parts, there may be sub-window
             // msb
             Functions::copy_plane(output_plane.data(), output_plane.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
@@ -179,7 +180,7 @@ public:
           else {
             Functions::copy_plane(output_plane.data(), output_plane.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              output_plane.width(), output_plane.height());
+              output_plane.width()*output_plane.pixelsize(), output_plane.height()); // rowsize = width*pixelsize
           }
           break;
         case COPY_SECOND:
@@ -195,7 +196,7 @@ public:
             } else {
               Functions::copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height());
+                output_plane.width()*output_plane.pixelsize(), output_plane.height());
             }
             break;
         case COPY_THIRD:
@@ -212,13 +213,14 @@ public:
             else {
               Functions::copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height());
+                output_plane.width()*output_plane.pixelsize(), output_plane.height());
             }
             break;
         case MEMSET:
             switch (output_plane.pixelsize()) {
             case 1:
               if (isStacked) {
+                // in two parts, there may be sub-window
                 Word val = static_cast<Word>(operators[nPlane].value());
                 // msb
                 Functions::memset_plane(output_plane.data(), output_plane.pitch(),
@@ -230,7 +232,7 @@ public:
                   static_cast<Byte>(val & 0xFF));
               } else {
                 Functions::memset_plane(output_plane.data(), output_plane.pitch(),
-                  output_plane.width(), output_plane.height(),
+                  output_plane.width(), output_plane.height(), // memset needs real width
                   static_cast<Byte>(operators[nPlane].value()));
               }
               break;
