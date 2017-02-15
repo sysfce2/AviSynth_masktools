@@ -10,6 +10,15 @@ typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight
 
 Processor invert_c;
 Processor invert_sse2;
+/* 10-16 */
+extern Processor *invert10_c;
+extern Processor *invert10_sse2;
+extern Processor *invert12_c;
+extern Processor *invert12_sse2;
+extern Processor *invert14_c;
+extern Processor *invert14_sse2;
+extern Processor *invert16_c;
+extern Processor *invert16_sse2;
 
 class Invert : public MaskTools::Filter
 {
@@ -23,12 +32,39 @@ protected:
     }
 
 public:
-   Invert(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
-   {
-      /* add the processors */
-      processors.push_back( Filtering::Processor<Processor>( invert_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) );
-      processors.push_back( Filtering::Processor<Processor>( invert_sse2, Constraint( CPU_SSE2, 16, 1, 16, 16 ), 1 ) );
-   }
+  Invert(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
+  {
+    int bits_per_pixel = bit_depths[C];
+
+    if (bits_per_pixel == 32) {
+      error = "32 bit float clip is not supported yet";
+      return;
+    }
+
+    /* add the processors */
+    switch (bits_per_pixel) {
+    case 8:
+      processors.push_back(Filtering::Processor<Processor>(invert_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(invert_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
+      break;
+    case 10:
+      processors.push_back(Filtering::Processor<Processor>(invert10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(invert10_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
+      break;
+    case 12:
+      processors.push_back(Filtering::Processor<Processor>(invert12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(invert12_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
+      break;
+    case 14:
+      processors.push_back(Filtering::Processor<Processor>(invert14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(invert14_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
+      break;
+    case 16:
+      processors.push_back(Filtering::Processor<Processor>(invert16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(invert16_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
+      break;
+    }
+  }
 
    InputConfiguration &input_configuration() const { return InPlaceOneFrame(); }
 
