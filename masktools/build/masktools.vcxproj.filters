@@ -121,9 +121,6 @@
     <Filter Include="helpers\parser">
       <UniqueIdentifier>{c622ffc9-36b4-4cbc-a381-9e9782d5a271}</UniqueIdentifier>
     </Filter>
-    <Filter Include="filters\lut\lut16">
-      <UniqueIdentifier>{94b6ff7d-0ed7-47ba-9017-b8f00bf9023f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="filters\support\average16">
       <UniqueIdentifier>{32d55ae6-e05e-492a-915e-5cd76d3818f5}</UniqueIdentifier>
     </Filter>
@@ -240,35 +237,14 @@
     <ClInclude Include="..\common\simd.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\filters\lut\lut16\lut16.h">
-      <Filter>filters\lut\lut16</Filter>
-    </ClInclude>
     <ClInclude Include="..\filters\merge\merge16.h">
       <Filter>filters\merge</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\support\average16\average16.h">
-      <Filter>filters\support\average16</Filter>
     </ClInclude>
     <ClInclude Include="..\common\16bit.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="..\common\common.h">
       <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\support\adddiff16\adddiff16.h">
-      <Filter>filters\support\adddiff16</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\support\makediff16\makediff16.h">
-      <Filter>filters\support\makediff16</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\support\clamp16\clamp16.h">
-      <Filter>filters\support\clamp16</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\binarize\binarize16.h">
-      <Filter>filters\binarize</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\logic\logic16.h">
-      <Filter>filters\logic</Filter>
     </ClInclude>
     <ClInclude Include="..\filters\logic\logic.h">
       <Filter>filters\logic</Filter>
@@ -285,17 +261,11 @@
     <ClInclude Include="..\filters\morphologic\functions16.h">
       <Filter>filters\morphologic</Filter>
     </ClInclude>
-    <ClInclude Include="..\filters\morphologic\inpand\inpand16.h">
-      <Filter>filters\morphologic\inpand</Filter>
+    <ClInclude Include="..\filters\mask\functions16.h">
+      <Filter>filters\mask</Filter>
     </ClInclude>
-    <ClInclude Include="..\filters\morphologic\inflate\inflate16.h">
-      <Filter>filters\morphologic\inflate</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\morphologic\expand\expand16.h">
-      <Filter>filters\morphologic\expand</Filter>
-    </ClInclude>
-    <ClInclude Include="..\filters\morphologic\deflate\deflate16.h">
-      <Filter>filters\morphologic\deflate</Filter>
+    <ClInclude Include="..\filters\mask\functions32.h">
+      <Filter>filters\mask</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -377,9 +347,6 @@
     <ClCompile Include="..\filters\support\adddiff\adddiff.cpp">
       <Filter>filters\support\adddiff</Filter>
     </ClCompile>
-    <ClCompile Include="..\filters\lut\lut16\lut16.cpp">
-      <Filter>filters\lut\lut16</Filter>
-    </ClCompile>
     <ClCompile Include="..\filters\merge\merge16.cpp">
       <Filter>filters\merge</Filter>
     </ClCompile>
@@ -421,6 +388,21 @@
     </ClCompile>
     <ClCompile Include="..\filters\merge\merge.cpp">
       <Filter>filters\merge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\mask\edge\edgemask16.cpp">
+      <Filter>filters\mask\edge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\mask\edge\edgemask32.cpp">
+      <Filter>filters\mask\edge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\lut\lut\lut16.cpp">
+      <Filter>filters\lut\lut</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\blur\mappedblur16.cpp">
+      <Filter>filters\blur</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\blur\mappedblur32.cpp">
+      <Filter>filters\blur</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
