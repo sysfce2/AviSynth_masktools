@@ -25,6 +25,11 @@ protected:
 public:
    Lutxy(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
+      if (bit_depths[C] != 8) {
+        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
+        return;
+      }
+     
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);

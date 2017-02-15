@@ -38,6 +38,11 @@ protected:
 public:
    Convolution(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
    {
+      if (bit_depths[C] != 8) {
+        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
+        return;
+      }
+     
       i_vertical = i_horizontal = NULL;
       f_vertical = f_horizontal = NULL;
       vertical = horizontal = NULL;

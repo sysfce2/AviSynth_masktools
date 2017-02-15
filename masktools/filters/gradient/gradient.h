@@ -33,6 +33,11 @@ protected:
 public:
    Gradient(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
    {
+      if (bit_depths[C] != 8) {
+        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
+        return;
+      }
+     
       /* add the processors */
       if ( parameters["distorsion"].toString() == "sad" )
       {

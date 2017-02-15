@@ -29,6 +29,11 @@ protected:
 public:
    MappedBlur(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
    {
+      if (bit_depths[C] != 8) {
+        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
+        return;
+      }
+
       auto coeffs = Parser::getDefaultParser().parse(parameters["kernel"].toString(), " ").getExpression();
       memset(matrix, 0, sizeof(matrix));
       for ( int i = 0; i < 9; i++ )
