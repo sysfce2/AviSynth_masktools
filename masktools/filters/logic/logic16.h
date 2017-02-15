@@ -1,17 +1,17 @@
 #ifndef __Mt_Logic16_H__
 #define __Mt_Logic16_H__
-
+#if 0
 #include "../../common/base/filter.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic16 {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource);
 
 #define DEFINE_PROCESSOR(name) \
-   extern Processor *name##_stacked_c; \
-   extern Processor *name##_native_c; \
-   extern Processor *name##_stacked_sse2; \
-   extern Processor *name##_native_sse2;
+   extern Processor16 *name##_stacked_c; \
+   extern Processor16 *name##_native_c; \
+   extern Processor16 *name##_stacked_sse2; \
+   extern Processor16 *name##_native_sse2;
 
 DEFINE_PROCESSOR(and);
 DEFINE_PROCESSOR(or);
@@ -38,14 +38,14 @@ DEFINE_NINE(max);
 class Logic16 : public MaskTools::Filter
 {
 
-   ProcessorList<Processor> processors;
-   Byte nThresholdDestination, nThresholdSource;
+   ProcessorList<Processor16> processors16;
+   int nThresholdDestination, nThresholdSource;
 
 protected:
    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
    {
        UNUSED(n);
-       processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+       processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
            dst.width(), dst.height(), dst.origheight(), nThresholdDestination, nThresholdSource);
    }
@@ -71,11 +71,11 @@ public:
 
 #define SET_MODE(mode) \
     if (isStacked) { \
-        processors.push_back( Filtering::Processor<Processor>( mode##_stacked_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
-        processors.push_back( Filtering::Processor<Processor>( mode##_stacked_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( mode##_stacked_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( mode##_stacked_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     } else { \
-        processors.push_back( Filtering::Processor<Processor>( mode##_native_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
-        processors.push_back( Filtering::Processor<Processor>( mode##_native_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( mode##_native_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( mode##_native_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
     }
         int nTh1 = parameters["th1"].toInt();
         int nTh2 = parameters["th2"].toInt();
@@ -94,8 +94,8 @@ public:
             bool isSrcSub = nTh2 < 0;
             bool isSrcAdd = nTh2 > 0;
 
-            nThresholdDestination = convert<Byte, int>(abs<int>(nTh1));
-            nThresholdSource = convert<Byte, int>(abs<int>(nTh2));
+            nThresholdDestination = convert<Word, int>(abs<int>(nTh1)); // todo bits_per_pixel
+            nThresholdSource = convert<Word, int>(abs<int>(nTh2));
 
             if (parameters["mode"].toString() == "min")
             {
@@ -148,5 +148,5 @@ public:
 
 
 } } } }
-
+#endif
 #endif

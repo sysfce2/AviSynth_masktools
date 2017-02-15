@@ -7,19 +7,19 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 {
 
 typedef void (StackedProcessor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight);
-typedef void (InterleavedProcessor)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight);
+typedef void (Processor16)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight);
 
 class MorphologicFilter16 : public MaskTools::Filter
 {
    int nMaxDeviations[3];
-   int *pCoordinates, nCoordinates;
+   int *coordinates_list, coordinates_count;
 
    MorphologicFilter16(const MorphologicFilter16 &filter);
 
 protected:
 
    ProcessorList<StackedProcessor> stackedProcessors;
-   ProcessorList<InterleavedProcessor> interleavedProcessors;
+   ProcessorList<Processor16> processors16;
 
    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
@@ -27,31 +27,31 @@ protected:
         if (parameters["stacked"].toBool()) {
             stackedProcessors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                 frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
-                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height() / 2, dst.origheight()); // stacked: /2
+                nMaxDeviations[nPlane], coordinates_list, coordinates_count, dst.width(), dst.height() / 2, dst.origheight()); // stacked: /2
         }
         else {
-            interleavedProcessors.best_processor(constraints[nPlane])(reinterpret_cast<Word*>((Byte*)dst.data()), dst.pitch() / 2, /* /2: word sized */
+            processors16.best_processor(constraints[nPlane])(reinterpret_cast<Word*>((Byte*)dst.data()), dst.pitch() / 2, /* /2: word sized */
                 reinterpret_cast<const Word*>((const Byte*)(frames[0].plane(nPlane).data())), frames[0].plane(nPlane).pitch() / 2, 
-                nMaxDeviations[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height(), dst.origheight());
+                nMaxDeviations[nPlane], coordinates_list, coordinates_count, dst.width(), dst.height(), dst.origheight());
         }
     }
 
    void FillCoordinates(const String &coordinates)
    {
       auto coeffs = Parser::getDefaultParser().parse( coordinates, " (),;." ).getExpression();
-      nCoordinates = coeffs.size();
-      pCoordinates = new int[nCoordinates];
+      coordinates_count = coeffs.size();
+      coordinates_list = new int[coordinates_count];
       int i = 0;
 
       while ( !coeffs.empty() )
       {
-         pCoordinates[i++] = int( coeffs.front().getValue(0, 0, 0) );
+         coordinates_list[i++] = int( coeffs.front().getValue(0, 0, 0) );
          coeffs.pop_front();
       }
    }
 
 public:
-   MorphologicFilter16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD ), pCoordinates( NULL ), nCoordinates( 0 )
+   MorphologicFilter16(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD ), coordinates_list( NULL ), coordinates_count( 0 )
    {
      bool isStacked = parameters["stacked"].toBool();
      int bits_per_pixel = bit_depths[C];
@@ -78,9 +78,9 @@ public:
 
    ~MorphologicFilter16()
    {
-      if ( pCoordinates )
-         delete[] pCoordinates;
-      pCoordinates = NULL;
+      if ( coordinates_list )
+         delete[] coordinates_list;
+      coordinates_list = NULL;
    }
 
    InputConfiguration &input_configuration() const { return OneFrame(); }

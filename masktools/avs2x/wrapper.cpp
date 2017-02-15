@@ -30,15 +30,15 @@
 //#include "../filters/binarize/binarize16.h"
 //#include "../filters/merge/merge16.h"
 //#include "../filters/lut/lut16/lut16.h"
-#include "../filters/logic/logic16.h"
+//#include "../filters/logic/logic16.h"
 //#include "../filters/support/clamp16/clamp16.h"
 //#include "../filters/support/average16/average16.h"
 //#include "../filters/support/adddiff16/adddiff16.h"
 //#include "../filters/support/makediff16/makediff16.h"
-#include "../filters/morphologic/expand/expand16.h"
-#include "../filters/morphologic/inpand/inpand16.h"
-#include "../filters/morphologic/inflate/inflate16.h"
-#include "../filters/morphologic/deflate/deflate16.h"
+//#include "../filters/morphologic/expand/expand16.h"
+//#include "../filters/morphologic/inpand/inpand16.h"
+//#include "../filters/morphologic/inflate/inflate16.h"
+//#include "../filters/morphologic/deflate/deflate16.h"
 #endif
 
 #include "../helpers/avs2x/helpers_avs2x.h"
@@ -58,10 +58,10 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
 
    Avisynth2x::Filter<Invert::Invert>::create( env );
    Avisynth2x::Filter<Binarize::Binarize>::create( env ); // 8-16
-   Avisynth2x::Filter<Morphologic::Inflate::Inflate>::create( env );
-   Avisynth2x::Filter<Morphologic::Deflate::Deflate>::create( env );
-   Avisynth2x::Filter<Morphologic::Inpand::Inpand>::create( env );
-   Avisynth2x::Filter<Morphologic::Expand::Expand>::create( env );
+   Avisynth2x::Filter<Morphologic::Inflate::Inflate>::create( env ); // 8-16
+   Avisynth2x::Filter<Morphologic::Deflate::Deflate>::create( env ); // 8-16
+   Avisynth2x::Filter<Morphologic::Inpand::Inpand>::create( env ); // 8-16
+   Avisynth2x::Filter<Morphologic::Expand::Expand>::create( env ); // 8-16
    Avisynth2x::Filter<Lut::Single::Lut>::create( env ); // 8-16
    Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env );
    Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env );
@@ -71,7 +71,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env );
    Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16
    Avisynth2x::Filter<Logic::Logic>::create( env );
-   Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8-32
+   Avisynth2x::Filter<Convolution::Convolution>::create( env );
    Avisynth2x::Filter<Blur::MappedBlur>::create( env );
    Avisynth2x::Filter<Gradient::Gradient>::create( env );
    Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-16
@@ -87,15 +87,15 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    //Avisynth2x::Filter<Binarize16::Binarize16>::create( env );
    //Avisynth2x::Filter<Lut::Single16bit::Lut16>::create( env ); // common with mt_lut
    //Avisynth2x::Filter<Merge16::Merge16>::create( env );  // common with mt_merge
-   Avisynth2x::Filter<Logic16::Logic16>::create( env );
+   //Avisynth2x::Filter<Logic16::Logic16>::create( env );
    //Avisynth2x::Filter<Support::Average16::Average16>::create( env ); common with mt_average
    //Avisynth2x::Filter<Support::MakeDiff16::MakeDiff16>::create( env );
    //Avisynth2x::Filter<Support::AddDiff16::AddDiff16>::create( env ); common with adddiff
    //Avisynth2x::Filter<Support::Clamp16::Clamp16>::create( env );
-   Avisynth2x::Filter<Morphologic16::Inflate16::Inflate16>::create( env );
-   Avisynth2x::Filter<Morphologic16::Deflate16::Deflate16>::create( env );
-   Avisynth2x::Filter<Morphologic16::Inpand16::Inpand16>::create( env );
-   Avisynth2x::Filter<Morphologic16::Expand16::Expand16>::create( env );
+   //Avisynth2x::Filter<Morphologic16::Inflate16::Inflate16>::create( env );
+   //Avisynth2x::Filter<Morphologic16::Deflate16::Deflate16>::create( env );
+   //Avisynth2x::Filter<Morphologic16::Inpand16::Inpand16>::create( env );
+   //Avisynth2x::Filter<Morphologic16::Expand16::Expand16>::create( env );
 #endif
    return("MaskTools: a set of tools to work with masks");
 }

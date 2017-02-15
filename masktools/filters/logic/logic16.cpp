@@ -1,30 +1,30 @@
-#include "logic16.h"
+#include "logic.h"
 #include "../../common/simd.h"
 #include "../../common/16bit.h"
 
 using namespace Filtering;
 
-static MT_FORCEINLINE Word add_c(Word a, Word b) { return clip<Word, int>(a + (int)b); }
-static MT_FORCEINLINE Word sub_c(Word a, Word b) { return clip<Word, int>(a - (int)b); }
-static MT_FORCEINLINE Word nop_c(Word a, Word b) { UNUSED(b); return a; }
+static MT_FORCEINLINE Word add16_c(Word a, Word b) { return clip<Word, int>(a + (int)b); }
+static MT_FORCEINLINE Word sub16_c(Word a, Word b) { return clip<Word, int>(a - (int)b); }
+static MT_FORCEINLINE Word nop16_c(Word a, Word b) { UNUSED(b); return a; }
 
-static MT_FORCEINLINE Word and_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a & b; }
-static MT_FORCEINLINE Word or_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a | b; }
-static MT_FORCEINLINE Word andn_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a & ~b; }
-static MT_FORCEINLINE Word xor_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a ^ b; }
+static MT_FORCEINLINE Word and16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a & b; }
+static MT_FORCEINLINE Word or16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a | b; }
+static MT_FORCEINLINE Word andn16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a & ~b; }
+static MT_FORCEINLINE Word xor16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a ^ b; }
 
-template <decltype(add_c) opa, decltype(add_c) opb>
+template <decltype(add16_c) opa, decltype(add16_c) opb>
 static MT_FORCEINLINE Word min_t(Word a, Word b, Word th1, Word th2) { 
     return min<Word>(opa(a, th1), opb(b, th2)); 
 }
 
-template <decltype(add_c) opa, decltype(add_c) opb>
+template <decltype(add16_c) opa, decltype(add16_c) opb>
 static MT_FORCEINLINE Word max_t(Word a, Word b, Word th1, Word th2) { 
     return max<Word>(opa(a, th1), opb(b, th2)); 
 }
 
-template <decltype(and_c) op>
-void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
+template <decltype(and16_c) op>
+static void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
     auto pSrcLsb = pSrc + nSrcPitch * nOrigHeight / 2;
@@ -45,7 +45,7 @@ void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdif
     }
 }
 
-template <decltype(and_c) op>
+template <decltype(and16_c) op>
 void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     UNUSED(nOrigHeight);
@@ -63,38 +63,38 @@ void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff
 
 /* sse2 */
 
-static MT_FORCEINLINE __m128i add_sse2(__m128i a, __m128i b) { return _mm_adds_epu16(a, b); }
-static MT_FORCEINLINE __m128i sub_sse2(__m128i a, __m128i b) { return _mm_subs_epu16(a, b); }
-static MT_FORCEINLINE __m128i nop_sse2(__m128i a, __m128i) { return a; }
+static MT_FORCEINLINE __m128i add16_sse2(__m128i a, __m128i b) { return _mm_adds_epu16(a, b); }
+static MT_FORCEINLINE __m128i sub16_sse2(__m128i a, __m128i b) { return _mm_subs_epu16(a, b); }
+static MT_FORCEINLINE __m128i nop16_sse2(__m128i a, __m128i) { return a; }
 
-static MT_FORCEINLINE __m128i and_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
+static MT_FORCEINLINE __m128i and16_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
     return _mm_and_si128(a, b); 
 }
 
-static MT_FORCEINLINE __m128i or_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
+static MT_FORCEINLINE __m128i or16_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
     return _mm_or_si128(a, b); 
 }
 
-static MT_FORCEINLINE __m128i andn_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
+static MT_FORCEINLINE __m128i andn16_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
     return _mm_andnot_si128(a, b); 
 }
 
-static MT_FORCEINLINE __m128i xor_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
+static MT_FORCEINLINE __m128i xor16_sse2(const __m128i &a, const __m128i &b, const __m128i&, const __m128i&) { 
     return _mm_xor_si128(a, b); 
 }
 
-template <decltype(add_sse2) opa, decltype(add_sse2) opb>
+template <decltype(add16_sse2) opa, decltype(add16_sse2) opb>
 static MT_FORCEINLINE __m128i min_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) { 
     return _mm_min_epu16(opa(a, th1), opb(b, th2)); // !!min_epu16: SSE4 todo simd_min_epu16
 }
 
-template <decltype(add_sse2) opa, decltype(add_sse2) opb>
+template <decltype(add16_sse2) opa, decltype(add16_sse2) opb>
 static MT_FORCEINLINE __m128i max_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) { 
     return _mm_max_epu16(opa(a, th1), opb(b, th2)); // !!max_epu16: SSE4 todo simd_max_epu16
 }
 
 
-template<decltype(and_sse2) op, decltype(and_c) op_c>
+template<decltype(and16_sse2) op, decltype(and16_c) op_c>
     void logic16_stacked_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     int wMod8 = (nWidth / 8) * 8;
@@ -127,7 +127,7 @@ template<decltype(and_sse2) op, decltype(and_c) op_c>
     }
 }
 
-template<decltype(and_sse2) op, decltype(and_c) op_c>
+template<decltype(and16_sse2) op, decltype(and16_c) op_c>
 void logic16_native_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
@@ -156,29 +156,29 @@ void logic16_native_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, pt
 }
 
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic {
 
-Processor *and_stacked_c      = &logic16_stacked_t<and_c>;
-Processor *or_stacked_c       = &logic16_stacked_t<or_c>;
-Processor *andn_stacked_c     = &logic16_stacked_t<andn_c>;
-Processor *xor_stacked_c      = &logic16_stacked_t<xor_c>;
+Processor16 *and16_stacked_c      = &logic16_stacked_t<and16_c>;
+Processor16 *or16_stacked_c       = &logic16_stacked_t<or16_c>;
+Processor16 *andn16_stacked_c     = &logic16_stacked_t<andn16_c>;
+Processor16 *xor16_stacked_c      = &logic16_stacked_t<xor16_c>;
 
-Processor *and_native_c  = &logic16_native_t<and_c>;
-Processor *or_native_c   = &logic16_native_t<or_c>;
-Processor *andn_native_c = &logic16_native_t<andn_c>;
-Processor *xor_native_c  = &logic16_native_t<xor_c>;
+Processor16 *and16_native_c  = &logic16_native_t<and16_c>;
+Processor16 *or16_native_c   = &logic16_native_t<or16_c>;
+Processor16 *andn16_native_c = &logic16_native_t<andn16_c>;
+Processor16 *xor16_native_c  = &logic16_native_t<xor16_c>;
 
 
 #define DEFINE_SILLY_C_MODE(mode, layout) \
-    Processor *mode##_##layout##_c         = &logic16_##layout##_t<mode##_t<nop_c, nop_c>>;   \
-    Processor *mode##sub_##layout##_c      = &logic16_##layout##_t<mode##_t<nop_c, sub_c>>;   \
-    Processor *mode##add_##layout##_c      = &logic16_##layout##_t<mode##_t<nop_c, add_c>>;   \
-    Processor *sub##mode##_##layout##_c    = &logic16_##layout##_t<mode##_t<sub_c, nop_c>>;   \
-    Processor *sub##mode##sub_##layout##_c = &logic16_##layout##_t<mode##_t<sub_c, sub_c>>;   \
-    Processor *sub##mode##add_##layout##_c = &logic16_##layout##_t<mode##_t<sub_c, add_c>>;   \
-    Processor *add##mode##_##layout##_c    = &logic16_##layout##_t<mode##_t<add_c, nop_c>>;   \
-    Processor *add##mode##sub_##layout##_c = &logic16_##layout##_t<mode##_t<add_c, sub_c>>;   \
-    Processor *add##mode##add_##layout##_c = &logic16_##layout##_t<mode##_t<add_c, add_c>>;
+    Processor16 *mode##_##layout##_c         = &logic16_##layout##_t<mode##_t<nop16_c, nop16_c>>;   \
+    Processor16 *mode##sub_##layout##_c      = &logic16_##layout##_t<mode##_t<nop16_c, sub16_c>>;   \
+    Processor16 *mode##add_##layout##_c      = &logic16_##layout##_t<mode##_t<nop16_c, add16_c>>;   \
+    Processor16 *sub##mode##_##layout##_c    = &logic16_##layout##_t<mode##_t<sub16_c, nop16_c>>;   \
+    Processor16 *sub##mode##sub_##layout##_c = &logic16_##layout##_t<mode##_t<sub16_c, sub16_c>>;   \
+    Processor16 *sub##mode##add_##layout##_c = &logic16_##layout##_t<mode##_t<sub16_c, add16_c>>;   \
+    Processor16 *add##mode##_##layout##_c    = &logic16_##layout##_t<mode##_t<add16_c, nop16_c>>;   \
+    Processor16 *add##mode##sub_##layout##_c = &logic16_##layout##_t<mode##_t<add16_c, sub16_c>>;   \
+    Processor16 *add##mode##add_##layout##_c = &logic16_##layout##_t<mode##_t<add16_c, add16_c>>;
 
 DEFINE_SILLY_C_MODE(min, stacked)
 DEFINE_SILLY_C_MODE(min, native)
@@ -186,26 +186,26 @@ DEFINE_SILLY_C_MODE(max, stacked)
 DEFINE_SILLY_C_MODE(max, native)
 
 
-Processor *and_stacked_sse2      = &logic16_stacked_t_sse2<and_sse2, and_c>;
-Processor *or_stacked_sse2       = &logic16_stacked_t_sse2<or_sse2, or_c>;
-Processor *andn_stacked_sse2     = &logic16_stacked_t_sse2<andn_sse2, andn_c>;
-Processor *xor_stacked_sse2      = &logic16_stacked_t_sse2<xor_sse2, xor_c>;
+Processor16 *and16_stacked_sse2      = &logic16_stacked_t_sse2<and16_sse2, and16_c>;
+Processor16 *or16_stacked_sse2       = &logic16_stacked_t_sse2<or16_sse2, or16_c>;
+Processor16 *andn16_stacked_sse2     = &logic16_stacked_t_sse2<andn16_sse2, andn16_c>;
+Processor16 *xor16_stacked_sse2      = &logic16_stacked_t_sse2<xor16_sse2, xor16_c>;
 
-Processor *and_native_sse2  = &logic16_native_t_sse2<and_sse2, and_c>;
-Processor *or_native_sse2   = &logic16_native_t_sse2<or_sse2, or_c>;
-Processor *andn_native_sse2 = &logic16_native_t_sse2<andn_sse2, andn_c>;
-Processor *xor_native_sse2  = &logic16_native_t_sse2<xor_sse2, xor_c>;
+Processor16 *and16_native_sse2  = &logic16_native_t_sse2<and16_sse2, and16_c>;
+Processor16 *or16_native_sse2   = &logic16_native_t_sse2<or16_sse2, or16_c>;
+Processor16 *andn16_native_sse2 = &logic16_native_t_sse2<andn16_sse2, andn16_c>;
+Processor16 *xor16_native_sse2  = &logic16_native_t_sse2<xor16_sse2, xor16_c>;
 
 #define DEFINE_SILLY_SSE2_VERSIONS(mode, layout) \
-    Processor *mode##_##layout##_sse2         = &logic16_##layout##_t_sse2<mode##_t_sse2<nop_sse2, nop_sse2>, mode##_t<nop_c, nop_c>>;   \
-    Processor *mode##sub_##layout##_sse2      = &logic16_##layout##_t_sse2<mode##_t_sse2<nop_sse2, sub_sse2>, mode##_t<nop_c, sub_c>>;   \
-    Processor *mode##add_##layout##_sse2      = &logic16_##layout##_t_sse2<mode##_t_sse2<nop_sse2, add_sse2>, mode##_t<nop_c, add_c>>;   \
-    Processor *sub##mode##_##layout##_sse2    = &logic16_##layout##_t_sse2<mode##_t_sse2<sub_sse2, nop_sse2>, mode##_t<sub_c, nop_c>>;   \
-    Processor *sub##mode##sub_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<sub_sse2, sub_sse2>, mode##_t<sub_c, sub_c>>;   \
-    Processor *sub##mode##add_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<sub_sse2, add_sse2>, mode##_t<sub_c, add_c>>;   \
-    Processor *add##mode##_##layout##_sse2    = &logic16_##layout##_t_sse2<mode##_t_sse2<add_sse2, nop_sse2>, mode##_t<add_c, nop_c>>;   \
-    Processor *add##mode##sub_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add_sse2, sub_sse2>, mode##_t<add_c, sub_c>>;   \
-    Processor *add##mode##add_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add_sse2, add_sse2>, mode##_t<add_c, add_c>>;
+    Processor16 *mode##_##layout##_sse2         = &logic16_##layout##_t_sse2<mode##_t_sse2<nop16_sse2, nop16_sse2>, mode##_t<nop16_c, nop16_c>>;   \
+    Processor16 *mode##sub_##layout##_sse2      = &logic16_##layout##_t_sse2<mode##_t_sse2<nop16_sse2, sub16_sse2>, mode##_t<nop16_c, sub16_c>>;   \
+    Processor16 *mode##add_##layout##_sse2      = &logic16_##layout##_t_sse2<mode##_t_sse2<nop16_sse2, add16_sse2>, mode##_t<nop16_c, add16_c>>;   \
+    Processor16 *sub##mode##_##layout##_sse2    = &logic16_##layout##_t_sse2<mode##_t_sse2<sub16_sse2, nop16_sse2>, mode##_t<sub16_c, nop16_c>>;   \
+    Processor16 *sub##mode##sub_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<sub16_sse2, sub16_sse2>, mode##_t<sub16_c, sub16_c>>;   \
+    Processor16 *sub##mode##add_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<sub16_sse2, add16_sse2>, mode##_t<sub16_c, add16_c>>;   \
+    Processor16 *add##mode##_##layout##_sse2    = &logic16_##layout##_t_sse2<mode##_t_sse2<add16_sse2, nop16_sse2>, mode##_t<add16_c, nop16_c>>;   \
+    Processor16 *add##mode##sub_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add16_sse2, sub16_sse2>, mode##_t<add16_c, sub16_c>>;   \
+    Processor16 *add##mode##add_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add16_sse2, add16_sse2>, mode##_t<add16_c, add16_c>>;
 
 // todo: add_sse2 to 10-14 bits (only 16 bit saturates correctly in simd)
 
@@ -213,5 +213,7 @@ DEFINE_SILLY_SSE2_VERSIONS(min, stacked)
 DEFINE_SILLY_SSE2_VERSIONS(max, stacked)
 DEFINE_SILLY_SSE2_VERSIONS(min, native)
 DEFINE_SILLY_SSE2_VERSIONS(max, native)
+
+#undef DEFINE_SILLY_SSE2_VERSIONS
 
 } } } }

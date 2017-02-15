@@ -5,9 +5,9 @@
 #include "../../common/simd.h"
 #include "../../common/16bit.h"
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic {
 
-typedef Word (Operator)(Word, Word, Word, Word, Word, Word, Word, Word, Word, int);
+typedef Word (Operator16)(Word, Word, Word, Word, Word, Word, Word, Word, Word, int);
 
 enum Directions {
     Vertical = 1,
@@ -17,7 +17,7 @@ enum Directions {
 };
 
 //height should be already divised by 2
-template<Border borderMode, Operator op>
+template<Border borderMode, Operator16 op>
 void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
     UNUSED(height);
     Byte *pDstLsb = pDst + nOrigHeight * dstPitch / 2;
@@ -43,8 +43,8 @@ void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pS
     }
 }
 
-template<Border borderMode, Operator op>
-void process_line_morpho_interleaved_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
+template<Border borderMode, Operator16 op>
+void process_line_morpho_native_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
     UNUSED(dstPitch); UNUSED(srcPitch); UNUSED(height); UNUSED(nOrigHeight);
 
     const int leftOffset = borderMode == Border::Left ? 0 : 1;
@@ -70,7 +70,7 @@ struct MorphologicProcessor {
     typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight);
 
     template<ProcessLineC process_line_left, ProcessLineC process_line, ProcessLineC process_line_right>
-    static void generic_c(T *pDst, ptrdiff_t nDstPitch, const T *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
+    static void generic_16_c(T *pDst, ptrdiff_t nDstPitch, const T *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
     {
         const T *pSrcp = pSrc - nSrcPitch;
         const T *pSrcn = pSrc + nSrcPitch;
@@ -148,7 +148,7 @@ void generic_custom_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc,
 
 
 template<class T>
-void generic_custom_interleaved_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
+void generic_custom_native_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
 {
     UNUSED(nOrigHeight);
 

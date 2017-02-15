@@ -1,4 +1,4 @@
-#include "expand16.h"
+#include "expand.h"
 #include "../functions16.h"
 
 using namespace Filtering;
@@ -62,69 +62,69 @@ static inline Word maximumThresholded(Word a1, Word a2, Word a3, Word a4, Word a
     return static_cast<Word>(nMaximum);
 }
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 { namespace Expand16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic { namespace Expand {
 
-    class NewValue {
+    class NewValue16 {
         int nMax;
         int nMaxDeviation;
         Word nValue;
     public:
-        NewValue(Word nValue, int nMaxDeviation) : nMax(-1), nMaxDeviation(nMaxDeviation), nValue(nValue) { }
+        NewValue16(Word nValue, int nMaxDeviation) : nMax(-1), nMaxDeviation(nMaxDeviation), nValue(nValue) { }
         void add(Word _nValue) { if ( _nValue > nMax ) nMax = _nValue; }
         Word finalize() const { return static_cast<Word>(nMax < 0 ? nValue : (nMax - nValue > nMaxDeviation ? nValue + nMaxDeviation : nMax)); }
     };
 
 
-StackedProcessor *expand_square_stacked_c = &MorphologicProcessor<Byte>::generic_c<
+StackedProcessor *expand_square_stacked_c = &MorphologicProcessor<Byte>::generic_16_c<
     process_line_morpho_stacked_c<Border::Left, maximumThresholded<::maximum_square>>,
     process_line_morpho_stacked_c<Border::None, maximumThresholded<::maximum_square>>,
     process_line_morpho_stacked_c<Border::Right, maximumThresholded<::maximum_square>>
     >;
 
-StackedProcessor *expand_horizontal_stacked_c = &MorphologicProcessor<Byte>::generic_c<
+StackedProcessor *expand_horizontal_stacked_c = &MorphologicProcessor<Byte>::generic_16_c<
     process_line_morpho_stacked_c<Border::Left, maximumThresholded<::maximum_horizontal>>,
     process_line_morpho_stacked_c<Border::None, maximumThresholded<::maximum_horizontal>>,
     process_line_morpho_stacked_c<Border::Right, maximumThresholded<::maximum_horizontal>>
     >;
 
-StackedProcessor *expand_vertical_stacked_c = &MorphologicProcessor<Byte>::generic_c<
+StackedProcessor *expand_vertical_stacked_c = &MorphologicProcessor<Byte>::generic_16_c<
     process_line_morpho_stacked_c<Border::Left, maximumThresholded<::maximum_vertical>>,
     process_line_morpho_stacked_c<Border::None, maximumThresholded<::maximum_vertical>>,
     process_line_morpho_stacked_c<Border::Right, maximumThresholded<::maximum_vertical>>
     >;
 
-StackedProcessor *expand_both_stacked_c = &MorphologicProcessor<Byte>::generic_c<
+StackedProcessor *expand_both_stacked_c = &MorphologicProcessor<Byte>::generic_16_c<
     process_line_morpho_stacked_c<Border::Left, maximumThresholded<::maximum_both>>,
     process_line_morpho_stacked_c<Border::None, maximumThresholded<::maximum_both>>,
     process_line_morpho_stacked_c<Border::Right, maximumThresholded<::maximum_both>>
     >;
 
-InterleavedProcessor *expand_square_interleaved_c = &MorphologicProcessor<Word>::generic_c<
-    process_line_morpho_interleaved_c<Border::Left, maximumThresholded<::maximum_square>>,
-    process_line_morpho_interleaved_c<Border::None, maximumThresholded<::maximum_square>>,
-    process_line_morpho_interleaved_c<Border::Right, maximumThresholded<::maximum_square>>
+Processor16 *expand_square_native_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_square>>,
+    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_square>>,
+    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_square>>
     >;
 
-InterleavedProcessor *expand_horizontal_interleaved_c = &MorphologicProcessor<Word>::generic_c<
-    process_line_morpho_interleaved_c<Border::Left, maximumThresholded<::maximum_horizontal>>,
-    process_line_morpho_interleaved_c<Border::None, maximumThresholded<::maximum_horizontal>>,
-    process_line_morpho_interleaved_c<Border::Right, maximumThresholded<::maximum_horizontal>>
+Processor16 *expand_horizontal_native_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_horizontal>>,
+    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_horizontal>>,
+    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_horizontal>>
     >;
 
-InterleavedProcessor *expand_vertical_interleaved_c = &MorphologicProcessor<Word>::generic_c<
-    process_line_morpho_interleaved_c<Border::Left, maximumThresholded<::maximum_vertical>>,
-    process_line_morpho_interleaved_c<Border::None, maximumThresholded<::maximum_vertical>>,
-    process_line_morpho_interleaved_c<Border::Right, maximumThresholded<::maximum_vertical>>
+Processor16 *expand_vertical_native_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_vertical>>,
+    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_vertical>>,
+    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_vertical>>
     >;
 
-InterleavedProcessor *expand_both_interleaved_c = &MorphologicProcessor<Word>::generic_c<
-    process_line_morpho_interleaved_c<Border::Left, maximumThresholded<::maximum_both>>,
-    process_line_morpho_interleaved_c<Border::None, maximumThresholded<::maximum_both>>,
-    process_line_morpho_interleaved_c<Border::Right, maximumThresholded<::maximum_both>>
+Processor16 *expand_both_native_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_both>>,
+    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_both>>,
+    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_both>>
     >;
 
 
-StackedProcessor *expand_custom_stacked_c       = &generic_custom_stacked_c<NewValue>;
-InterleavedProcessor *expand_custom_interleaved_c   = &generic_custom_interleaved_c<NewValue>;
+StackedProcessor *expand_custom_stacked_c       = &generic_custom_stacked_c<NewValue16>;
+Processor16 *expand_custom_native_c   = &generic_custom_native_c<NewValue16>;
 
 } } } } }

@@ -1,6 +1,6 @@
 #ifndef __Mt_Expand16_H__
 #define __Mt_Expand16_H__
-
+#if 0
 #include "../morphologic16.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 { namespace Expand16 {
@@ -12,11 +12,11 @@ extern StackedProcessor *expand_vertical_stacked_c;
 extern StackedProcessor *expand_both_stacked_c;
 extern StackedProcessor *expand_custom_stacked_c;
 
-extern InterleavedProcessor *expand_square_interleaved_c;
-extern InterleavedProcessor *expand_horizontal_interleaved_c;
-extern InterleavedProcessor *expand_vertical_interleaved_c;
-extern InterleavedProcessor *expand_both_interleaved_c;
-extern InterleavedProcessor *expand_custom_interleaved_c;
+extern Processor16 *expand_square_interleaved_c;
+extern Processor16 *expand_horizontal_interleaved_c;
+extern Processor16 *expand_vertical_interleaved_c;
+extern Processor16 *expand_both_interleaved_c;
+extern Processor16 *expand_custom_interleaved_c;
 
 class Expand16 : public Morphologic16::MorphologicFilter16
 {
@@ -49,23 +49,23 @@ public:
         } else {
             if ( parameters["mode"].toString() == "square" )
             {
-                interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(expand_square_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+                processors16.push_back(Filtering::Processor<Processor16>(expand_square_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             }
             else if ( parameters["mode"].toString() == "horizontal" )
             {
-                interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(expand_horizontal_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+                processors16.push_back(Filtering::Processor<Processor16>(expand_horizontal_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             }
             else if ( parameters["mode"].toString() == "vertical" )
             {
-                interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(expand_vertical_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+                processors16.push_back(Filtering::Processor<Processor16>(expand_vertical_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             }
             else if ( parameters["mode"].toString() == "both" )
             {
-                interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(expand_both_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+                processors16.push_back(Filtering::Processor<Processor16>(expand_both_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             }
             else
             {
-                interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(expand_custom_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+                processors16.push_back(Filtering::Processor<Processor16>(expand_custom_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
                 FillCoordinates( parameters["mode"].toString() );
             }
         }
@@ -84,7 +84,7 @@ public:
         return add_defaults( signature );
     }
 };
-
+#endif
 } } } } } // namespace Expand, Morphologic, Filter, MaskTools, Filtering
 
 #endif

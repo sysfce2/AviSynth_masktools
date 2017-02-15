@@ -1,12 +1,12 @@
 #ifndef __Mt_Inflate16_H__
 #define __Mt_Inflate16_H__
-
+#if 0
 #include "../morphologic16.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 { namespace Inflate16 {
 
 extern StackedProcessor *inflate_stacked_c;
-extern InterleavedProcessor *inflate_interleaved_c;
+extern Processor16 *inflate_native_c;
 
 class Inflate16 : public Morphologic16::MorphologicFilter16
 {
@@ -17,7 +17,7 @@ public:
             /* add the processors */
             stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inflate_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         } else {
-            interleavedProcessors.push_back(Filtering::Processor<InterleavedProcessor>(inflate_interleaved_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors16.push_back(Filtering::Processor<Processor16>(inflate_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         }
     }
 
@@ -35,5 +35,5 @@ public:
 };
 
 } } } } } // namespace Inflate, Morphologic, Filter, MaskTools, Filtering
-
+#endif
 #endif

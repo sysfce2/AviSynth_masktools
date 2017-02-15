@@ -1,4 +1,4 @@
-#include "deflate16.h"
+#include "deflate.h"
 #include "../functions16.h"
 #include "../../../common/simd.h"
 
@@ -19,18 +19,18 @@ static MT_FORCEINLINE Word meanMinThresholded(Word a1, Word a2, Word a3, Word a4
     return static_cast<Word>(nMeanMin);
 }
 
-namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic16 { namespace Deflate16 {
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic { namespace Deflate {
 
-StackedProcessor *deflate_stacked_c = &MorphologicProcessor<Byte>::generic_c<
+StackedProcessor *deflate_stacked_c = &MorphologicProcessor<Byte>::generic_16_c<
     process_line_morpho_stacked_c<Border::Left, meanMinThresholded>,
     process_line_morpho_stacked_c<Border::None, meanMinThresholded>,
     process_line_morpho_stacked_c<Border::Right, meanMinThresholded>
 >;
 
-InterleavedProcessor *deflate_interleaved_c = &MorphologicProcessor<Word>::generic_c<
-    process_line_morpho_interleaved_c<Border::Left, meanMinThresholded>,
-    process_line_morpho_interleaved_c<Border::None, meanMinThresholded>,
-    process_line_morpho_interleaved_c<Border::Right, meanMinThresholded>
+Processor16 *deflate_native_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_native_c<Border::Left, meanMinThresholded>,
+    process_line_morpho_native_c<Border::None, meanMinThresholded>,
+    process_line_morpho_native_c<Border::Right, meanMinThresholded>
 >;
 
 } } } } }
