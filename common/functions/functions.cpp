@@ -17,7 +17,7 @@ void Functions::memset_plane(Byte *ptr, ptrdiff_t pitch, int width, int height, 
 
 void Functions::memset_plane_16(Byte *ptr, ptrdiff_t pitch, int width, int height, Word value)
 {
-  if (pitch == (size_t)width * sizeof(uint16_t)) {
+  if ((size_t)pitch == width * sizeof(uint16_t)) {
     std::fill_n((Word *)ptr, width*height, value);
   }
   else {
@@ -30,7 +30,7 @@ void Functions::memset_plane_16(Byte *ptr, ptrdiff_t pitch, int width, int heigh
 
 void Functions::memset_plane_32(Byte *ptr, ptrdiff_t pitch, int width, int height, float value)
 {
-  if (pitch == (size_t)width * sizeof(float)) {
+  if ((size_t)pitch == width * sizeof(float)) {
     std::fill_n((float *)ptr, width*height, value);
   }
   else {
