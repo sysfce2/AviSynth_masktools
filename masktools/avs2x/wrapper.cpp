@@ -41,24 +41,24 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
     AVS_linkage = vectors;
 #endif
 
-   Avisynth2x::Filter<Invert::Invert>::create( env );
+   Avisynth2x::Filter<Invert::Invert>::create( env ); // 8-16
    Avisynth2x::Filter<Binarize::Binarize>::create( env ); // 8-16
    Avisynth2x::Filter<Morphologic::Inflate::Inflate>::create( env ); // 8-16
    Avisynth2x::Filter<Morphologic::Deflate::Deflate>::create( env ); // 8-16
    Avisynth2x::Filter<Morphologic::Inpand::Inpand>::create( env ); // 8-16
    Avisynth2x::Filter<Morphologic::Expand::Expand>::create( env ); // 8-16
    Avisynth2x::Filter<Lut::Single::Lut>::create( env ); // 8-16
-   Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env );
-   Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env );
-   Avisynth2x::Filter<Lut::Spatial::Luts>::create( env );
-   Avisynth2x::Filter<Lut::Frame::Lutf>::create( env );
-   Avisynth2x::Filter<Lut::SpatialExtended::Lutsx>::create( env );
-   Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env );
+   Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::Spatial::Luts>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::Frame::Lutf>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::SpatialExtended::Lutsx>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env ); // 8 bit only
    Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16
    Avisynth2x::Filter<Logic::Logic>::create( env ); // 8-16
-   Avisynth2x::Filter<Convolution::Convolution>::create( env );
-   Avisynth2x::Filter<Blur::MappedBlur>::create( env );
-   Avisynth2x::Filter<Gradient::Gradient>::create( env );
+   Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Blur::MappedBlur>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Gradient::Gradient>::create( env ); // 8 bit only
    Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-16
    Avisynth2x::Filter<Support::Average::Average>::create( env ); // 8-16
    Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env ); // 8-16
