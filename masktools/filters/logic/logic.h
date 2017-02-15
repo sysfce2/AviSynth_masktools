@@ -83,12 +83,12 @@ protected:
     if (bits_per_pixel == 8) {
       processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
         frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-        dst.width(), dst.height(), nThresholdDestination, nThresholdSource);
+        dst.width(), dst.height(), (Byte)nThresholdDestination, (Byte)nThresholdSource);
     }
     else if (bits_per_pixel <= 16) {
       processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
         frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-        dst.width(), dst.height(), dst.origheight(), nThresholdDestination, nThresholdSource);
+        dst.width(), dst.height(), dst.origheight(), (Word)nThresholdDestination, (Word)nThresholdSource);
     }
   }
 
