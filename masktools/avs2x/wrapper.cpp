@@ -57,7 +57,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16
    Avisynth2x::Filter<Logic::Logic>::create( env ); // 8-16
    Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8 bit only
-   Avisynth2x::Filter<Blur::MappedBlur>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Blur::MappedBlur>::create( env ); // 8-32
    Avisynth2x::Filter<Gradient::Gradient>::create( env ); // 8 bit only
    Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-16
    Avisynth2x::Filter<Support::Average::Average>::create( env ); // 8-16
