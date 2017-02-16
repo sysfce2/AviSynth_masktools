@@ -9,6 +9,7 @@
 #include "../filters/lut/lutf/lutf.h"
 #include "../filters/lut/lutxy/lutxy.h"
 #include "../filters/lut/lutxyz/lutxyz.h"
+#include "../filters/lut/lutxyza/lutxyza.h"
 #include "../filters/lut/lutsx/lutsx.h"
 #include "../filters/lut/lutspa/lutspa.h"
 #include "../filters/mask/edge/edgemask.h"
@@ -48,8 +49,9 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Morphologic::Inpand::Inpand>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Morphologic::Expand::Expand>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Lut::Single::Lut>::create( env ); // 8-32, stacked, lut for bits<=16, realtime otherwise
-   Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env ); // 8-32, lut for bits<=14, realtime otherwise
-   Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env ); // 8-32, lut for bits<=12, realtime otherwise, may ask realtime=false for 14,16
+   Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env ); // 8-32 , lut only for 8 bits, 10+ bits realtime
+   Avisynth2x::Filter<Lut::Quad::Lutxyza>::create(env); // 8-32 , four clips, realtime only
    Avisynth2x::Filter<Lut::Spatial::Luts>::create( env ); // 8 bit only
    Avisynth2x::Filter<Lut::Frame::Lutf>::create( env ); // 8 bit only
    Avisynth2x::Filter<Lut::SpatialExtended::Lutsx>::create( env ); // 8 bit only
