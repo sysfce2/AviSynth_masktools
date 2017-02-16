@@ -7,8 +7,16 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Trial {
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, const Byte *lut);
+typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, Parser::Context &ctx);
 
 Processor lut_c;
+
+ProcessorCtx realtime8_c;
+extern ProcessorCtx *realtime10_c;
+extern ProcessorCtx *realtime12_c;
+extern ProcessorCtx *realtime14_c;
+extern ProcessorCtx *realtime16_c;
+ProcessorCtx realtime32_c;
 
 class Lutxyz : public MaskTools::Filter
 {
@@ -33,31 +41,55 @@ class Lutxyz : public MaskTools::Filter
        return lut;
    }
 
+   // for realtime
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+
+   ProcessorCtx *processorCtx;
+   ProcessorCtx *processorCtx16;
+   ProcessorCtx *processorCtx32;
+   int bits_per_pixel;
+   bool realtime;
+
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
         UNUSED(constraints);
-        lut_c(dst.data(), dst.pitch(),
+        if (realtime) {
+          // thread safety
+          Parser::Context ctx(*parsed_expressions[nPlane]);
+          processorCtx(dst.data(), dst.pitch(), 
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
+            frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+            dst.width(), dst.height(), ctx);
+        }
+        else if (bits_per_pixel == 8) {
+          lut_c(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
             dst.width(), dst.height(), luts[nPlane].ptr);
+        }
     }
 
 public:
    Lutxyz(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
-      if (bit_depths[C] != 8) {
-        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
-        return;
+      for (int i = 0; i < 3; i++) {
+        parsed_expressions[i] = nullptr;
       }
-     
-      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
-      
+
       for (int i = 0; i < 4; ++i) {
           luts[i].used = false;
           luts[i].ptr = nullptr;
       }
+
+      bits_per_pixel = bit_depths[C];
+      realtime = parameters["realtime"].toBool();
+      
+      if (bits_per_pixel > 8)
+        realtime = true;
+
+      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z);
 
@@ -73,14 +105,43 @@ public:
               continue;
           }
 
+          bool customExpressionDefined = false;
           if (parameters[expr_strs[i]].is_defined()) {
-              parser.parse(parameters[expr_strs[i]].toString(), " ");
+            parser.parse(parameters[expr_strs[i]].toString(), " ");
+            customExpressionDefined = true;
+          }
+          else
+            parser.parse(parameters["expr"].toString(), " ");
+
+          // for check:
+          Parser::Context ctx(parser.getExpression());
+
+          if (!ctx.check())
+          {
+            error = "invalid expression in the lut";
+            return;
+          }
+
+          if (realtime) {
+            parsed_expressions[i] = new std::deque<Parser::Symbol>(parser.getExpression());
+
+            switch (bits_per_pixel) {
+            case 8: processorCtx = realtime8_c; break;
+            case 10: processorCtx = realtime10_c; break;
+            case 12: processorCtx = realtime12_c; break;
+            case 14: processorCtx = realtime14_c; break;
+            case 16: processorCtx = realtime16_c; break;
+            case 32: processorCtx = realtime32_c; break;
+            }
+            continue;
+          }
+
+          if (customExpressionDefined) {
               luts[i].used = true;
-              luts[i].ptr = calculateLut(parser.getExpression());
+              luts[i].ptr = calculateLut(parser.getExpression()); // 8 bit always
           }
           else {
               if (luts[3].ptr == nullptr) {
-                  parser.parse(parameters["expr"].toString(), " ");
                   luts[3].used = true;
                   luts[3].ptr = calculateLut(parser.getExpression());
               }
@@ -95,6 +156,9 @@ public:
            if (luts[i].used) {
                delete[] luts[i].ptr;
            }
+       }
+       for (int i = 0; i < 3; i++) {
+         delete parsed_expressions[i];
        }
    }
 
@@ -111,6 +175,7 @@ public:
       signature.add(Parameter(String("x"), "yExpr"));
       signature.add(Parameter(String("x"), "uExpr"));
       signature.add(Parameter(String("x"), "vExpr"));
+      signature.add(Parameter(false, "realtime"));
 
       return add_defaults( signature );
    }
