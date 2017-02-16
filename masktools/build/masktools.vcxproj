@@ -525,6 +525,7 @@
     <ClInclude Include="..\filters\blur\mappedblur.h" />
     <ClInclude Include="..\filters\invert\invert.h" />
     <ClInclude Include="..\filters\binarize\binarize.h" />
+    <ClInclude Include="..\filters\lut\lutxyza\lutxyza.h" />
     <ClInclude Include="..\filters\mask\functions16.h" />
     <ClInclude Include="..\filters\mask\functions32.h" />
     <ClInclude Include="..\filters\merge\merge.h" />
@@ -572,6 +573,7 @@
     <ClCompile Include="..\filters\invert\invert.cpp" />
     <ClCompile Include="..\filters\binarize\binarize.cpp" />
     <ClCompile Include="..\filters\logic\logic16.cpp" />
+    <ClCompile Include="..\filters\lut\lutxyza\lutxyza.cpp" />
     <ClCompile Include="..\filters\lut\lut\lut16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask32.cpp" />

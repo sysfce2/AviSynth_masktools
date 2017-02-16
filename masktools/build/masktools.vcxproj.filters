@@ -133,6 +133,9 @@
     <Filter Include="filters\support\clamp16">
       <UniqueIdentifier>{514c8348-941b-466e-b57a-ff11408b6dfe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="filters\lut\lutxyza">
+      <UniqueIdentifier>{21848e79-178e-4c2f-87b3-e805139a9d03}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\filters\morphologic\functions.h">
@@ -266,6 +269,9 @@
     </ClInclude>
     <ClInclude Include="..\filters\mask\functions32.h">
       <Filter>filters\mask</Filter>
+    </ClInclude>
+    <ClInclude Include="..\filters\lut\lutxyza\lutxyza.h">
+      <Filter>filters\lut\lutxyza</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -403,6 +409,9 @@
     </ClCompile>
     <ClCompile Include="..\filters\blur\mappedblur32.cpp">
       <Filter>filters\blur</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\lut\lutxyza\lutxyza.cpp">
+      <Filter>filters\lut\lutxyza</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
