@@ -9,7 +9,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { 
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, const Byte lut[65536]);
 typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, const Word *lut);
-typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Parser::Context *ctx);
+typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Parser::Context &ctx);
 
 Processor lut_c;
 extern Processor16 *lut10_c;
@@ -82,7 +82,6 @@ class Lutxy : public MaskTools::Filter
    ProcessorCtx *processorCtx16;
    ProcessorCtx *processorCtx32;
    int bits_per_pixel;
-   bool isStacked;
    bool realtime;
 
 protected:
@@ -93,7 +92,7 @@ protected:
         if (realtime) {
           // thread safety
           Parser::Context ctx(*parsed_expressions[nPlane]);
-          processorCtx(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), &ctx);
+          processorCtx(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), ctx);
         }
         else if (bits_per_pixel == 8)
           processor(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), luts[nPlane].ptr);

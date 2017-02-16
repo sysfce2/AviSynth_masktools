@@ -76,7 +76,7 @@ public:
         nHeight = childs[0]->height();
         C = childs[0]->colorspace();
 
-        operators[0] = Operator((float)parameters["Y"].toFloat()); // prepare, once we'll have float for memset
+        operators[0] = Operator((float)parameters["Y"].toFloat()); // prepare, float for memset
         operators[1] = Operator((float)parameters["U"].toFloat());
         operators[2] = Operator((float)parameters["V"].toFloat());
 

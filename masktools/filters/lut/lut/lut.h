@@ -8,7 +8,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { 
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Byte lut[256]);
 typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked);
-typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, Parser::Context *ctx);
+typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, Parser::Context &ctx);
 
 Processor lut_c;
 
@@ -48,7 +48,7 @@ protected:
         if (realtime) {
           // thread safety
           Parser::Context ctx(*parsed_expressions[nPlane]);
-          processorCtx(dst.data(), dst.pitch(), dst.width(), dst.height(), &ctx);
+          processorCtx(dst.data(), dst.pitch(), dst.width(), dst.height(), ctx);
         }
         else if (bits_per_pixel == 8)
           processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane]);
