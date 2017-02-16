@@ -16,6 +16,8 @@ public:
       VARIABLE_X,
       VARIABLE_Y,
       VARIABLE_Z,
+      // 4th variable since v2.2.1
+      VARIABLE_A,
 
       VARIABLE_BITDEPTH,
       // special adaptive constants filled by bitdepth
@@ -90,6 +92,9 @@ public:
    static Symbol X;
    static Symbol Y;
    static Symbol Z;
+   // v2.2.1
+   // 4th variable: a
+   static Symbol A;
    // Auto bitdepth conv
    static Symbol BITDEPTH;
    // special adaptive constants filled by bitdepth
@@ -129,7 +134,7 @@ class Context {
    int nSymbols;
    int nPos;
 
-   double x, y, z;
+   double x, y, z, a;
    int bitdepth; // bit depth
    double rec_compute();
    String rec_infix();
@@ -141,11 +146,12 @@ public:
    ~Context();
 
    bool check();
-   double compute(double x, double y = -1.0f, double z = -1.0f, double bitdepth = 8);
+   // v2.2.1: variable a
+   double compute(double x, double y = -1.0f, double z = -1.0f, double a = -1.0f, double bitdepth = 8);
    String infix();
-   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f, double _b = 8) { return clip<Byte, double>( compute(_x, _y, _z, _b) ); } // byte: default 8 bit
-   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f, double _b = 16) { return clip<Word, double>( compute(_x, _y, _z, _b) ); } // word: default 16 bit
-   Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _b = 0) { return (float)(compute(_x, _y, _z, _b)); } // float: 1<<0 = 1.0 default base
+   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, double _b = 8) { return clip<Byte, double>( compute(_x, _y, _z, _a, _b) ); } // byte: default 8 bit
+   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, double _b = 16) { return clip<Word, double>( compute(_x, _y, _z, _a, _b) ); } // word: default 16 bit
+   Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, double _b = 0) { return (float)(compute(_x, _y, _z, _a, _b)); } // float: 1<<0 = 1.0 default base
 };
 
 } } // namespace Parser, Filtering

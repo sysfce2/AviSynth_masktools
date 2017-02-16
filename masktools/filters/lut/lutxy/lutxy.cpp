@@ -58,7 +58,7 @@ static void realtime16_t_c(Byte *dstp, ptrdiff_t dst_pitch, const Byte *srcp, pt
       Word pixelY = reinterpret_cast<const uint16_t *>(srcp)[x];
       if (bits_per_pixel != 16) pixelY = min(pixelY, max_pixel_value); // clamp input below 16 bit
 
-      Word result = ctx->compute_word(pixelX, pixelY, -1, bits_per_pixel);
+      Word result = ctx->compute_word(pixelX, pixelY, -1.0 /*n/a*/, -1.0 /*n/a*/, bits_per_pixel);
       
       if (bits_per_pixel != 16) result = min(result, max_pixel_value); // clamp output below 16 bit
       reinterpret_cast<uint16_t *>(dstp)[x] = result;
@@ -73,7 +73,7 @@ void Filtering::MaskTools::Filters::Lut::Dual::realtime32_c(Byte *dstp, ptrdiff_
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(dstp)[x] = ctx->compute_float(reinterpret_cast<Float *>(dstp)[x], reinterpret_cast<const Float *>(srcp)[x], -1, 32);
+      reinterpret_cast<Float *>(dstp)[x] = ctx->compute_float(reinterpret_cast<Float *>(dstp)[x], reinterpret_cast<const Float *>(srcp)[x], -1.0 /*n/a*/, -1.0 /*n/a*/, 32);
     }
     dstp += dst_pitch;
     srcp += nSrcPitch;

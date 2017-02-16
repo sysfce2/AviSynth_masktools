@@ -56,20 +56,20 @@ static double mmax             (double x, double y, double z) { UNUSED(z); retur
 static double floor           (double x, double y, double z) { UNUSED(y); UNUSED(z); return floor(x); }
 static double ceil            (double x, double y, double z) { UNUSED(y); UNUSED(z); return ceil(x); }
 static double trunc           (double x, double y, double z) { UNUSED(y); UNUSED(z); return double(Int64(x)); }
-// bit depth conversion helpers. x:value on 8 bit scale y: bit depth
+// bit depth conversion helpers. x:value on 8 bit scale y: bit depth 8-32
 static double upscaleByShift(double x, double y, double z)
 {
   UNUSED(z);
   if (y == 8) return x; // 8 bit 
   if (y == 32) return x / 255; // float
-  return double(clip<Int64, double>(x) << clip<Int64, double>(y - 8));
+  return double(x * (1 << ((int)y - 8))); // shift by y-8 bits
 } 
 static double upscaleByStretch(double x, double y, double z) // e.g. 8->10 bit rgb: x/255*1023
 {
   UNUSED(z);
   if (y == 8) return x; // 8 bit 
   if (y == 32) return x / 255; // float
-  return x / 255 * ((1 << clip<Int64, double>(y)) - 1.0);
+  return x / 255 * ((1 << (int)y) - 1);
 }
 
 Symbol Symbol::Addition       ("+" , OPERATOR, 2, addition);
@@ -107,9 +107,11 @@ Symbol Symbol::Pi             ("pi", 3.1415927, NUMBER  , 0, NULL);
 Symbol Symbol::X              ("x" , VARIABLE_X, 0, NULL);  
 Symbol Symbol::Y              ("y" , VARIABLE_Y, 0, NULL);
 Symbol Symbol::Z              ("z" , VARIABLE_Z, 0, NULL);
-// global bitdepth parameter for autoscale
+// preliminary lut variable: A(lpha)
+Symbol Symbol::A              ("a" , VARIABLE_A, 0, NULL);
+// global bitdepth parameter for autoscale, since v2.2.1
 Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE_BITDEPTH, 0, NULL); 
-// bit-depth adaptive constants
+// bit-depth adaptive constants, since v2.2.1
 Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE_RANGE_HALF, 0, NULL); // 128  scaled
 Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE_RANGE_MAX, 0, NULL);   // 255, 4095, .. 65535
 Symbol Symbol::RANGE_SIZE     ("range_size", VARIABLE_RANGE_SIZE, 0, NULL); // 256, 1024, 4096, 16384, 65536
@@ -134,7 +136,7 @@ Symbol Symbol::Max            ("max", FUNCTION, 2, mmax);
 Symbol Symbol::Ceil           ("ceil", FUNCTION, 1, ceil);
 Symbol Symbol::Floor          ("floor", FUNCTION, 1, floor);
 Symbol Symbol::Trunc          ("trunc", FUNCTION, 1, trunc);
-// automatic bit-depth scaling helpers
+// automatic bit-depth scaling helpers, since v2.2.1
 Symbol Symbol::UpscaleByShift  ("#B", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByShift);
 Symbol Symbol::UpscaleByStretch("#F", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByStretch);
 
@@ -174,7 +176,8 @@ double Symbol::getValue(double x, double y, double z) const
    case VARIABLE_X:
    case VARIABLE_Y:
    case VARIABLE_Z:
-
+   // since v2.2.1:
+   case VARIABLE_A: 
    // automatic silent parameter of the script
    case VARIABLE_BITDEPTH:
    // embedded expr constants
@@ -220,6 +223,7 @@ double Context::rec_compute()
    case Symbol::VARIABLE_X: return x;
    case Symbol::VARIABLE_Y: return y;
    case Symbol::VARIABLE_Z: return z;
+   case Symbol::VARIABLE_A: return a;
    case Symbol::VARIABLE_BITDEPTH: return bitdepth; // bit-depth for autoscale
 
    case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
@@ -265,12 +269,13 @@ double Context::rec_compute()
    }
 }
 
-double Context::compute(double x, double y, double z, double bitdepth)
+double Context::compute(double x, double y, double z, double a, double bitdepth)
 {
    nPos = nSymbols;
    this->x = x;
    this->y = y;
    this->z = z;
+   this->a = a;
 
    this->bitdepth = (int)bitdepth;
    // all other expr constants are calculated from bitdepth
@@ -287,7 +292,15 @@ String Context::rec_infix()
     case Symbol::VARIABLE_X: 
     case Symbol::VARIABLE_Y: 
     case Symbol::VARIABLE_Z: 
+    case Symbol::VARIABLE_A:
     case Symbol::VARIABLE_BITDEPTH:
+    case Symbol::VARIABLE_RANGE_HALF:
+    case Symbol::VARIABLE_RANGE_MAX:
+    case Symbol::VARIABLE_RANGE_SIZE:
+    case Symbol::VARIABLE_YMIN:
+    case Symbol::VARIABLE_YMAX:
+    case Symbol::VARIABLE_CMIN:
+    case Symbol::VARIABLE_CMAX:
     case Symbol::NUMBER: return s.value;
     case Symbol::FUNCTION:
         if (s.nParameter == 1) {
