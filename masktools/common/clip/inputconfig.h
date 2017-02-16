@@ -28,6 +28,7 @@ public:
    InputConfiguration(const Input &input) { push_back( input ); }
    InputConfiguration(const Input &input1, const Input &input2) { push_back( input1 ); push_back( input2 ); }
    InputConfiguration(const Input &input1, const Input &input2, const Input &input3) { push_back( input1 ); push_back( input2 ); push_back( input3 ); }
+   InputConfiguration(const Input &input1, const Input &input2, const Input &input3, const Input &input4) { push_back(input1); push_back(input2); push_back(input3); push_back(input4); }
 
 };
 
@@ -37,6 +38,7 @@ InputConfiguration &OneFrame();
 InputConfiguration &InPlaceTwoFrame();
 InputConfiguration &TwoFrame();
 InputConfiguration &InPlaceThreeFrame();
+InputConfiguration &InPlaceFourFrame();
 InputConfiguration &InPlaceTemporalOneFrame();
 InputConfiguration &TemporalOneFrame();
 
