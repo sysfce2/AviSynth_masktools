@@ -24,20 +24,54 @@ extern ProcessorCtx *realtime14_c;
 extern ProcessorCtx *realtime16_c;
 ProcessorCtx realtime32_c;
 
-//#define METHOD_1
 
 class Lutxy : public MaskTools::Filter
 {
-  /*
+   // re-use repeated luts, like in lutxyz
    struct Lut {
      bool used;
      Byte *ptr;
    };
 
-   Lut Luts[4];
-   */
-   Byte luts[3][65536];
-   Word *luts16[3]; // 10+bits
+   Lut luts[4];
+   
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
+     Parser::Context ctx(expr);
+     int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
+     Word max_pixel_value = (1 << bits_per_pixel) - 1;
+     size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
+     Byte *lut = new Byte[buffer_size];
+
+     switch (bits_per_pixel) {
+     case 8:
+       for (int x = 0; x < 256; x++)
+         for (int y = 0; y < 256; y++)
+           lut[(x << 8) + y] = ctx.compute_byte(x, y);
+       break;
+     case 10:
+       for (int x = 0; x < 1024; x++)
+         for (int y = 0; y < 1024; y++)
+           reinterpret_cast<Word *>(lut)[(x << 10) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
+       break;
+     case 12:
+       for (int x = 0; x < 4096; x++)
+         for (int y = 0; y < 4096; y++)
+           reinterpret_cast<Word *>(lut)[(x << 12) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
+       break;
+     case 14:
+       for (int x = 0; x < 16384; x++)
+         for (int y = 0; y < 16384; y++)
+           reinterpret_cast<Word *>(lut)[(x << 14) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
+       break;
+     case 16:
+       // 64bit only
+       for (int x = 0; x < 65536; x++)
+         for (int y = 0; y < 65536; y++)
+           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word(x, y);
+       break;
+     }
+     return lut;
+   }
 
    // for realtime
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
@@ -62,17 +96,21 @@ protected:
           processorCtx(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), &ctx);
         }
         else if (bits_per_pixel == 8)
-          processor(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), luts[nPlane]);
+          processor(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), luts[nPlane].ptr);
         else if (bits_per_pixel <= 16)
-          processor16(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), luts16[nPlane]);
+          processor16(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), (Word *)luts[nPlane].ptr);
     }
 
 public:
    Lutxy(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
    {
       for (int i = 0; i < 3; i++) {
-        luts16[i] = nullptr;
         parsed_expressions[i] = nullptr;
+      }
+
+      for (int i = 0; i < 4; ++i) {
+        luts[i].used = false;
+        luts[i].ptr = nullptr;
       }
 
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
@@ -80,7 +118,6 @@ public:
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
 
       bits_per_pixel = bit_depths[C];
-      int max_pixel_value = (1 << bits_per_pixel) - 1;
       realtime = parameters["realtime"].toBool();
 
       // 14, 16 bit and float: default realtime, 
@@ -115,11 +152,14 @@ public:
               continue;
           }
 
-          if (parameters[expr_strs[i]].is_defined())
+          bool customExpressionDefined = false;
+          if (parameters[expr_strs[i]].is_defined()) {
             parser.parse(parameters[expr_strs[i]].toString(), " ");
-          else
+            customExpressionDefined = true;
+          } else
             parser.parse(parameters["expr"].toString(), " ");
 
+          // for check:
           Parser::Context ctx(parser.getExpression());
 
           if (!ctx.check())
@@ -144,41 +184,34 @@ public:
 
           // pure lut, no realtime
 
-          if (bits_per_pixel > 8) {
-            size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) * sizeof(uint16_t);
-            luts16[i] = reinterpret_cast<Word*>(_aligned_malloc(buffer_size, 16));
+          // save memory, reuse luts, like in xyz
+          if (customExpressionDefined) {
+            luts[i].used = true;
+            luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+          }
+          else {
+            if (luts[3].ptr == nullptr) {
+              luts[3].used = true;
+              luts[3].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+            }
+            luts[i].ptr = luts[3].ptr;
           }
 
           switch (bits_per_pixel) {
-          case 8: 
-            for (int x = 0; x < 256; x++)
-              for (int y = 0; y < 256; y++)
-                luts[i][(x << 8) + y] = ctx.compute_byte(x, y);
+          case 8:
             processor = lut_c;
             break;
           case 10:
-            for (int x = 0; x < 1024; x++)
-              for (int y = 0; y < 1024; y++)
-                luts16[i][(x << 10) + y] = min(ctx.compute_word(x, y),(Word)max_pixel_value);
             processor16 = lut10_c;
             break;
           case 12:
-            for (int x = 0; x < 4096; x++)
-              for (int y = 0; y < 4096; y++)
-                luts16[i][(x << 12) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
             processor16 = lut12_c;
             break;
           case 14:
-            for (int x = 0; x < 16384; x++)
-              for (int y = 0; y < 16384; y++)
-                luts16[i][(x << 14) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
             processor16 = lut14_c;
             break;
           case 16:
             // 64bit only
-            for (int x = 0; x < 65536; x++)
-              for (int y = 0; y < 65536; y++)
-                luts16[i][((size_t)x << 16) + y] = ctx.compute_word(x, y);
             processor16 = lut16_c;
             break;
           }
@@ -187,8 +220,12 @@ public:
 
    ~Lutxy()
    {
+     for (int i = 0; i < 4; ++i) {
+       if (luts[i].used) {
+         delete[] luts[i].ptr;
+       }
+     }
      for (int i = 0; i < 3; i++) {
-       _aligned_free(luts16[i]);
        delete parsed_expressions[i];
      }
    }
