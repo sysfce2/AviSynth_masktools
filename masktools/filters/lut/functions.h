@@ -20,25 +20,26 @@ typedef enum {
 
 } MPROCESSOR_MODE;
 
-#define EXPRESSION_SINGLE( base, mode1, mode2 ) &base< mode2 >
-#define EXPRESSION_DUAL( base, mode1, mode2 ) &base< mode1, mode2 >
+#define EXPRESSION_SINGLE( realtime, base, mode1, mode2 ) &base< realtime, mode2 >
+#define EXPRESSION_DUAL( realtime, base, mode1, mode2 ) &base< mode1, mode2 >
 
-#define MPROCESSOR(expr, param, mode) \
+#define MPROCESSOR(realtime, expr, param, mode) \
 { \
-   expr( param, mode, Nonizer ), \
-   expr( param, mode, Averager<int> ), \
-   expr( param, mode, Minimizer ), \
-   expr( param, mode, Maximizer ), \
-   expr( param, mode, Deviater<int> ), \
-   expr( param, mode, Rangizer ), \
-   expr( param, mode, Medianizer ), \
-   expr( param, mode, MedianizerBetter<4> ), \
-   expr( param, mode, MedianizerBetter<6> ), \
-   expr( param, mode, MedianizerBetter<2> ), \
+   expr( realtime, param, mode, Nonizer ), \
+   expr( realtime, param, mode, Averager<int> ), \
+   expr( realtime, param, mode, Minimizer ), \
+   expr( realtime, param, mode, Maximizer ), \
+   expr( realtime, param, mode, Deviater<int> ), \
+   expr( realtime, param, mode, Rangizer ), \
+   expr( realtime, param, mode, Medianizer ), \
+   expr( realtime, param, mode, MedianizerBetter<4> ), \
+   expr( realtime, param, mode, MedianizerBetter<6> ), \
+   expr( realtime, param, mode, MedianizerBetter<2> ), \
 }
 
-#define MPROCESSOR_SINGLE( base )     MPROCESSOR( EXPRESSION_SINGLE, base, )
-#define MPROCESSOR_DUAL( base, mode ) MPROCESSOR( EXPRESSION_DUAL, base, mode )
+#define MPROCESSOR_SINGLE( base, realtime )     MPROCESSOR( realtime, EXPRESSION_SINGLE, base, )
+#define MPROCESSOR_DUAL( base, mode ) MPROCESSOR( false, EXPRESSION_DUAL, base, mode )
+// for dual: realtime n/a
 
 static inline int ModeToInt(const String &mode)
 {
