@@ -3,7 +3,8 @@
 
 using namespace Filtering;
 
-template<class T>
+//similar template to lutf, only realtime==false (lut-mode) used
+template<bool realtime, class T>
 static void custom_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte *pLut, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode)
 {
    T new_value( mode );
@@ -33,7 +34,7 @@ static void custom_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Spatial {
 
-Processor *processors_array[NUM_MODES] = MPROCESSOR_SINGLE( custom_c );
+Processor *processors_array[NUM_MODES] = MPROCESSOR_SINGLE( custom_c, false );
 
 } } } } }
 
