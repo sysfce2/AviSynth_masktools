@@ -53,7 +53,7 @@ Differences to Masktools 2.0b1
     But you can force realtime=false even for a 16 bit lutxy (8GBytes lut table, x64 only)
    
   - Feature matrix   
-  
+```
                    8 bit | 10-16 bit | float | stacked | realtime
       mt_invert      X         X         -        -
       mt_binarize    X         X         -        X
@@ -82,7 +82,7 @@ Differences to Masktools 2.0b1
       mt_edge        X         X         X        -
       mt_hysteresis  X         X         X        -
       mt_infix/mt_polish: available only on non-XP builds
- 
+``` 
 Masktools2 info:
 http://avisynth.nl/index.php/MaskTools2
 
@@ -90,7 +90,7 @@ Article by tp7
 http://tp7.github.io/articles/masktools/
 
 Project:
-https://github.com/pinterf/masktools/tree/16bit/masktools
+https://github.com/pinterf/masktools/tree/16bit/
 
 Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
