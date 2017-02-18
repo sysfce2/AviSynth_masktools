@@ -51,23 +51,23 @@ class Lutxy : public MaskTools::Filter
      case 10:
        for (int x = 0; x < 1024; x++)
          for (int y = 0; y < 1024; y++)
-           reinterpret_cast<Word *>(lut)[(x << 10) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
+           reinterpret_cast<Word *>(lut)[(x << 10) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
        break;
      case 12:
        for (int x = 0; x < 4096; x++)
          for (int y = 0; y < 4096; y++)
-           reinterpret_cast<Word *>(lut)[(x << 12) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
+           reinterpret_cast<Word *>(lut)[(x << 12) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
        break;
      case 14:
        for (int x = 0; x < 16384; x++)
          for (int y = 0; y < 16384; y++)
-           reinterpret_cast<Word *>(lut)[(x << 14) + y] = min(ctx.compute_word(x, y), (Word)max_pixel_value);
+           reinterpret_cast<Word *>(lut)[(x << 14) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
        break;
      case 16:
        // 64bit only
        for (int x = 0; x < 65536; x++)
          for (int y = 0; y < 65536; y++)
-           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word(x, y);
+           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel);
        break;
      }
      return lut;
