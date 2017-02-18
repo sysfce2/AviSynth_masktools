@@ -29,7 +29,7 @@ class Lutxyza : public MaskTools::Filter
 
    static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
        Parser::Context ctx(expr);
-       size_t bufsize = (1 << bits_per_pixel);
+       size_t bufsize = ((size_t)1 << bits_per_pixel);
        bufsize = bufsize * bufsize*bufsize*bufsize;
        Byte *lut = new Byte[bufsize];
 
