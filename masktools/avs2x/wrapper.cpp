@@ -53,7 +53,7 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env ); // 8-32 , lut only for 8 bits, 10+ bits realtime
    Avisynth2x::Filter<Lut::Quad::Lutxyza>::create(env); // 8-32 , four clips, realtime only
    Avisynth2x::Filter<Lut::Spatial::Luts>::create( env ); // 8 bit only
-   Avisynth2x::Filter<Lut::Frame::Lutf>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Lut::Frame::Lutf>::create( env ); // 8-32, lut for bits<=12, realtime otherwise, may ask realtime=false for 14,16
    Avisynth2x::Filter<Lut::SpatialExtended::Lutsx>::create( env ); // 8 bit only
    Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env ); // 8-32 bit
    Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16, stacked
