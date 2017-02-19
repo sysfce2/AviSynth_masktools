@@ -197,7 +197,7 @@
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\</LibraryPath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.0\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">
     <ClCompile>
@@ -472,6 +472,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -577,6 +578,8 @@
     <ClCompile Include="..\filters\lut\lut\lut16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask32.cpp" />
+    <ClCompile Include="..\filters\mask\motion\motionmask16.cpp" />
+    <ClCompile Include="..\filters\mask\motion\motionmask32.cpp" />
     <ClCompile Include="..\filters\merge\merge.cpp" />
     <ClCompile Include="..\filters\merge\merge16.cpp" />
     <ClCompile Include="..\filters\morphologic\deflate\deflate16.cpp" />
