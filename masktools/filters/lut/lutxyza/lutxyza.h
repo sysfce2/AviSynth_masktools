@@ -32,12 +32,15 @@ class Lutxyza : public MaskTools::Filter
        size_t bufsize = ((size_t)1 << bits_per_pixel);
        bufsize = bufsize * bufsize*bufsize*bufsize;
        Byte *lut = new Byte[bufsize];
-
+       // expr = "x y + z + a + 4 /" -> 2 min lut calculation time on i7-3770
+       // When is it worth? LUT or realtime?
+       // Lut calculation takes 256*256*256*256 expr.evaluation
+       // This equals to 2071 frames in 1920x1080 (one plane)
        for ( int x = 0; x < 256; x++ ) {
            for ( int y = 0; y < 256; y++ ) {
                for ( int z = 0; z < 256; z++ ) {
                  for (int a = 0; a < 256; a++) {
-                   lut[((size_t)a << 24) + (x << 16) + (y << 8) + z] = ctx.compute_byte(x, y, z, a);
+                   lut[((size_t)x << 24) + (y << 16) + (z << 8) + a] = ctx.compute_byte(x, y, z, a);
                  }
                }
            }
@@ -48,6 +51,7 @@ class Lutxyza : public MaskTools::Filter
    // for realtime
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
 
+   Processor *processor;
    ProcessorCtx *processorCtx;
    ProcessorCtx *processorCtx16;
    ProcessorCtx *processorCtx32;
@@ -68,7 +72,14 @@ protected:
             frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
             dst.width(), dst.height(), ctx);
         }
-
+        else {
+          // 4D lut! 8 bit only
+          processor(dst.data(), dst.pitch(),
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+            frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+            frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
+            dst.width(), dst.height(), luts[nPlane].ptr);
+        }
     }
 
 public:
@@ -139,6 +150,9 @@ public:
             }
             continue;
           }
+
+          // 4D lut only 8 bits
+          processor = lut_c;
 
           if (customExpressionDefined) {
               luts[i].used = true;

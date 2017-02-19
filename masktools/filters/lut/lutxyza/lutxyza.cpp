@@ -7,8 +7,10 @@ void Filtering::MaskTools::Filters::Lut::Quad::lut_c(Byte *pDst, ptrdiff_t nDstP
 {
    for ( int y = 0; y < nHeight; y++ )
    {
-      for ( int x = 0; x < nWidth; x++ )
-        pDst[x] = lut[((size_t)(pDst[x])<<24) + ((size_t)(pSrc1[x])<<16) + ((size_t)(pSrc2)[x] << 8) + ((size_t)(pSrc3)[x])];
+      for (int x = 0; x < nWidth; x++) {
+        // x64! int is not enough
+        pDst[x] = lut[((size_t)(pDst[x]) << 24) + (pSrc1[x] << 16) + (pSrc2[x] << 8) + (pSrc3[x])];
+      }
       pDst += nDstPitch;
       pSrc1 += nSrc1Pitch;
       pSrc2 += nSrc2Pitch;
