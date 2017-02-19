@@ -6,44 +6,78 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Gradient {
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte *pRef, ptrdiff_t nRefPitch, int nWidth, int nHeight, int nX, int nY, int nMinimum, int nMaximum, int nPrecision);
+typedef void(Processor16)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, const Word *pRef, ptrdiff_t nRefPitch, int nWidth, int nHeight, int nX, int nY, int nMinimum, int nMaximum, int nPrecision);
+typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, const Float *pRef, ptrdiff_t nRefPitch, int nWidth, int nHeight, int nX, int nY, Float nMinimum, Float nMaximum, int nPrecision);
 
 extern Processor *sad_c;
+extern Processor16 *sad_10_c;
+extern Processor16 *sad_12_c;
+extern Processor16 *sad_14_c;
+extern Processor16 *sad_16_c;
+extern Processor32 *sad_32_c;
 
 class Gradient : public MaskTools::Filter
 {
 
    ProcessorList<Processor> processors;
+   ProcessorList<Processor16> processors16;
+   ProcessorList<Processor32> processors32;
    int nX[3];
    int nY[3];
    int nMinimum;
    int nMaximum;
+   float nMinimum_f;
+   float nMaximum_f;
    int nPrecision;
+
+   int bits_per_pixel;
 
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
-    {
-        UNUSED(n);
-        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-            dst.width(), dst.height(), nX[nPlane], nY[nPlane], nMinimum, nMaximum, nPrecision);
-    }
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
+  {
+    UNUSED(n);
+    if (bits_per_pixel == 8)
+      processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+        frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+        dst.width(), dst.height(), nX[nPlane], nY[nPlane], nMinimum, nMaximum, nPrecision);
+    else if (bits_per_pixel <= 16)
+      processors16.best_processor(constraints[nPlane])((Word *)dst.data(), dst.pitch(),
+      (Word *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        (Word *)frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+        dst.width(), dst.height(), nX[nPlane], nY[nPlane], nMinimum, nMaximum, nPrecision);
+    else // 32
+      processors32.best_processor(constraints[nPlane])((Float *)dst.data(), dst.pitch(),
+      (Float *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        (Float *)frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+        dst.width(), dst.height(), nX[nPlane], nY[nPlane], nMinimum_f, nMaximum_f, nPrecision);
+  }
 
 public:
    Gradient(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
    {
-      if (bit_depths[C] != 8) {
-        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
-        return;
-      }
+      bits_per_pixel = bit_depths[C];
      
       /* add the processors */
-      if ( parameters["distorsion"].toString() == "sad" )
+      if (parameters["distorsion"].toString() == "sad")
       {
-         processors.push_back(Filtering::Processor<Processor>(sad_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-         nMinimum = parameters["min"].is_defined() ? parameters["min"].toInt() : 0;
-         nMaximum = parameters["max"].is_defined() ? parameters["max"].toInt() : 65535;
+        switch (bits_per_pixel) {
+        case 8: processors.push_back(Filtering::Processor<Processor>(sad_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+        case 10: processors16.push_back(Filtering::Processor<Processor16>(sad_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+        case 12: processors16.push_back(Filtering::Processor<Processor16>(sad_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+        case 14: processors16.push_back(Filtering::Processor<Processor16>(sad_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+        case 16: processors16.push_back(Filtering::Processor<Processor16>(sad_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+        case 32: processors32.push_back(Filtering::Processor<Processor32>(sad_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+        }
+        if (bits_per_pixel <= 16) {
+          nMinimum = parameters["min"].is_defined() ? parameters["min"].toInt() : 0;
+          nMaximum = parameters["max"].is_defined() ? parameters["max"].toInt() : 16 * 16 * (1 << bits_per_pixel); // max sad of 16x16 block
+        }
+        else {
+          nMinimum_f = parameters["min"].is_defined() ? (Float)parameters["min"].toFloat() : 0.0f;
+          nMaximum_f = parameters["max"].is_defined() ? (Float)parameters["max"].toFloat() : 16 * 16 * 1.0f; // max sad of block size 16x16 
+        }
       }
       else 
       {
@@ -73,8 +107,8 @@ public:
       signature.add(Parameter(String("sad"), "distorsion"));
       signature.add(Parameter(0, "size_x"));
       signature.add(Parameter(0, "size_y"));
-      signature.add(Parameter(0, "min"));
-      signature.add(Parameter(65535, "max"));
+      signature.add(Parameter(0.0f, "min"));
+      signature.add(Parameter(65535.0f, "max")); // bit depth adaptive 
       signature.add(Parameter(1, "precision"));
 
       return add_defaults( signature );
