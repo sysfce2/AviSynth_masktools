@@ -413,6 +413,12 @@
     <ClCompile Include="..\filters\lut\lutxyza\lutxyza.cpp">
       <Filter>filters\lut\lutxyza</Filter>
     </ClCompile>
+    <ClCompile Include="..\filters\mask\motion\motionmask16.cpp">
+      <Filter>filters\mask\motion</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\mask\motion\motionmask32.cpp">
+      <Filter>filters\mask\motion</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\common\mt_resource.rc">
