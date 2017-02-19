@@ -1,5 +1,17 @@
 ### MaskTools 2 ###
 
+Changelog
+  v2.2.2 (work in progress)
+    - mt_lutxyza 4D lut for realtime=false! (4 GBytes LUT table, slower initial lut table calculation)
+      Allowed only on x64. When is it worth?
+      Number of expression evaluations for 4G lut calculation equals to realtime calculation on 
+      2100 frames (1920x1080 plane)
+    - mt_gradient 10-16 bit / float
+    - mt_convolution 10-16 bit / float
+    - mt_motion 10-16 bit / float
+  
+  v2.2.1 (20170218) initial high bit depth release
+
 Masktools2 v2.2.1 (20170218)
 mod by pinterf
 
@@ -68,17 +80,17 @@ Differences to Masktools 2.0b1
       mt_luts        X         -         -        -
       mt_lutf        X         X         X        -      when bits>=14   
       mt_lutsx       X         -         -        -
-      mt_lutspa      X         X         X        -      
-      mt_merge       X         X         -        X      
-      mt_logic       X         X         -        X      
-      mt_convolution X         -         -        -     
-      mt_mappedblur  X         X         X        -                
-      mt_gradient    X         -         -        -              
-      mt_makediff    X         X         -        X      
-      mt_average     X         X         -        X      
-      mt_adddiff     X         X         -        X      
-      mt_clamp       X         X         -        X      
-      mt_motionmask  X         -         -        -    
+      mt_lutspa      X         X         X        -
+      mt_merge       X         X         -        X
+      mt_logic       X         X         -        X
+      mt_convolution X         X         X        -
+      mt_mappedblur  X         X         X        -
+      mt_gradient    X         X         X        -
+      mt_makediff    X         X         -        X
+      mt_average     X         X         -        X
+      mt_adddiff     X         X         -        X
+      mt_clamp       X         X         -        X
+      mt_motion      X         X         X        -
       mt_edge        X         X         X        -
       mt_hysteresis  X         X         X        -
       mt_infix/mt_polish: available only on non-XP builds
