@@ -50,22 +50,22 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Morphologic::Expand::Expand>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Lut::Single::Lut>::create( env ); // 8-32, stacked, lut for bits<=16, realtime otherwise
    Avisynth2x::Filter<Lut::Dual::Lutxy>::create( env ); // 8-32, lut for bits<=12, realtime otherwise, may ask realtime=false for 14,16
-   Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env ); // 8-32 , lut only for 8 bits, 10+ bits realtime
-   Avisynth2x::Filter<Lut::Quad::Lutxyza>::create(env); // 8-32 , four clips, realtime only
+   Avisynth2x::Filter<Lut::Trial::Lutxyz>::create( env ); // 8-32, lut only for 8 bits, 10+ bits realtime
+   Avisynth2x::Filter<Lut::Quad::Lutxyza>::create(env); // 8-32, four clips, realtime only, realtime=false accepted on 8 bit (4GBytes LUT!)
    Avisynth2x::Filter<Lut::Spatial::Luts>::create( env ); // 8 bit only
    Avisynth2x::Filter<Lut::Frame::Lutf>::create( env ); // 8-32, lut for bits<=12, realtime otherwise, may ask realtime=false for 14,16
    Avisynth2x::Filter<Lut::SpatialExtended::Lutsx>::create( env ); // 8 bit only
-   Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env ); // 8-32 bit
+   Avisynth2x::Filter<Lut::Coordinate::Lutspa>::create( env ); // 8-32
    Avisynth2x::Filter<Merge::Merge>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Logic::Logic>::create( env ); // 8-16, stacked
-   Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8-32
    Avisynth2x::Filter<Blur::MappedBlur>::create( env ); // 8-32
-   Avisynth2x::Filter<Gradient::Gradient>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Gradient::Gradient>::create( env ); // 8-32 bit only
    Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Support::Average::Average>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env ); // 8-16, stacked
    Avisynth2x::Filter<Support::Clamp::Clamp>::create( env ); // 8-16, stacked
-   Avisynth2x::Filter<Mask::Motion::MotionMask>::create( env ); // 8 bit only
+   Avisynth2x::Filter<Mask::Motion::MotionMask>::create( env ); // 8-32
    Avisynth2x::Filter<Mask::Edge::EdgeMask>::create( env ); // 8-32
    Avisynth2x::Filter<Mask::Hysteresis::Hysteresis>::create( env ); // 8-32
    MaskTools::Avs2x::Helpers::DeclareHelpers(env);
