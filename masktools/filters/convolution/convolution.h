@@ -5,12 +5,38 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Convolution {
 
+// void* parameters can be either int* or float*
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, void *, void *, void *, int nHorizontal, int nVertical, int nWidth, int nHeight);
+typedef void(Processor16)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, void *, void *, void *, int nHorizontal, int nVertical, int nWidth, int nHeight);
+typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, void *, void *, void *, int nHorizontal, int nVertical, int nWidth, int nHeight);
 
 extern Processor *convolution_f_s_c;
 extern Processor *convolution_i_s_c;
 extern Processor *convolution_f_m_c;
 extern Processor *convolution_i_m_c;
+
+extern Processor16 *convolution_f_s_10_c;
+extern Processor16 *convolution_i_s_10_c;
+extern Processor16 *convolution_f_m_10_c;
+extern Processor16 *convolution_i_m_10_c;
+
+extern Processor16 *convolution_f_s_12_c;
+extern Processor16 *convolution_i_s_12_c;
+extern Processor16 *convolution_f_m_12_c;
+extern Processor16 *convolution_i_m_12_c;
+
+extern Processor16 *convolution_f_s_14_c;
+extern Processor16 *convolution_i_s_14_c;
+extern Processor16 *convolution_f_m_14_c;
+extern Processor16 *convolution_i_m_14_c;
+
+extern Processor16 *convolution_f_s_16_c;
+extern Processor16 *convolution_i_s_16_c;
+extern Processor16 *convolution_f_m_16_c;
+extern Processor16 *convolution_i_m_16_c;
+
+extern Processor32 *convolution_f_s_32_c;
+extern Processor32 *convolution_f_m_32_c;
 
 class Convolution : public MaskTools::Filter
 {
@@ -24,24 +50,37 @@ class Convolution : public MaskTools::Filter
    int nHorizontal;
    int nVertical;
 
+   int bits_per_pixel;
+
    ProcessorList<Processor> processors;
+   ProcessorList<Processor16> processors16;
+   ProcessorList<Processor32> processors32;
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
-    {
-        UNUSED(n);
-        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            horizontal, vertical, total, nHorizontal, nVertical, dst.width(), dst.height());
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
+  {
+    UNUSED(n);
+    if (bits_per_pixel == 8) {
+      processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+        frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        horizontal, vertical, total, nHorizontal, nVertical, dst.width(), dst.height());
     }
-
+    else if (bits_per_pixel <= 16) {
+      processors16.best_processor(constraints[nPlane])((Word *)dst.data(), dst.pitch(),
+        (Word *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        horizontal, vertical, total, nHorizontal, nVertical, dst.width(), dst.height());
+    }
+    else
+    {
+      processors32.best_processor(constraints[nPlane])((Float *)dst.data(), dst.pitch(),
+        (Float *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        horizontal, vertical, total, nHorizontal, nVertical, dst.width(), dst.height());
+    }
+  }
 public:
    Convolution(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
    {
-      if (bit_depths[C] != 8) {
-        error = "only 8 bit clip accepted"; // todo: 10-16bit, float
-        return;
-      }
+      bits_per_pixel = bit_depths[C];
      
       i_vertical = i_horizontal = NULL;
       f_vertical = f_horizontal = NULL;
@@ -55,6 +94,7 @@ public:
       bool isFloat = false;
       isFloat |= parameters["horizontal"].toString().find(".", 0) != String::npos;
       isFloat |= parameters["vertical"].toString().find(".", 0) != String::npos;
+      isFloat |= (bits_per_pixel == 32); // float clip is always using float
 
       /* create the two arrays */
       if ( isFloat )
@@ -102,15 +142,40 @@ public:
       bool isSaturate = parameters["saturate"].toBool();
       if ( isFloat )
          if ( isSaturate )
-            processors.push_back(Filtering::Processor<Processor>(convolution_f_s_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           switch (bits_per_pixel) {
+           case 8: processors.push_back(Filtering::Processor<Processor>(convolution_f_s_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 10: processors16.push_back(Filtering::Processor<Processor16>(convolution_f_s_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 12: processors16.push_back(Filtering::Processor<Processor16>(convolution_f_s_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 14: processors16.push_back(Filtering::Processor<Processor16>(convolution_f_s_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 16: processors16.push_back(Filtering::Processor<Processor16>(convolution_f_s_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 32: processors32.push_back(Filtering::Processor<Processor32>(convolution_f_s_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           }
          else
-            processors.push_back(Filtering::Processor<Processor>(convolution_f_m_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           switch (bits_per_pixel) {
+           case 8:  processors.push_back(Filtering::Processor<Processor>(convolution_f_m_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 10:  processors16.push_back(Filtering::Processor<Processor16>(convolution_f_m_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 12:  processors16.push_back(Filtering::Processor<Processor16>(convolution_f_m_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 14:  processors16.push_back(Filtering::Processor<Processor16>(convolution_f_m_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 16:  processors16.push_back(Filtering::Processor<Processor16>(convolution_f_m_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 32:  processors32.push_back(Filtering::Processor<Processor32>(convolution_f_m_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           }
       else
          if ( isSaturate )
-            processors.push_back(Filtering::Processor<Processor>(convolution_i_s_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+           switch (bits_per_pixel) {
+           case 8: processors.push_back(Filtering::Processor<Processor>(convolution_i_s_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 10: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_s_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 12: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_s_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 14: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_s_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 16: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_s_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           }
          else
-            processors.push_back(Filtering::Processor<Processor>(convolution_i_m_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-
+           switch (bits_per_pixel) {
+           case 8: processors.push_back(Filtering::Processor<Processor>(convolution_i_m_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 10: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_m_10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 12: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_m_12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 14: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_m_14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           case 16: processors16.push_back(Filtering::Processor<Processor16>(convolution_i_m_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); break;
+           }
    }
 
    ~Convolution()
