@@ -6,13 +6,14 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Support { namespace AddDiff {
 /* 8 bit */
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
 
 Processor adddiff_c;
 extern Processor *adddiff_sse2;
 extern Processor *adddiff_asse2;
 
 /* 16 bit */
-typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
 
 Processor16 adddiff16_stacked_c;
 Processor16 adddiff16_stacked_sse2;
@@ -32,10 +33,15 @@ extern Processor16 *adddiff16_native_12_sse4_1;
 extern Processor16 *adddiff16_native_14_sse4_1;
 extern Processor16 *adddiff16_native_16_sse4_1;
 
+Processor32 adddiff32_c;
+extern Processor32 *adddiff32_sse2;
+extern Processor32 *adddiff32_asse2;
+
 class AddDiff : public MaskTools::Filter
 {
     ProcessorList<Processor> processors;
     ProcessorList<Processor16> processors16;
+    ProcessorList<Processor32> processors32;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
@@ -52,6 +58,10 @@ protected:
           processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             dst.width(), dst.height(), dst.origheight());
+        else
+          processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+            dst.width(), dst.height());
     }
 
 public:
@@ -68,10 +78,6 @@ public:
       if (isStacked)
         bits_per_pixel = 16;
 
-      if (bits_per_pixel == 32) {
-        error = "32 bit float clip is not supported yet";
-        return;
-      }
       /* add the processors */
       if (parameters["stacked"].toBool() == true) {
         processors16.push_back(Filtering::Processor<Processor16>(adddiff16_stacked_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
@@ -103,6 +109,11 @@ public:
           processors16.push_back(Filtering::Processor<Processor16>(adddiff16_native_16_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
           processors16.push_back(Filtering::Processor<Processor16>(adddiff16_native_16_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
           processors16.push_back(Filtering::Processor<Processor16>(adddiff16_native_16_sse4_1, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 2));
+          break;
+        case 32:
+          processors32.push_back(Filtering::Processor<Processor32>(&adddiff32_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+          processors32.push_back(Filtering::Processor<Processor32>(adddiff32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+          processors32.push_back(Filtering::Processor<Processor32>(adddiff32_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
           break;
         }
       }

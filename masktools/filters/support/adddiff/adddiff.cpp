@@ -57,7 +57,53 @@ static void adddiff_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, pt
     }
 }
 
+void adddiff32_c(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height)
+{
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      reinterpret_cast<Float *>(pDst)[x] = reinterpret_cast<Float *>(pDst)[x] + reinterpret_cast<const Float *>(pSrc)[x] - 0.5f;
+    }
+    pDst += dst_pitch;
+    pSrc += src_pitch;
+  }
+}
+
+
+template<MemoryMode mem_mode>
+static void adddiff32_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height)
+{
+  width *= sizeof(Float);
+
+  int mod16_width = (width / 32) * 32;
+  auto pDst2 = pDst;
+  auto pSrc2 = pSrc;
+  auto vHalf = _mm_set1_ps(0.5f);
+
+  for (int j = 0; j < height; ++j) {
+    for (int i = 0; i < mod16_width; i += 16) {
+      _mm_prefetch(reinterpret_cast<const char*>(pDst) + i + 128, _MM_HINT_T0);
+      _mm_prefetch(reinterpret_cast<const char*>(pSrc) + i + 128, _MM_HINT_T0);
+
+      auto dst = simd_load_ps<mem_mode>(pDst + i);
+      auto src = simd_load_ps<mem_mode>(pSrc + i);
+
+      auto result = _mm_sub_ps(_mm_add_ps(dst, src), vHalf);
+
+      simd_store_ps<mem_mode>(pDst + i, result);
+    }
+    pDst += dst_pitch;
+    pSrc += src_pitch;
+  }
+
+  if (width > mod16_width) {
+    adddiff32_c(pDst2 + mod16_width, dst_pitch, pSrc2 + mod16_width, src_pitch, (width - mod16_width) / sizeof(Float), height);
+  }
+}
+
 Processor *adddiff_sse2 = &adddiff_sse2_t<MemoryMode::SSE2_UNALIGNED>;
 Processor *adddiff_asse2 = &adddiff_sse2_t<MemoryMode::SSE2_ALIGNED>;
+
+Processor32 *adddiff32_sse2 = &adddiff32_sse2_t<MemoryMode::SSE2_UNALIGNED>;
+Processor32 *adddiff32_asse2 = &adddiff32_sse2_t<MemoryMode::SSE2_ALIGNED>;
 
 } } } } }
