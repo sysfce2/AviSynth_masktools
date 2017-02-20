@@ -8,6 +8,10 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
 /* 8 bit */
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                         const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+  const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, int nOrigHeight);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+  const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight);
 
 Processor merge_c;
 Processor merge_luma_420_c;
@@ -24,8 +28,6 @@ extern Processor *merge_luma_411_sse2;
 extern Processor *merge_luma_411_asse2;
 
 /* 16 bit */
-typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
-  const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, int nOrigHeight);
 
 extern Processor16 *merge16_c_stacked;
 extern Processor16 *merge16_luma_420_c_stacked;
@@ -62,6 +64,17 @@ MAKE_16BIT_EXTERNS(14)
 MAKE_16BIT_EXTERNS(16)
 #undef MAKE_16BIT_EXTERNS
 
+/* 32 bit */
+Processor32 merge32_c;
+Processor32 merge32_luma_420_c;
+Processor32 merge32_luma_422_c;
+
+extern Processor32 *merge32_sse2;
+extern Processor32 *merge32_asse2;
+extern Processor32 *merge32_luma_420_sse2;
+extern Processor32 *merge32_luma_420_asse2;
+extern Processor32 *merge32_luma_422_sse2;
+extern Processor32 *merge32_luma_422_asse2;
 
 class Merge : public MaskTools::Filter
 {
@@ -71,6 +84,8 @@ class Merge : public MaskTools::Filter
    ProcessorList<Processor> chroma_processors;
    ProcessorList<Processor16> processors16;
    ProcessorList<Processor16> chroma_processors16;
+   ProcessorList<Processor32> processors32;
+   ProcessorList<Processor32> chroma_processors32;
 
 protected:
 
@@ -97,7 +112,11 @@ protected:
             dst.width(), dst.height(), dst.origheight());
           break;
         case 32:
-          break; // todo
+          chroma_processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+            frames[1].plane(0).data(), frames[1].plane(0).pitch(),
+            dst.width(), dst.height());
+          break;
         }
       }
       else {
@@ -116,7 +135,11 @@ protected:
             dst.width(), dst.height(), dst.origheight());
           break;
         case 32:
-          break; // todo
+          processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+            frames[1].plane(0).data(), frames[1].plane(0).pitch(),
+            dst.width(), dst.height());
+          break;
         }
       }
     }
@@ -135,7 +158,11 @@ protected:
           dst.width(), dst.height(), dst.origheight());
         break;
       case 32:
-        break; // todo
+        processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+          frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+          frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+          dst.width(), dst.height());
+        break;
       }
     }
   }
@@ -156,10 +183,6 @@ public:
       }
       if (isStacked && is411) {
         error = "Stacked 16 bit for 4:1:1 not supported";
-        return;
-      }
-      if (bits_per_pixel == 32) {
-        error = "32 bit float clip is not supported yet";
         return;
       }
 
@@ -274,7 +297,23 @@ public:
 #undef MAKE_16BIT_PROCESSORS
         break;
       case 32:
-        // todo float
+        /* add the processors */
+        processors32.push_back(Filtering::Processor<Processor32>(merge32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        processors32.push_back(Filtering::Processor<Processor32>(merge32_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+        processors32.push_back(Filtering::Processor<Processor32>(merge32_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+
+        /* add the chroma processors */
+        // they are used only for 420 and 422
+        if (is420) {
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+        }
+        else if (is422) { // 422
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+        }
         break;
       }
    }
