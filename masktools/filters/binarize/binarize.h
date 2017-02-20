@@ -6,6 +6,8 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Binarize {
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, Byte nThreshold, int nWidth, int nHeight);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, Float nThreshold, int nWidth, int nHeight);
 
 #define DEFINE_PROCESSOR(name) \
    extern Processor *binarize_##name##_c; \
@@ -28,7 +30,6 @@ DEFINE_PROCESSOR(255_t);
 #undef DEFINE_PROCESSOR
 
 /* 16 bits */
-typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, Word nThreshold, int nWidth, int nHeight, int nOrigHeight);
 
 #define DEFINE_PROCESSOR(name) \
 extern Processor16 *binarize_##name##_stacked_16_c; \
@@ -57,13 +58,36 @@ DEFINE_PROCESSOR(255_t);
 
 #undef DEFINE_PROCESSOR
 
+/* 32 bits */
+#define DEFINE_PROCESSOR(name) \
+   extern Processor32 *binarize32_##name##_c; \
+   extern Processor32 *binarize32_##name##_sse2; \
+   extern Processor32 *binarize32_##name##_asse2
+
+DEFINE_PROCESSOR(upper);
+DEFINE_PROCESSOR(lower);
+DEFINE_PROCESSOR(0_x);
+DEFINE_PROCESSOR(t_x);
+DEFINE_PROCESSOR(x_0);
+DEFINE_PROCESSOR(x_t);
+DEFINE_PROCESSOR(t_0);
+DEFINE_PROCESSOR(0_t);
+DEFINE_PROCESSOR(x_255);
+DEFINE_PROCESSOR(t_255);
+DEFINE_PROCESSOR(255_x);
+DEFINE_PROCESSOR(255_t);
+
+#undef DEFINE_PROCESSOR
+
 
 class Binarize : public MaskTools::Filter
 {
    ProcessorList<Processor> processors;
-   
-   int nThreshold;
    ProcessorList<Processor16> processors16;
+   ProcessorList<Processor32> processors32;
+
+   int nThreshold;
+   float nThreshold_f;
 
    int bits_per_pixel;
 protected:
@@ -74,6 +98,8 @@ protected:
           processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height());
         else if(bits_per_pixel <= 16)
           processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height(), dst.origheight());
+        else
+          processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold_f, dst.width(), dst.height());
     }
 
    bool isMode(const char *mode) {
@@ -94,16 +120,20 @@ public:
      if (isStacked)
        bits_per_pixel = 16;
 
-     if (bits_per_pixel == 32) {
-       error = "32 bit float clip is not supported yet";
-       return;
-     }
+     bool isFloat = bits_per_pixel == 32;
 
      if (parameters["threshold"].is_defined()) {
-       nThreshold = parameters["threshold"].toInt();
-       nThreshold = min(nThreshold, (1 << bits_per_pixel) - 1);
+       if (isFloat) {
+         nThreshold_f = (float)parameters["threshold"].toFloat();
+       }
+       else {
+         nThreshold = parameters["threshold"].toInt();
+         nThreshold = min(nThreshold, (1 << bits_per_pixel) - 1);
+       }
      }
      else {
+       if(isFloat)
+         nThreshold_f = 0.5f; 
        if (isStacked)
          nThreshold = 32768; // 16 bit stacked half
        else
@@ -176,6 +206,32 @@ public:
 #undef SET_MODE
 
      }
+     else { // float
+#define SET_MODE(mode) \
+      processors32.push_back(Filtering::Processor<Processor32>(binarize32_##mode##_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0)); \
+      processors32.push_back(Filtering::Processor<Processor32>(binarize32_##mode##_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1)); \
+      processors32.push_back(Filtering::Processor<Processor32>(binarize32_##mode##_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
+
+       if (isMode("0 x")) { SET_MODE(0_x); }
+       else if (isMode("t x")) { SET_MODE(t_x); }
+       else if (isMode("x 0")) { SET_MODE(x_0); }
+       else if (isMode("x t")) { SET_MODE(x_t); }
+       else if (isMode("t 0")) { SET_MODE(t_0); }
+       else if (isMode("0 t")) { SET_MODE(0_t); }
+       else if (isMode("x 255")) { SET_MODE(x_255); }
+       else if (isMode("t 255")) { SET_MODE(t_255); }
+       else if (isMode("255 x")) { SET_MODE(255_x); }
+       else if (isMode("255 t")) { SET_MODE(255_t); }
+       else if ((parameters["mode"].is_defined() && (parameters["mode"].toString() == "upper" || parameters["mode"].toString() == "0 255")) || (!parameters["mode"].is_defined() && parameters["upper"].toBool())) {
+         SET_MODE(upper);
+       }
+       else {
+         SET_MODE(lower);
+       }
+#undef SET_MODE
+
+
+     }
    }
 
    InputConfiguration &input_configuration() const { return InPlaceOneFrame(); }
@@ -185,7 +241,7 @@ public:
       Signature signature = "mt_binarize";
 
       signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( 128, "threshold" ) );
+      signature.add( Parameter( 128.0f, "threshold" ) ); // bit depth dependent, see above.
       signature.add( Parameter( false, "upper" ) );
       signature.add( Parameter( String("lower"), "mode" ) );
       signature.add( Parameter(false, "stacked"));
