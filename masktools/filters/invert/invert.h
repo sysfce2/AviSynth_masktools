@@ -20,6 +20,9 @@ extern Processor *invert14_sse2;
 extern Processor *invert16_c;
 extern Processor *invert16_sse2;
 
+Processor invert32_c;
+Processor invert32_sse2;
+
 class Invert : public MaskTools::Filter
 {
    ProcessorList<Processor> processors;
@@ -35,11 +38,6 @@ public:
   Invert(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
   {
     int bits_per_pixel = bit_depths[C];
-
-    if (bits_per_pixel == 32) {
-      error = "32 bit float clip is not supported yet";
-      return;
-    }
 
     /* add the processors */
     switch (bits_per_pixel) {
@@ -62,6 +60,10 @@ public:
     case 16:
       processors.push_back(Filtering::Processor<Processor>(invert16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       processors.push_back(Filtering::Processor<Processor>(invert16_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
+      break;
+    case 32:
+      processors.push_back(Filtering::Processor<Processor>(invert32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(invert32_sse2, Constraint(CPU_SSE2, 16, 1, 16, 16), 1));
       break;
     }
   }

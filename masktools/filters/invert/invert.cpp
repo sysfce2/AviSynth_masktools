@@ -25,6 +25,16 @@ void invert_c(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight)
    }
 }
 
+void invert32_c(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight)
+{
+  for (int j = 0; j < nHeight; j++)
+  {
+    for (int i = 0; i < nWidth; i++)
+      reinterpret_cast<Float *>(pDst)[i] = 1.0f - reinterpret_cast<Float *>(pDst)[i];
+    pDst += nDstPitch;
+  }
+}
+
 void invert_sse2(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight)
 {
     auto fff = _mm_set1_epi32(0xFFFFFFFF);
@@ -54,6 +64,22 @@ void invert16_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight)
     pDst += nDstPitch;
   }
 }
+
+void invert32_sse2(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight)
+{
+  nWidth *= sizeof(float);
+
+  auto one = _mm_set1_ps(1.0f);
+  for (int j = 0; j < nHeight; j++) {
+    for (int i = 0; i < nWidth; i += 16) {
+      auto src = simd_load_ps<MemoryMode::SSE2_ALIGNED>(pDst + i);
+      auto result = _mm_sub_ps(one, src);
+      simd_store_ps<MemoryMode::SSE2_ALIGNED>(pDst + i, result);
+    }
+    pDst += nDstPitch;
+  }
+}
+
 
 template void invert16_t_c<10>(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight);
 template void invert16_t_c<12>(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight);
