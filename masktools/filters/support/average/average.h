@@ -7,24 +7,30 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Suppor
 
 /* 8 bits */
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
 
 Processor average_c;
 extern Processor *average_sse2;
 extern Processor *average_asse2;
 
 /* 16 bits */
-typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
-
 Processor16 average16_stacked_c;
 Processor16 average16_stacked_sse2;
 
 Processor16 average16_native_c;
 Processor16 average16_native_sse2;
 
+Processor32 average32_c;
+extern Processor32 *average32_sse2;
+extern Processor32 *average32_asse2;
+
+
 class Average : public MaskTools::Filter
 {
     ProcessorList<Processor> processors;
     ProcessorList<Processor16> processors16;
+    ProcessorList<Processor32> processors32;
     int bits_per_pixel;
 
 protected:
@@ -39,6 +45,10 @@ protected:
           processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             dst.width(), dst.height(), dst.origheight());
+        else
+          processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+            dst.width(), dst.height());
     }
 
 public:
@@ -54,10 +64,6 @@ public:
       if (isStacked)
         bits_per_pixel = 16;
 
-      if (bits_per_pixel == 32) {
-        error = "32 bit float clip is not supported yet";
-        return;
-      }
       /* add the processors */
       if (isStacked) {
         processors16.push_back(Filtering::Processor<Processor16>(average16_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
@@ -67,11 +73,15 @@ public:
         processors.push_back(Filtering::Processor<Processor>(&average_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
         processors.push_back(Filtering::Processor<Processor>(average_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
         processors.push_back(Filtering::Processor<Processor>(average_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
-
-      }else
+      }else if(bits_per_pixel <= 16)
       {
         processors16.push_back(Filtering::Processor<Processor16>(average16_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         processors16.push_back(Filtering::Processor<Processor16>(average16_native_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      }
+      else {
+        processors32.push_back(Filtering::Processor<Processor32>(&average32_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0));
+        processors32.push_back(Filtering::Processor<Processor32>(average32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+        processors32.push_back(Filtering::Processor<Processor32>(average32_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
       }
     }
 
