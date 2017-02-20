@@ -532,6 +532,7 @@
     <ClInclude Include="..\filters\merge\merge.h" />
     <ClInclude Include="..\filters\merge\merge16.h" />
     <ClInclude Include="..\filters\morphologic\functions16.h" />
+    <ClInclude Include="..\filters\morphologic\functions32.h" />
     <ClInclude Include="..\filters\morphologic\morphologic.h" />
     <ClInclude Include="..\filters\morphologic\functions.h" />
     <ClInclude Include="..\filters\morphologic\expand\expand.h" />
@@ -568,6 +569,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\filters\binarize\binarize16.cpp" />
+    <ClCompile Include="..\filters\binarize\binarize32.cpp" />
     <ClCompile Include="..\filters\blur\mappedblur.cpp" />
     <ClCompile Include="..\filters\blur\mappedblur16.cpp" />
     <ClCompile Include="..\filters\blur\mappedblur32.cpp" />
@@ -582,10 +584,14 @@
     <ClCompile Include="..\filters\mask\motion\motionmask32.cpp" />
     <ClCompile Include="..\filters\merge\merge.cpp" />
     <ClCompile Include="..\filters\merge\merge16.cpp" />
+    <ClCompile Include="..\filters\merge\merge32.cpp" />
     <ClCompile Include="..\filters\morphologic\deflate\deflate16.cpp" />
+    <ClCompile Include="..\filters\morphologic\deflate\deflate32.cpp" />
     <ClCompile Include="..\filters\morphologic\expand\expand.cpp" />
     <ClCompile Include="..\filters\morphologic\expand\expand16.cpp" />
+    <ClCompile Include="..\filters\morphologic\expand\expand32.cpp" />
     <ClCompile Include="..\filters\morphologic\inflate\inflate16.cpp" />
+    <ClCompile Include="..\filters\morphologic\inflate\inflate32.cpp" />
     <ClCompile Include="..\filters\morphologic\inpand\inpand.cpp" />
     <ClCompile Include="..\filters\morphologic\inflate\inflate.cpp" />
     <ClCompile Include="..\filters\morphologic\deflate\deflate.cpp" />
@@ -598,6 +604,7 @@
     <ClCompile Include="..\filters\logic\logic.cpp" />
     <ClCompile Include="..\filters\convolution\convolution.cpp" />
     <ClCompile Include="..\filters\morphologic\inpand\inpand16.cpp" />
+    <ClCompile Include="..\filters\morphologic\inpand\inpand32.cpp" />
     <ClCompile Include="..\filters\support\adddiff16\adddiff16.cpp" />
     <ClCompile Include="..\filters\support\average16\average16.cpp" />
     <ClCompile Include="..\filters\support\clamp16\clamp16.cpp" />
