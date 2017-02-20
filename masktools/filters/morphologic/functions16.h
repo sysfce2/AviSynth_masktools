@@ -7,7 +7,7 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic {
 
-typedef Word (Operator16)(Word, Word, Word, Word, Word, Word, Word, Word, Word, int);
+typedef Word (Operator16)(Word, Word, Word, Word, Word, Word, Word, Word, Word, int); // last is nMaxDeviation
 
 enum Directions {
     Vertical = 1,

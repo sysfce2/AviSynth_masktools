@@ -1,6 +1,7 @@
 #ifndef __Mt_MorphologicFilter16_H__
 #define __Mt_MorphologicFilter16_H__
 
+#if 0
 #include "../../common/base/filter.h"
 #include "../../../common/parser/parser.h"
 
@@ -87,5 +88,5 @@ public:
 };
 
 } } } } // namespace Morphologic, Filters, MaskTools, Filtering
-
+#endif
 #endif
