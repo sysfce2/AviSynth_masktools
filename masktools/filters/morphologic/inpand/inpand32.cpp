@@ -75,30 +75,30 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Morpho
     };
 
 
-Processor32 *inpand_square_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *inpand32_square_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, minimumThresholded<::minimum_square>>,
     process_line_morpho_32_c<Border::None, minimumThresholded<::minimum_square>>,
     process_line_morpho_32_c<Border::Right, minimumThresholded<::minimum_square>>
     >;
 
-Processor32 *inpand_horizontal_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *inpand32_horizontal_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, minimumThresholded<::minimum_horizontal>>,
     process_line_morpho_32_c<Border::None, minimumThresholded<::minimum_horizontal>>,
     process_line_morpho_32_c<Border::Right, minimumThresholded<::minimum_horizontal>>
     >;
 
-Processor32 *inpand_vertical_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *inpand32_vertical_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, minimumThresholded<::minimum_vertical>>,
     process_line_morpho_32_c<Border::None, minimumThresholded<::minimum_vertical>>,
     process_line_morpho_32_c<Border::Right, minimumThresholded<::minimum_vertical>>
     >;
 
-Processor32 *inpand_both_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *inpand32_both_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, minimumThresholded<::minimum_both>>,
     process_line_morpho_32_c<Border::None, minimumThresholded<::minimum_both>>,
     process_line_morpho_32_c<Border::Right, minimumThresholded<::minimum_both>>
     >;
 
-Processor32 *inpand_custom_32_c = &generic_custom_32_c<NewValue32>;
+Processor32 *inpand32_custom_c = &generic_custom_32_c<NewValue32>;
 
 } } } } }

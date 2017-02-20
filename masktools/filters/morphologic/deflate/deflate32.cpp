@@ -19,7 +19,7 @@ static MT_FORCEINLINE Float meanMinThresholded(Float a1, Float a2, Float a3, Flo
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic { namespace Deflate {
 
-Processor32 *deflate_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *deflate32_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, meanMinThresholded>,
     process_line_morpho_32_c<Border::None, meanMinThresholded>,
     process_line_morpho_32_c<Border::Right, meanMinThresholded>

@@ -75,31 +75,31 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Morpho
     };
 
 
-Processor32 *expand_square_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *expand32_square_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, maximumThresholded<::maximum_square>>,
     process_line_morpho_32_c<Border::None, maximumThresholded<::maximum_square>>,
     process_line_morpho_32_c<Border::Right, maximumThresholded<::maximum_square>>
     >;
 
-Processor32 *expand_horizontal_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *expand32_horizontal_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, maximumThresholded<::maximum_horizontal>>,
     process_line_morpho_32_c<Border::None, maximumThresholded<::maximum_horizontal>>,
     process_line_morpho_32_c<Border::Right, maximumThresholded<::maximum_horizontal>>
     >;
 
-Processor32 *expand_vertical_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *expand32_vertical_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, maximumThresholded<::maximum_vertical>>,
     process_line_morpho_32_c<Border::None, maximumThresholded<::maximum_vertical>>,
     process_line_morpho_32_c<Border::Right, maximumThresholded<::maximum_vertical>>
     >;
 
-Processor32 *expand_both_32_c = &MorphologicProcessor<Float>::generic_32_c<
+Processor32 *expand32_both_c = &MorphologicProcessor<Float>::generic_32_c<
     process_line_morpho_32_c<Border::Left, maximumThresholded<::maximum_both>>,
     process_line_morpho_32_c<Border::None, maximumThresholded<::maximum_both>>,
     process_line_morpho_32_c<Border::Right, maximumThresholded<::maximum_both>>
     >;
 
 
-Processor32 *expand_custom_32_c   = &generic_custom_32_c<NewValue32>;
+Processor32 *expand32_custom_c   = &generic_custom_32_c<NewValue32>;
 
 } } } } }

@@ -13,6 +13,9 @@ extern Processor *inflate_asse2;
 extern StackedProcessor *inflate_stacked_c;
 extern Processor16 *inflate_native_c;
 
+/*32 bit */
+extern Processor32 *inflate32_c;
+
 class Inflate : public Morphologic::MorphologicFilter
 {
 public:
@@ -31,8 +34,11 @@ public:
     else if (isStacked) {
       stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inflate_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
     }
-    else {
+    else if (bits_per_pixel <= 16){
       processors16.push_back(Filtering::Processor<Processor16>(inflate_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+    }
+    else {
+      processors32.push_back(Filtering::Processor<Processor32>(inflate32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
     }
   }
 
