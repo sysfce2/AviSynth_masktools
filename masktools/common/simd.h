@@ -76,20 +76,20 @@ static MT_FORCEINLINE void simd_store_si128(T *ptr, __m128i value) {
 }
 
 template<MemoryMode mem_mode, typename T>
-static MT_FORCEINLINE void simd_store_ps(T *ptr, __m128i value) {
+static MT_FORCEINLINE void simd_store_ps(T *ptr, __m128 value) {
 #ifdef USE_MOVPS
   if (mem_mode == MemoryMode::SSE2_ALIGNED) {
-    _mm_store_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
+    _mm_store_ps(reinterpret_cast<float*>(ptr), value);
 }
   else {
-    _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
+    _mm_storeu_ps(reinterpret_cast<float*>(ptr), value);
   }
 #else
   if (mem_mode == MemoryMode::SSE2_ALIGNED) {
-    _mm_store_si128(reinterpret_cast<__m128i*>(ptr), value);
+    _mm_store_si128(reinterpret_cast<__m128i*>(ptr), _mm_castps_si128(value));
   }
   else {
-    _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), value);
+    _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), _mm_castps_si128(value));
   }
 #endif
 }

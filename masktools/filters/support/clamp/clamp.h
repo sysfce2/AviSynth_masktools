@@ -5,15 +5,15 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Support { namespace Clamp {
 
-/* 8 bit */
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, int nOvershoot, int nUndershoot);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, Float nOvershoot, Float nUndershoot);
 
 Processor clamp_c;
 extern Processor *clamp_sse2;
 extern Processor *clamp_asse2;
 
 /* 16 bit */
-typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot);
 
 Processor16 clamp16_stacked_c;
 extern Processor16 *clamp16_stacked_sse2;
@@ -34,13 +34,19 @@ extern Processor16 *clamp16_native_12_sse4_1;
 extern Processor16 *clamp16_native_14_sse4_1;
 extern Processor16 *clamp16_native_16_sse4_1;
 
+/* 32 bit */
+Processor32 clamp32_c;
+extern Processor32 *clamp32_sse2;
+extern Processor32 *clamp32_asse2;
 
 
 class Clamp : public MaskTools::Filter
 {
     int nOvershoot, nUndershoot;
+    float nOvershoot_f, nUndershoot_f;
     ProcessorList<Processor> processors;
     ProcessorList<Processor16> processors16;
+    ProcessorList<Processor32> processors32;
     int bits_per_pixel;
 
 protected:
@@ -57,6 +63,11 @@ protected:
         frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
         frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
         dst.width(), dst.height(), dst.origheight(), nOvershoot, nUndershoot);
+    else
+      processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+        frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+        dst.width(), dst.height(), nOvershoot_f, nUndershoot_f);
   }
 
 public:
@@ -64,6 +75,9 @@ public:
     {
         nUndershoot = parameters["undershoot"].toInt();
         nOvershoot = parameters["overshoot"].toInt();
+
+        nUndershoot_f = (Float)parameters["undershoot"].toFloat();
+        nOvershoot_f = (Float)parameters["overshoot"].toFloat();
 
         bool isStacked = parameters["stacked"].toBool();
         bits_per_pixel = bit_depths[C];
@@ -74,11 +88,6 @@ public:
         }
         if (isStacked)
           bits_per_pixel = 16;
-
-        if (bits_per_pixel == 32) {
-          error = "32 bit float clip is not supported yet";
-          return;
-        }
 
         /* add the processors */
         if (isStacked) {
@@ -113,6 +122,11 @@ public:
             processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
             processors16.push_back(Filtering::Processor<Processor16>(clamp16_native_16_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 2));
             break;
+          case 32:
+            processors32.push_back(Filtering::Processor<Processor32>(clamp32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+            processors32.push_back(Filtering::Processor<Processor32>(clamp32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+            processors32.push_back(Filtering::Processor<Processor32>(clamp32_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
+            break;
           }
         }
     }
@@ -126,8 +140,8 @@ public:
         signature.add(Parameter(TYPE_CLIP, ""));
         signature.add(Parameter(TYPE_CLIP, ""));
         signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(0, "overshoot"));
-        signature.add(Parameter(0, "undershoot"));
+        signature.add(Parameter(0.0f, "overshoot"));
+        signature.add(Parameter(0.0f, "undershoot"));
         signature.add(Parameter(false, "stacked"));
 
         return add_defaults(signature);

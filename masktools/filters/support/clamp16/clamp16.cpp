@@ -52,6 +52,7 @@ void clamp16_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, pt
 template<int bits_per_pixel>
 void clamp16_native_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit, ptrdiff_t nUpLimitPitch, const Byte *pLowLimit, ptrdiff_t nLowLimitPitch, int nWidth, int nHeight, int nOrigHeight, int nOvershoot, int nUndershoot)
 {
+    UNUSED(nOrigHeight);
     for (int y = 0; y < nHeight; y++) {
         auto pDstWord = reinterpret_cast<Word*>(pDst);
         auto pUpLimitWord = reinterpret_cast<const Word*>(pUpLimit);
