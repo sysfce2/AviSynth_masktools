@@ -61,9 +61,9 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
    Avisynth2x::Filter<Convolution::Convolution>::create( env ); // 8-32
    Avisynth2x::Filter<Blur::MappedBlur>::create( env ); // 8-32
    Avisynth2x::Filter<Gradient::Gradient>::create( env ); // 8-32 bit only
-   Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-16, stacked
-   Avisynth2x::Filter<Support::Average::Average>::create( env ); // 8-16, stacked
-   Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env ); // 8-16, stacked
+   Avisynth2x::Filter<Support::MakeDiff::MakeDiff>::create( env ); // 8-32, stacked
+   Avisynth2x::Filter<Support::Average::Average>::create( env ); // 8-32, stacked
+   Avisynth2x::Filter<Support::AddDiff::AddDiff>::create( env ); // 8-32, stacked
    Avisynth2x::Filter<Support::Clamp::Clamp>::create( env ); // 8-32, stacked
    Avisynth2x::Filter<Mask::Motion::MotionMask>::create( env ); // 8-32
    Avisynth2x::Filter<Mask::Edge::EdgeMask>::create( env ); // 8-32
