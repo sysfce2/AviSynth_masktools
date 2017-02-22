@@ -8,20 +8,82 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Spatial {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], Parser::Context *ctx, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode);
 
+// lut 8-16
 extern Processor *processors_array[NUM_MODES];
+extern Processor *processors_10_array[NUM_MODES];
+extern Processor *processors_12_array[NUM_MODES];
+extern Processor *processors_14_array[NUM_MODES];
+extern Processor *processors_16_array[NUM_MODES];
+// realtime 8-32
+extern Processor *processors_realtime_8_array[NUM_MODES];
+extern Processor *processors_realtime_10_array[NUM_MODES];
+extern Processor *processors_realtime_12_array[NUM_MODES];
+extern Processor *processors_realtime_14_array[NUM_MODES];
+extern Processor *processors_realtime_16_array[NUM_MODES];
+extern Processor *processors_realtime_32_array[NUM_MODES];
 
 class Luts : public MaskTools::Filter
 {
-   Byte luts[3][65536];
-
    int *pCoordinates;
    int nCoordinates;
 
    ProcessorList<Processor> processors;
+
+   // for realtime
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+
+   int bits_per_pixel;
+   bool realtime;
+
    String mode;
 
+   // re-use repeated luts, like in lutxyz
+   struct Lut {
+     bool used;
+     Byte *ptr;
+   };
+
+   Lut luts[4];
+
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
+     Parser::Context ctx(expr);
+     int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
+     Word max_pixel_value = (1 << bits_per_pixel) - 1;
+     size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
+     Byte *lut = new Byte[buffer_size];
+
+     switch (bits_per_pixel) {
+     case 8:
+       for (int x = 0; x < 256; x++)
+         for (int y = 0; y < 256; y++)
+           lut[(x << 8) + y] = ctx.compute_byte(x, y);
+       break;
+     case 10:
+       for (int x = 0; x < 1024; x++)
+         for (int y = 0; y < 1024; y++)
+           reinterpret_cast<Word *>(lut)[(x << 10) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+       break;
+     case 12:
+       for (int x = 0; x < 4096; x++)
+         for (int y = 0; y < 4096; y++)
+           reinterpret_cast<Word *>(lut)[(x << 12) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+       break;
+     case 14:
+       for (int x = 0; x < 16384; x++)
+         for (int y = 0; y < 16384; y++)
+           reinterpret_cast<Word *>(lut)[(x << 14) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+       break;
+     case 16:
+       // 64bit only
+       for (int x = 0; x < 65536; x++)
+         for (int y = 0; y < 65536; y++)
+           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel);
+       break;
+     }
+     return lut;
+   }
    void FillCoordinates(const String &coordinates)
    {
       auto coeffs = Parser::getDefaultParser().parse( coordinates, " (),;." ).getExpression();
@@ -40,64 +102,148 @@ protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
     {
         UNUSED(n);
-        processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+        if (realtime) {
+          // thread safety
+          Parser::Context ctx(*parsed_expressions[nPlane]);
+          processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            luts[nPlane], pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+           nullptr, &ctx, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+        }
+        else {
+          processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+            luts[nPlane].ptr, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+        }
     }
 
 public:
-   ~Luts()
+   Luts(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
    {
-      if ( pCoordinates ) delete[] pCoordinates;
-   }
+     for (int i = 0; i < 3; i++) {
+       parsed_expressions[i] = nullptr;
+     }
 
-   Luts(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
-   {
-       if (bit_depths[C] != 8) {
-         error = "only 8 bit clip accepted"; // todo: 10-16bit, float
+     for (int i = 0; i < 4; ++i) {
+       luts[i].used = false;
+       luts[i].ptr = nullptr;
+     }
+
+     static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+
+     Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
+
+     bits_per_pixel = bit_depths[C];
+     realtime = parameters["realtime"].toBool();
+
+     // same as in lut_xy
+     // 14, 16 bit and float: default realtime, 
+     // hardcore users on x64 with 8GB memory and plenty of time can override 16 bit lutxy with realtime=false :)
+     // lut sizes
+     // 10 bits: 2 MBytes (2*1024*1024) per expression 
+     // 12 bits: 32 MBytes (2*4096*4096) per expression 
+     // 14 bits: 512 MBytes (2*16384*16384) per expression 
+     // 16 bits: 8 GBytes (2*65536*65536) per expression 
+     if (bits_per_pixel >= 14 && !parameters["realtime"].is_defined()) {
+       realtime = true;
+     }
+
+     if (bits_per_pixel == 32)
+       realtime = true;
+
+     if (bits_per_pixel == 16) {
+       if ((uint64_t)std::numeric_limits<size_t>::max() <= 0xFFFFFFFFull && bits_per_pixel == 16) {
+         realtime = true; // not even possible a real 16 bit lutxy on 32 bit environment
+       }
+     }
+
+     /* compute the luts */
+     for (int i = 0; i < 3; i++)
+     {
+       if (operators[i] != PROCESS) {
+         continue;
+       }
+
+       if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
+         operators[i] = NONE; //inplace
+         continue;
+       }
+
+       bool customExpressionDefined = false;
+       if (parameters[expr_strs[i]].is_defined()) {
+         parser.parse(parameters[expr_strs[i]].toString(), " ");
+         customExpressionDefined = true;
+       }
+       else
+         parser.parse(parameters["expr"].toString(), " ");
+
+       // for check:
+       Parser::Context ctx(parser.getExpression());
+
+       if (!ctx.check())
+       {
+         error = "invalid expression in the lut";
          return;
        }
-     
-       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
 
-       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
-
-       /* compute the luts */
-       for ( int i = 0; i < 3; i++ )
-       {
-           if (operators[i] != PROCESS) {
-               continue;
-           }
-
-           if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
-               operators[i] = NONE; //inplace
-               continue;
-           }
-
-           if ( parameters[expr_strs[i]].is_defined() ) 
-               parser.parse(parameters[expr_strs[i]].toString(), " ");
-           else
-               parser.parse(parameters["expr"].toString(), " ");
-
-           Parser::Context ctx(parser.getExpression());
-
-           if ( !ctx.check() )
-           {
-               error = "invalid expression in the lut";
-               return;
-           }
-
-           for ( int x = 0; x < 256; x++ )
-               for ( int y = 0; y < 256; y++ )
-                   luts[i][(x<<8)+y] = ctx.compute_byte(x, y);
+       if (realtime) {
+         parsed_expressions[i] = new std::deque<Parser::Symbol>(parser.getExpression());
+         continue;
        }
 
-       /* get the pixels list */
-       FillCoordinates( parameters["pixels"].toString() );
+       // pure lut, no realtime
 
-       /* choose the mode */
-       mode = parameters["mode"].toString();
-       processors.push_back( processors_array[ ModeToInt( mode ) ] );
+       // save memory, reuse luts, like in xyz
+       if (customExpressionDefined) {
+         luts[i].used = true;
+         luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+       }
+       else {
+         if (luts[3].ptr == nullptr) {
+           luts[3].used = true;
+           luts[3].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+         }
+         luts[i].ptr = luts[3].ptr;
+       }
+     }
+
+     /* get the pixels list */
+     FillCoordinates(parameters["pixels"].toString());
+
+     /* choose the mode */
+     mode = parameters["mode"].toString();
+     if (realtime) {
+       switch (bits_per_pixel) {
+       case 8:  processors.push_back(processors_realtime_8_array[ModeToInt(mode)]); break;
+       case 10:  processors.push_back(processors_realtime_10_array[ModeToInt(mode)]); break;
+       case 12:  processors.push_back(processors_realtime_12_array[ModeToInt(mode)]); break;
+       case 14:  processors.push_back(processors_realtime_14_array[ModeToInt(mode)]); break;
+       case 16:  processors.push_back(processors_realtime_16_array[ModeToInt(mode)]); break;
+       case 32:  processors.push_back(processors_realtime_32_array[ModeToInt(mode)]); break;
+       }
+     }
+     else {
+       switch (bits_per_pixel) {
+       case 8:  processors.push_back(processors_array[ModeToInt(mode)]); break;
+       case 10:  processors.push_back(processors_10_array[ModeToInt(mode)]); break;
+       case 12:  processors.push_back(processors_12_array[ModeToInt(mode)]); break;
+       case 14:  processors.push_back(processors_14_array[ModeToInt(mode)]); break;
+       case 16:  processors.push_back(processors_16_array[ModeToInt(mode)]); break;
+       }
+     };
+   }
+
+   ~Luts()
+   {
+     if (pCoordinates) delete[] pCoordinates;
+     
+     for (int i = 0; i < 4; ++i) {
+       if (luts[i].used) {
+         delete[] luts[i].ptr;
+       }
+     }
+     for (int i = 0; i < 3; i++) {
+       delete parsed_expressions[i];
+     }
    }
 
    InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
@@ -114,6 +260,7 @@ public:
       signature.add( Parameter( String( "y" ), "yExpr" ) );
       signature.add( Parameter( String( "y" ), "uExpr" ) );
       signature.add( Parameter( String( "y" ), "vExpr" ) );
+      signature.add( Parameter( false, "realtime"));
 
       return add_defaults( signature );
    }
