@@ -43,7 +43,7 @@ typedef enum {
 
 /* 16 bit */
 #define EXPRESSION16_SINGLE( realtime, bits_per_pixel, base, mode1, mode2 ) &base< realtime, bits_per_pixel, mode2 >
-//#define EXPRESSION_DUAL( realtime, base, mode1, mode2 ) &base< mode1, mode2 >
+#define EXPRESSION16_DUAL( realtime, bits_per_pixel, base, mode1, mode2 ) &base< realtime, bits_per_pixel, mode1, mode2 >
 
 #define MPROCESSOR16(realtime, bits_per_pixel, expr, param, mode) \
 { \
@@ -60,10 +60,11 @@ typedef enum {
 }
 
 #define MPROCESSOR16_SINGLE( base, realtime, bits_per_pixel )     MPROCESSOR16( realtime, bits_per_pixel, EXPRESSION16_SINGLE, base, )
+#define MPROCESSOR16_DUAL( base, mode, realtime, bits_per_pixel ) MPROCESSOR16( realtime, bits_per_pixel, EXPRESSION16_DUAL, base, mode )
 
 /* 32 bit float */
 #define EXPRESSION32_SINGLE( base, mode1, mode2 ) &base< mode2 >
-//#define EXPRESSION_DUAL( realtime, base, mode1, mode2 ) &base< mode1, mode2 >
+#define EXPRESSION32_DUAL( base, mode1, mode2 ) &base< mode1, mode2 >
 
 #define MPROCESSOR32(expr, param, mode) \
 { \
@@ -80,6 +81,7 @@ typedef enum {
 }
 
 #define MPROCESSOR32_SINGLE( base )     MPROCESSOR32( EXPRESSION32_SINGLE, base, )
+#define MPROCESSOR32_DUAL( base, mode ) MPROCESSOR32( EXPRESSION32_DUAL, base, mode )
 
 
 static inline int ModeToInt(const String &mode)
