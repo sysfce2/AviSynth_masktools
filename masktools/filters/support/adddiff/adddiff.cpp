@@ -61,7 +61,7 @@ void adddiff32_c(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t sr
 {
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(pDst)[x] = reinterpret_cast<Float *>(pDst)[x] + reinterpret_cast<const Float *>(pSrc)[x]; // float: no +half! and no -half at adddiff32 either!
+      reinterpret_cast<Float *>(pDst)[x] = reinterpret_cast<Float *>(pDst)[x] + reinterpret_cast<const Float *>(pSrc)[x] - 0.5f; // to work like "x y + 128 -"
     }
     pDst += dst_pitch;
     pSrc += src_pitch;
@@ -77,7 +77,7 @@ static void adddiff32_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, 
   int mod16_width = (width / 16) * 16;
   auto pDst2 = pDst;
   auto pSrc2 = pSrc;
-  //auto vHalf = _mm_set1_ps(0.5f); // float: no +half! and no -half at adddiff32 either!
+  auto vHalf = _mm_set1_ps(0.5f); 
 
   for (int j = 0; j < height; ++j) {
     for (int i = 0; i < mod16_width; i += 16) {
@@ -87,8 +87,7 @@ static void adddiff32_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, 
       auto dst = simd_load_ps<mem_mode>(pDst + i);
       auto src = simd_load_ps<mem_mode>(pSrc + i);
 
-      //auto result = _mm_sub_ps(_mm_add_ps(dst, src), vHalf);
-      auto result = _mm_add_ps(dst, src);
+      auto result = _mm_sub_ps(_mm_add_ps(dst, src), vHalf); // to work like "x y + 128 -"
 
       simd_store_ps<mem_mode>(pDst + i, result);
     }
