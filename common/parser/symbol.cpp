@@ -56,20 +56,44 @@ static double mmax             (double x, double y, double z) { UNUSED(z); retur
 static double floor           (double x, double y, double z) { UNUSED(y); UNUSED(z); return floor(x); }
 static double ceil            (double x, double y, double z) { UNUSED(y); UNUSED(z); return ceil(x); }
 static double trunc           (double x, double y, double z) { UNUSED(y); UNUSED(z); return double(Int64(x)); }
-// bit depth conversion helpers. x:value on 8 bit scale y: bit depth 8-32
+// bit depth conversion helpers. x:value on 8 bit scale y: target bit depth 8-32 z:base bit depth
 static double upscaleByShift(double x, double y, double z)
 {
-  UNUSED(z);
-  if (y == 8) return x; // 8 bit 
-  if (y == 32) return x / 255; // float
-  return double(x * (1 << ((int)y - 8))); // shift by y-8 bits
-} 
+  const int target_bit_depth = (int)y;
+  const int source_bit_depth = (int)z;
+  if (target_bit_depth == source_bit_depth) return x; // same bit 
+  if (target_bit_depth == 32) { // target float
+    const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+    return x / max_pixel_value_source;
+  }
+  if (source_bit_depth == 32) { // treat original as float, target 8-16 bits
+    const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+    return x * max_pixel_value_target;
+  }
+  // 8-16 <-> 8-16
+  if (target_bit_depth > source_bit_depth) // e.g. 8-->10
+    return double(x * (1 << (target_bit_depth - source_bit_depth))); // upscale, mul by 2^N bits
+  else
+    return double(x / (1 << (source_bit_depth - target_bit_depth))); // downscale: div by 2^N bits
+}
 static double upscaleByStretch(double x, double y, double z) // e.g. 8->10 bit rgb: x/255*1023
 {
-  UNUSED(z);
-  if (y == 8) return x; // 8 bit 
-  if (y == 32) return x / 255; // float
-  return x / 255 * ((1 << (int)y) - 1);
+  const int target_bit_depth = (int)y;
+  const int source_bit_depth = (int)z;
+  if (target_bit_depth == source_bit_depth) return x; // same bit 
+  
+  if (target_bit_depth == 32) { // target float
+    const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+    return x / max_pixel_value_source;
+  }
+  if (source_bit_depth == 32) { // treat original as float, target 8-16 bits
+    const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+    return x * max_pixel_value_target;
+  }
+  // 8-16 <-> 8-16
+  const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+  const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+  return double(x * max_pixel_value_target / max_pixel_value_source); // upscale or downscale
 }
 
 Symbol Symbol::Addition       ("+" , OPERATOR, 2, addition);
@@ -111,6 +135,7 @@ Symbol Symbol::Z              ("z" , VARIABLE_Z, 0, NULL);
 Symbol Symbol::A              ("a" , VARIABLE_A, 0, NULL);
 // global bitdepth parameter for autoscale, since v2.2.1
 Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE_BITDEPTH, 0, NULL); 
+Symbol Symbol::SCRIPT_BITDEPTH("sbitdepth", VARIABLE_SCRIPT_BITDEPTH, 0, NULL);
 // bit-depth adaptive constants, since v2.2.1
 Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE_RANGE_HALF, 0, NULL); // 128  scaled
 Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE_RANGE_MAX, 0, NULL);   // 255, 4095, .. 65535
@@ -139,6 +164,13 @@ Symbol Symbol::Trunc          ("trunc", FUNCTION, 1, trunc);
 // automatic bit-depth scaling helpers, since v2.2.1
 Symbol Symbol::UpscaleByShift  ("#B", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByShift);
 Symbol Symbol::UpscaleByStretch("#F", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByStretch);
+// admin config
+Symbol Symbol::SetScriptBitDepthI8("i8", 8.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptBitDepthI10("i10", 10.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptBitDepthI12("i12", 12.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptBitDepthI14("i14", 14.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptBitDepthI16("i16", 16.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptBitDepthF32("f32", 32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 
 Symbol::Symbol() :
 type(UNDEFINED), value(""), value2("")
@@ -178,9 +210,10 @@ double Symbol::getValue(double x, double y, double z) const
    case VARIABLE_Z:
    // since v2.2.1:
    case VARIABLE_A: 
-   // automatic silent parameter of the script
-   case VARIABLE_BITDEPTH:
-   // embedded expr constants
+   
+   case VARIABLE_BITDEPTH: // automatic silent parameter of the script 
+   case VARIABLE_SCRIPT_BITDEPTH: // v2.2
+     // embedded expr constants
    case VARIABLE_RANGE_HALF:
    case VARIABLE_RANGE_MAX:
    case VARIABLE_RANGE_SIZE:
@@ -190,6 +223,8 @@ double Symbol::getValue(double x, double y, double z) const
    case VARIABLE_CMAX:
 
    case NUMBER:
+     return dValue;
+   case FUNCTION_CONFIG_SCRIPT_BITDEPTH:
      return dValue;
    default:
       return process(x, y, z);
@@ -204,8 +239,17 @@ Context::Context(const std::deque<Symbol> &expression)
 
    auto it = expression.begin();
 
-   for ( int i = 0; i < nSymbols; i++, it++ )
-      pSymbols[i] = *it;
+   int default_sbitdepth = 8;
+
+   int symbolCount = 0;
+   for (int i = 0; i < nSymbols; i++, it++) {
+     if (it->type == Symbol::FUNCTION_CONFIG_SCRIPT_BITDEPTH)
+       default_sbitdepth = (int)it->dValue;
+     else
+       pSymbols[symbolCount++] = *it;
+   }
+   nSymbols = symbolCount;
+   sbitdepth = default_sbitdepth;
 }
 
 Context::~Context()
@@ -225,6 +269,7 @@ double Context::rec_compute()
    case Symbol::VARIABLE_Z: return z;
    case Symbol::VARIABLE_A: return a;
    case Symbol::VARIABLE_BITDEPTH: return bitdepth; // bit-depth for autoscale
+   case Symbol::VARIABLE_SCRIPT_BITDEPTH: return sbitdepth; // source bit depth for autoscale
 
    case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
    case Symbol::VARIABLE_RANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
@@ -237,8 +282,8 @@ double Context::rec_compute()
    case Symbol::FUNCTION_WITH_B_AS_PARAM: // silent bit-depth parameter for autoscale
      switch (s.nParameter)
      {
-     case 1: return s.process(rec_compute(), bitdepth, -1.0f); // automatic bit-depth parameter
-     case 2: // two original parameters + bitdepth
+     case 1: return s.process(rec_compute(), bitdepth, sbitdepth); // automatic bit-depth parameters
+     case 2: // two original parameters + bitdepth ; none of this
      {
        double yy = rec_compute();
        double xx = rec_compute();
@@ -247,6 +292,7 @@ double Context::rec_compute()
      default:
        return s.process(-1.0f, -1.0f, -1.0f);
      }
+   
    default:
       switch ( s.nParameter )
       {
@@ -278,6 +324,7 @@ double Context::compute(double x, double y, double z, double a, double bitdepth)
    this->a = a;
 
    this->bitdepth = (int)bitdepth;
+   // this->sbitdepth = 8; already filled
    // all other expr constants are calculated from bitdepth
 
    return rec_compute();
@@ -294,6 +341,7 @@ String Context::rec_infix()
     case Symbol::VARIABLE_Z: 
     case Symbol::VARIABLE_A:
     case Symbol::VARIABLE_BITDEPTH:
+    case Symbol::VARIABLE_SCRIPT_BITDEPTH:
     case Symbol::VARIABLE_RANGE_HALF:
     case Symbol::VARIABLE_RANGE_MAX:
     case Symbol::VARIABLE_RANGE_SIZE:
@@ -327,7 +375,7 @@ String Context::rec_infix()
     case Symbol::FUNCTION_WITH_B_AS_PARAM:
     {
       if (s.nParameter == 1) {
-        return s.value + "(" + rec_infix() + "," + std::to_string(this->bitdepth) + ")";
+        return s.value + "(" + rec_infix() + "," + std::to_string(this->bitdepth) + "," + std::to_string(this->sbitdepth) + ")";
       }
     }
 

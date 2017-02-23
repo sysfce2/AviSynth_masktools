@@ -19,7 +19,9 @@ public:
       // 4th variable since v2.2.1
       VARIABLE_A,
 
-      VARIABLE_BITDEPTH,
+      VARIABLE_BITDEPTH, // automatic silent parameter of the expression v2.2.1
+      VARIABLE_SCRIPT_BITDEPTH, // base bit depth of the values to scale v2.2.2, settable with i8..i16,f32 keywords
+
       // special adaptive constants filled by bitdepth
       VARIABLE_RANGE_HALF,
       VARIABLE_RANGE_MAX,
@@ -30,6 +32,7 @@ public:
       VARIABLE_CMAX,
 
       FUNCTION_WITH_B_AS_PARAM,
+      FUNCTION_CONFIG_SCRIPT_BITDEPTH,
 
       UNDEFINED
 
@@ -97,6 +100,7 @@ public:
    static Symbol A;
    // Auto bitdepth conv
    static Symbol BITDEPTH;
+   static Symbol SCRIPT_BITDEPTH;
    // special adaptive constants filled by bitdepth
    static Symbol RANGE_HALF;
    static Symbol RANGE_MAX;
@@ -125,6 +129,13 @@ public:
    // auto bit depth conversions
    static Symbol UpscaleByShift;
    static Symbol UpscaleByStretch;
+   // script bit depth setters
+   static Symbol SetScriptBitDepthI8;
+   static Symbol SetScriptBitDepthI10;
+   static Symbol SetScriptBitDepthI12;
+   static Symbol SetScriptBitDepthI14;
+   static Symbol SetScriptBitDepthI16;
+   static Symbol SetScriptBitDepthF32;
 
 };
 
@@ -136,6 +147,7 @@ class Context {
 
    double x, y, z, a;
    int bitdepth; // bit depth
+   int sbitdepth; // source bit depth of values to scale
    double rec_compute();
    String rec_infix();
 
