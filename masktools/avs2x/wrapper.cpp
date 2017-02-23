@@ -1,5 +1,4 @@
 #include "../filters/binarize/binarize.h"
-
 #include "../filters/invert/invert.h"
 #include "../filters/logic/logic.h"
 #include "../filters/merge/merge.h"
