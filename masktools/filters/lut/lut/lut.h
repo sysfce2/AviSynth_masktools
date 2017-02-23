@@ -140,7 +140,7 @@ public:
         }
         else if (bits_per_pixel == 16) { // real or stacked 16 bit
           for (int x = 0; x <= 65535; x++)
-            luts16[i][x] = ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, -1.0 /*n/a*/, bits_per_pixel); // 17.02.13 4th parameter: bitdepth conversion support in expressions
+            luts16[i][x] = ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, -1.0 /*n/a*/, bits_per_pixel); // 4th parameter: bitdepth conversion support in expressions
         }
         else if (bits_per_pixel < 16) {
           for (int x = 0; x <= max_pixel_value; x++)
