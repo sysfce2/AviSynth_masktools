@@ -246,13 +246,13 @@ Processor16 *xor16_native_sse2  = &logic16_native_t_sse2<xor16_sse2, xor16_c>;
     Processor16 *add14##mode##add14_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add16_sse2<14>, add16_sse2<14>>, mode##_t<add16_c<14>, add16_c<14>>>; \
     Processor16 *add16##mode##add16_##layout##_sse2 = &logic16_##layout##_t_sse2<mode##_t_sse2<add16_sse2<16>, add16_sse2<16>>, mode##_t<add16_c<16>, add16_c<16>>>;
 
-// todo: add_sse2 to 10-14 bits (only 16 bit saturates correctly in simd)
-
 DEFINE_SILLY_SSE2_VERSIONS(min, stacked)
 DEFINE_SILLY_SSE2_VERSIONS(max, stacked)
 DEFINE_SILLY_SSE2_VERSIONS(min, native)
 DEFINE_SILLY_SSE2_VERSIONS(max, native)
 
 #undef DEFINE_SILLY_SSE2_VERSIONS
+#undef DEFINE_SILLY_C_MODE
+
 
 } } } }
