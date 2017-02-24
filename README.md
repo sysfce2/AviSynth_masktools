@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.2 (20170223)**
+**Masktools2 v2.2.3 (2017022?)**
 
 mod by pinterf
 
@@ -19,6 +19,7 @@ Differences to Masktools 2.0b1
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
 - mt_merge to discard U and V automatically when input is greyscale
+- some filters got AVX (float) and AVX2 (integer) support: mt_merge, mt_logic
 - new: mt_lutxyza. Accepts four clips. 4th variable name is 'a' (besides x, y and z)
 - expression syntax supporting bit depth independent expressions
   - bit-depth aware scale operators
@@ -128,8 +129,15 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.3 (20170224)**
+**v2.2.3 (2017022?)**
 - mt_logic to 32 bit float (final filter lacking it)
+- get CpuInfo from Avisynth (avx/avx2 preparation)
+  Note: AVX/AVX2 works if 
+  - recent Avisynth+ that reports extra CPU flags
+  - 64 bit OS (but Avisynth can be 32 bits)
+  - Windows 7 SP1 or newer
+- mt_merge: 8-16 bit: AVX2, float:AVX
+_ mt_logic: 8-16 bit: AVX2, float:AVX
 
 **v2.2.2 (20170223)** completed high bit depth support
 - All filters work in 10,12,14,16 bits and float (except mt_logic which is 8-16 only)
