@@ -54,6 +54,8 @@ void Functions::copy_plane(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, pt
     }
 }
 
+#if 0
+// v2.2.3: using avisynth's GetCpuFlags
 CpuFlags Functions::get_cpu_flags()
 {
     int CPUInfo[4]; //eax, ebx, ecx, edx
@@ -71,3 +73,4 @@ CpuFlags Functions::get_cpu_flags()
 
     return flags;
 }
+#endif
