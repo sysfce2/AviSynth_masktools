@@ -12,7 +12,9 @@ typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc1, 
 #define DEFINE_PROCESSOR(name) \
    extern Processor *name##_c; \
    extern Processor *name##_sse2; \
-   extern Processor *name##_asse2;
+   extern Processor *name##_asse2; \
+   extern Processor *name##_avx2; \
+   extern Processor *name##_aavx2;
 
 DEFINE_PROCESSOR(and);
 DEFINE_PROCESSOR(or);
@@ -41,7 +43,8 @@ DEFINE_NINE(max);
    extern Processor16 *name##_stacked_c; \
    extern Processor16 *name##_native_c; \
    extern Processor16 *name##_stacked_sse2; \
-   extern Processor16 *name##_native_sse2;
+   extern Processor16 *name##_native_sse2; \
+   extern Processor16 *name##_native_avx2;
 
 DEFINE_PROCESSOR(and16);
 DEFINE_PROCESSOR(or16 );
@@ -160,6 +163,8 @@ public:
       processors.push_back( Filtering::Processor<Processor>( mode##_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
       processors.push_back( Filtering::Processor<Processor>( mode##_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
       processors.push_back( Filtering::Processor<Processor>( mode##_asse2, Constraint( CPU_SSE2 , 1, 1, 16, 16 ), 2 ) ); \
+      processors.push_back( Filtering::Processor<Processor>( mode##_avx2, Constraint( CPU_AVX2 , 1, 1, 1, 1 ), 3 ) ); \
+      processors.push_back( Filtering::Processor<Processor>( mode##_aavx2, Constraint( CPU_AVX2 , 1, 1, 32, 32 ), 4 ) ); \
    } while(0)
 
       int nTh1 = parameters["th1"].toInt();
@@ -227,6 +232,7 @@ public:
           processors16.push_back( Filtering::Processor<Processor16>( mode##_native_sse2, Constraint( CPU_SSE4_1 , 1, 1, 1, 1 ), 1 ) ); \
         else \
           processors16.push_back( Filtering::Processor<Processor16>( mode##_native_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+        processors16.push_back( Filtering::Processor<Processor16>( mode##_native_avx2, Constraint( CPU_AVX2 , 1, 1, 1, 1 ), 1 ) ); \
     }
 
       int nTh1 = parameters["th1"].toInt();

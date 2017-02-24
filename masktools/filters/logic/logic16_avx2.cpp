@@ -1,0 +1,152 @@
+#include "logic.h"
+#include "../../common/simd.h"
+#include "../../common/16bit.h"
+
+using namespace Filtering;
+
+// remarks:
+// bits_per_pixel templating for add16: needs because of clamping to a value less than max(Word)
+
+template<int bits_per_pixel>
+static MT_FORCEINLINE Word add16_c(Word a, Word b) { return (Word)min(a + (int)b, (1 << bits_per_pixel) - 1); }
+static MT_FORCEINLINE Word sub16_c(Word a, Word b) { return clip<Word, int>(a - (int)b); }
+static MT_FORCEINLINE Word nop16_c(Word a, Word b) { UNUSED(b); return a; }
+
+static MT_FORCEINLINE Word and16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a & b; }
+static MT_FORCEINLINE Word or16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a | b; }
+static MT_FORCEINLINE Word andn16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a & ~b; }
+static MT_FORCEINLINE Word xor16_c(Word a, Word b, Word th1, Word th2) { UNUSED(th1); UNUSED(th2); return a ^ b; }
+
+template <decltype(nop16_c) opa, decltype(nop16_c) opb>
+static MT_FORCEINLINE Word min_t(Word a, Word b, Word th1, Word th2) { 
+    return min<Word>(opa(a, th1), opb(b, th2)); 
+}
+
+template <decltype(nop16_c) opa, decltype(nop16_c) opb>
+static MT_FORCEINLINE Word max_t(Word a, Word b, Word th1, Word th2) { 
+    return max<Word>(opa(a, th1), opb(b, th2)); 
+}
+
+template <decltype(and16_c) op>
+static void logic16_native_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
+{
+    UNUSED(nOrigHeight);
+    for (int y = 0; y < nHeight; y++) {
+        auto pDstWord = reinterpret_cast<Word*>(pDst);
+        auto pSrcWord = reinterpret_cast<const Word*>(pSrc);
+
+        for (int x = 0; x < nWidth; x++) {
+            pDstWord[x] = op(pDstWord[x], pSrcWord[x], nThresholdDestination, nThresholdSource);
+        }
+        pDst += nDstPitch;
+        pSrc += nSrcPitch;
+    }
+}
+
+/* avx2 */
+
+template<int bits_per_pixel>
+static MT_FORCEINLINE __m256i add16_avx2(__m256i a, __m256i b) 
+{ 
+  return bits_per_pixel==16 ? _mm256_adds_epu16(a, b) : _mm256_min_epu16(_mm256_adds_epu16(a, b),_mm256_set1_epi16((short)((1 << bits_per_pixel) - 1))); 
+}
+static MT_FORCEINLINE __m256i sub16_avx2(__m256i a, __m256i b) { return _mm256_subs_epu16(a, b); }
+static MT_FORCEINLINE __m256i nop16_avx2(__m256i a, __m256i) { return a; }
+
+static MT_FORCEINLINE __m256i and16_avx2(const __m256i &a, const __m256i &b, const __m256i&, const __m256i&) { 
+    return _mm256_and_si256(a, b); 
+}
+
+static MT_FORCEINLINE __m256i or16_avx2(const __m256i &a, const __m256i &b, const __m256i&, const __m256i&) { 
+    return _mm256_or_si256(a, b); 
+}
+
+static MT_FORCEINLINE __m256i andn16_avx2(const __m256i &a, const __m256i &b, const __m256i&, const __m256i&) { 
+    return _mm256_andnot_si256(a, b); 
+}
+
+static MT_FORCEINLINE __m256i xor16_avx2(const __m256i &a, const __m256i &b, const __m256i&, const __m256i&) { 
+    return _mm256_xor_si256(a, b); 
+}
+
+template <decltype(nop16_avx2) opa, decltype(nop16_avx2) opb>
+static MT_FORCEINLINE __m256i min_t_avx2(const __m256i &a, const __m256i &b, const __m256i& th1, const __m256i& th2) { 
+    return _mm256_min_epu16(opa(a, th1), opb(b, th2)); // !!min_epu16: SSE4
+}
+
+template <decltype(nop16_avx2) opa, decltype(nop16_avx2) opb>
+static MT_FORCEINLINE __m256i max_t_avx2(const __m256i &a, const __m256i &b, const __m256i& th1, const __m256i& th2) { 
+    return _mm256_max_epu16(opa(a, th1), opb(b, th2)); 
+}
+
+
+template<decltype(and16_avx2) op, decltype(and16_c) op_c>
+static void logic16_native_t_avx2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
+{
+    nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
+  
+    int wMod32 = (nWidth / 32) * 32;
+    auto pDst2 = pDst;
+    auto pSrc2 = pSrc;
+    auto tDest = _mm256_set1_epi16(nThresholdDestination);
+    auto tSource = _mm256_set1_epi16(nThresholdSource);
+
+    for (int j = 0; j < nHeight; ++j) {
+        for (int i = 0; i < wMod32; i+=32) {
+            auto dst = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(pDst+i));
+            auto src = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(pSrc+i));
+
+            auto result = op(dst, src, tDest, tSource);
+
+            simd256_store_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m256i*>(pDst+i), result);
+        }
+        pDst += nDstPitch;
+        pSrc += nSrcPitch;
+    }
+    if (nWidth > wMod32) {
+        logic16_native_t_c<op_c>(pDst2 + wMod32, nDstPitch, pSrc2 + wMod32, nSrcPitch, (nWidth - wMod32) / sizeof(uint16_t), nHeight, nOrigHeight, nThresholdDestination, nThresholdSource);
+    }
+    _mm256_zeroupper();
+}
+
+
+namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic {
+
+Processor16 *and16_native_avx2  = &logic16_native_t_avx2<and16_avx2, and16_c>;
+Processor16 *or16_native_avx2   = &logic16_native_t_avx2<or16_avx2, or16_c>;
+Processor16 *andn16_native_avx2 = &logic16_native_t_avx2<andn16_avx2, andn16_c>;
+Processor16 *xor16_native_avx2  = &logic16_native_t_avx2<xor16_avx2, xor16_c>;
+
+#define DEFINE_SILLY_AVX2_VERSIONS(mode, layout) \
+    Processor16 *mode##_##layout##_avx2         = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, nop16_avx2>, mode##_t<nop16_c, nop16_c>>;   \
+    Processor16 *mode##sub_##layout##_avx2      = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, sub16_avx2>, mode##_t<nop16_c, sub16_c>>;   \
+    Processor16 *mode##add10_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<10>>, mode##_t<nop16_c, add16_c<10>>>;   \
+    Processor16 *mode##add12_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<12>>, mode##_t<nop16_c, add16_c<12>>>;   \
+    Processor16 *mode##add14_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<14>>, mode##_t<nop16_c, add16_c<14>>>;   \
+    Processor16 *mode##add16_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<16>>, mode##_t<nop16_c, add16_c<16>>>;   \
+    Processor16 *sub##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, nop16_avx2>, mode##_t<sub16_c, nop16_c>>;   \
+    Processor16 *sub##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, sub16_avx2>, mode##_t<sub16_c, sub16_c>>;   \
+    Processor16 *sub##mode##add10_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<10>>, mode##_t<sub16_c, add16_c<10>>>;   \
+    Processor16 *sub##mode##add12_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<12>>, mode##_t<sub16_c, add16_c<12>>>;   \
+    Processor16 *sub##mode##add14_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<14>>, mode##_t<sub16_c, add16_c<14>>>;   \
+    Processor16 *sub##mode##add16_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<16>>, mode##_t<sub16_c, add16_c<16>>>;   \
+    Processor16 *add10##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<10>, nop16_avx2>, mode##_t<add16_c<10>, nop16_c>>;   \
+    Processor16 *add12##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<12>, nop16_avx2>, mode##_t<add16_c<12>, nop16_c>>;   \
+    Processor16 *add14##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<14>, nop16_avx2>, mode##_t<add16_c<14>, nop16_c>>;   \
+    Processor16 *add16##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<16>, nop16_avx2>, mode##_t<add16_c<16>, nop16_c>>;   \
+    Processor16 *add10##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<10>, sub16_avx2>, mode##_t<add16_c<10>, sub16_c>>;   \
+    Processor16 *add12##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<12>, sub16_avx2>, mode##_t<add16_c<12>, sub16_c>>;   \
+    Processor16 *add14##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<14>, sub16_avx2>, mode##_t<add16_c<14>, sub16_c>>;   \
+    Processor16 *add16##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<16>, sub16_avx2>, mode##_t<add16_c<16>, sub16_c>>;   \
+    Processor16 *add10##mode##add10_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<10>, add16_avx2<10>>, mode##_t<add16_c<10>, add16_c<10>>>; \
+    Processor16 *add12##mode##add12_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<12>, add16_avx2<12>>, mode##_t<add16_c<12>, add16_c<12>>>; \
+    Processor16 *add14##mode##add14_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<14>, add16_avx2<14>>, mode##_t<add16_c<14>, add16_c<14>>>; \
+    Processor16 *add16##mode##add16_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<16>, add16_avx2<16>>, mode##_t<add16_c<16>, add16_c<16>>>;
+
+DEFINE_SILLY_AVX2_VERSIONS(min, native)
+DEFINE_SILLY_AVX2_VERSIONS(max, native)
+
+#undef DEFINE_SILLY_AVX2_VERSIONS
+
+
+} } } }
