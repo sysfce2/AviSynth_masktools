@@ -51,7 +51,7 @@ static void logic16_stacked_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc,
 }
 
 template <decltype(and16_c) op>
-void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
+static void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource)
 {
     UNUSED(nOrigHeight);
     for (int y = 0; y < nHeight; y++) {
