@@ -443,6 +443,15 @@
     <ClCompile Include="..\filters\logic\logic32_avx.cpp">
       <Filter>filters\logic</Filter>
     </ClCompile>
+    <ClCompile Include="..\filters\merge\merge32_avx.cpp">
+      <Filter>filters\merge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\merge\merge_avx2.cpp">
+      <Filter>filters\merge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\merge\merge16_avx2.cpp">
+      <Filter>filters\merge</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\common\mt_resource.rc">
