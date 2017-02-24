@@ -452,6 +452,12 @@
     <ClCompile Include="..\filters\merge\merge16_avx2.cpp">
       <Filter>filters\merge</Filter>
     </ClCompile>
+    <ClCompile Include="..\filters\logic\logic16_avx2.cpp">
+      <Filter>filters\logic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\logic\logic_avx2.cpp">
+      <Filter>filters\logic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\common\mt_resource.rc">
