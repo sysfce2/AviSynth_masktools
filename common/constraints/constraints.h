@@ -6,18 +6,20 @@
 
 namespace Filtering {
 
+// internal CPU type list, for choosing best processor
 enum {
-
-   CPU_NONE    = 0,
-   CPU_MMX     = 0x01,
-   CPU_ISSE    = 0x02,
-   CPU_SSE2    = 0x04,
-   CPU_SSE3    = 0x08,
-   CPU_3DNOW   = 0x10,
-   CPU_3DNOW2  = 0x20,
-   CPU_SSSE3   = 0x40,
-   CPU_SSE4_1    = 0x80,
-   CPU_SSE4_2    = 0x100,
+  CPU_NONE   = 0,
+  //CPU_MMX = 0x01,
+  //CPU_ISSE = 0x02,
+  CPU_SSE2   = 0x04,
+  CPU_SSE3   = 0x08,
+  //CPU_3DNOW = 0x10,
+  //CPU_3DNOW2 = 0x20,
+  CPU_SSSE3  = 0x40,
+  CPU_SSE4_1 = 0x80,
+  CPU_SSE4_2 = 0x100,
+  CPU_AVX    = 0x200,
+  CPU_AVX2   = 0x400,
 };
 
 typedef int CpuFlags;
