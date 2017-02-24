@@ -7,6 +7,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic 
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, int nWidth, int nHeight, Byte nThresholdDestination, Byte nThresholdSource);
 typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight, Word nThresholdDestination, Word nThresholdSource);
+typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc1, ptrdiff_t nSrc1Pitch, int nWidth, int nHeight, Float nThresholdDestination, Float nThresholdSource);
 
 #define DEFINE_PROCESSOR(name) \
    extern Processor *name##_c; \
@@ -74,13 +75,43 @@ DEFINE_NINE(max);
 #undef DEFINE_NINE
 #undef DEFINE_PROCESSOR
 
+/* 32 bit */
+#define DEFINE_PROCESSOR(name) \
+   extern Processor32 *name##_32_c; \
+   extern Processor32 *name##_32_sse2; \
+   extern Processor32 *name##_32_asse2;
+
+DEFINE_PROCESSOR(and);
+DEFINE_PROCESSOR(or );
+DEFINE_PROCESSOR(andn);
+DEFINE_PROCESSOR(xor);
+
+#define DEFINE_TRIPLE(mode) \
+DEFINE_PROCESSOR(mode); \
+DEFINE_PROCESSOR(mode##add); \
+DEFINE_PROCESSOR(mode##sub)
+
+#define DEFINE_NINE(mode) \
+DEFINE_TRIPLE(mode); \
+DEFINE_TRIPLE(add##mode); \
+DEFINE_TRIPLE(sub##mode)
+
+DEFINE_NINE(min);
+DEFINE_NINE(max);
+
+#undef DEFINE_TRIPLE
+#undef DEFINE_NINE
+#undef DEFINE_PROCESSOR
+
 
 class Logic : public MaskTools::Filter
 {
 
   ProcessorList<Processor> processors;
   ProcessorList<Processor16> processors16;
+  ProcessorList<Processor32> processors32;
   int nThresholdDestination, nThresholdSource;
+  float nThresholdDestination_f, nThresholdSource_f;
 
   int bits_per_pixel;
   int isStacked;
@@ -100,6 +131,11 @@ protected:
         frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
         dst.width(), dst.height(), dst.origheight(), (Word)nThresholdDestination, (Word)nThresholdSource);
     }
+    else {
+      processors32.best_processor(constraints[nPlane])((Float *)dst.data(), dst.pitch(),
+        (Float *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+        dst.width(), dst.height(), nThresholdDestination_f, nThresholdSource_f);
+    }
   }
 
 public:
@@ -115,11 +151,6 @@ public:
 
     if (isStacked)
       bits_per_pixel = 16;
-
-    if (bits_per_pixel == 32) {
-      error = "32 bit float clip is not supported yet";
-      return;
-    }
 
     if (bits_per_pixel == 8) {
 #define SET_MODE(mode) \
@@ -179,7 +210,7 @@ public:
       }
 #undef SET_MODE
     }
-    else {
+    else if (bits_per_pixel <= 16) {
       /* 16 bit */
 #define SET_MODE(mode, needSSE4) \
     if (isStacked) { \
@@ -323,6 +354,64 @@ public:
 #undef SET_MODE
 
     }
+    else { // float
+#define SET_MODE(mode) \
+   do { \
+      processors32.push_back( Filtering::Processor<Processor32>( mode##_32_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
+      processors32.push_back( Filtering::Processor<Processor32>( mode##_32_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
+      processors32.push_back( Filtering::Processor<Processor32>( mode##_32_asse2, Constraint( CPU_SSE2 , 1, 1, 16, 16 ), 2 ) ); \
+   } while(0)
+
+      float nTh1 = (float) parameters["th1"].toFloat();
+      float nTh2 = (float) parameters["th2"].toFloat();
+
+      if (parameters["mode"].toString() == "and")
+        SET_MODE(and);
+      else if (parameters["mode"].toString() == "or")
+        SET_MODE(or );
+      else if (parameters["mode"].toString() == "xor")
+        SET_MODE(xor);
+      else if (parameters["mode"].toString() == "andn")
+        SET_MODE(andn);
+      else
+      {
+        bool isDstSub = nTh1 < 0;
+        bool isDstAdd = nTh1 > 0;
+        bool isSrcSub = nTh2 < 0;
+        bool isSrcAdd = nTh2 > 0;
+
+        nThresholdDestination_f = abs<float>(nTh1);
+        nThresholdSource_f = abs<float>(nTh2);
+
+        if (parameters["mode"].toString() == "min")
+        {
+          if (isDstAdd && isSrcAdd) SET_MODE(addminadd);
+          else if (isDstAdd && isSrcSub) SET_MODE(addminsub);
+          else if (isDstSub && isSrcAdd) SET_MODE(subminadd);
+          else if (isDstSub && isSrcSub) SET_MODE(subminsub);
+          else if (isDstAdd) SET_MODE(addmin);
+          else if (isSrcAdd) SET_MODE(minadd);
+          else if (isDstSub) SET_MODE(submin);
+          else if (isSrcSub) SET_MODE(minsub);
+          else SET_MODE(min);
+        }
+        else if (parameters["mode"].toString() == "max")
+        {
+          if (isDstAdd && isSrcAdd) SET_MODE(addmaxadd);
+          else if (isDstAdd && isSrcSub) SET_MODE(addmaxsub);
+          else if (isDstSub && isSrcAdd) SET_MODE(submaxadd);
+          else if (isDstSub && isSrcSub) SET_MODE(submaxsub);
+          else if (isDstAdd) SET_MODE(addmax);
+          else if (isSrcAdd) SET_MODE(maxadd);
+          else if (isDstSub) SET_MODE(submax);
+          else if (isSrcSub) SET_MODE(maxsub);
+          else SET_MODE(max);
+        }
+        else
+          error = "\"mode\" must be either \"and\", \"or\", \"xor\", \"andn\", \"min\" or \"max\"";
+      }
+#undef SET_MODE
+    }
   }
 
   InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
@@ -334,8 +423,8 @@ public:
     signature.add(Parameter(TYPE_CLIP, ""));
     signature.add(Parameter(TYPE_CLIP, ""));
     signature.add(Parameter(String(""), "mode"));
-    signature.add(Parameter(0, "th1"));
-    signature.add(Parameter(0, "th2"));
+    signature.add(Parameter(0.0, "th1"));
+    signature.add(Parameter(0.0, "th2"));
     signature.add(Parameter(false, "stacked"));
 
     return add_defaults(signature);
