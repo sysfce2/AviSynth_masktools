@@ -576,6 +576,16 @@
     <ClCompile Include="..\filters\binarize\binarize.cpp" />
     <ClCompile Include="..\filters\logic\logic16.cpp" />
     <ClCompile Include="..\filters\logic\logic32.cpp" />
+    <ClCompile Include="..\filters\logic\logic32_avx.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\filters\lut\lutxyza\lutxyza.cpp" />
     <ClCompile Include="..\filters\lut\lut\lut16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask16.cpp" />
