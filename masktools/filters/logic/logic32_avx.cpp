@@ -92,6 +92,9 @@ template<MemoryMode mem_mode, decltype(and_avx_op) op, decltype(and) op_c>
 
     for ( int j = 0; j < nHeight; ++j ) {
         for ( int i = 0; i < wMod32; i+=32 ) {
+            _mm_prefetch(reinterpret_cast<const char*>(pDst) + i + 384, _MM_HINT_T0);
+            _mm_prefetch(reinterpret_cast<const char*>(pSrc) + i + 384, _MM_HINT_T0);
+          
             auto dst = simd256_load_ps<mem_mode>(pDst+i);
             auto src = simd256_load_ps<mem_mode>(pSrc+i);
 
@@ -102,10 +105,10 @@ template<MemoryMode mem_mode, decltype(and_avx_op) op, decltype(and) op_c>
         pDst += nDstPitch;
         pSrc += nSrcPitch;
     }
-    _mm256_zeroupper();
     if (nWidth > wMod32) {
         logic_t<op_c>((Float *)(pDst2 + wMod32), nDstPitch, (Float *)(pSrc2 + wMod32), nSrcPitch, (nWidth - wMod32) / sizeof(float), nHeight, nThresholdDestination, nThresholdSource);
     }
+    _mm256_zeroupper();
 }
 
 
