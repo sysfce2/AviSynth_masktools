@@ -240,9 +240,6 @@
     <ClInclude Include="..\common\simd.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\filters\merge\merge16.h">
-      <Filter>filters\merge</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\16bit.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -439,6 +436,9 @@
     </ClCompile>
     <ClCompile Include="..\filters\binarize\binarize32.cpp">
       <Filter>filters\binarize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\logic\logic32.cpp">
+      <Filter>filters\logic</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

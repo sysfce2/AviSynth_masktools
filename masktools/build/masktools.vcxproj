@@ -530,7 +530,6 @@
     <ClInclude Include="..\filters\mask\functions16.h" />
     <ClInclude Include="..\filters\mask\functions32.h" />
     <ClInclude Include="..\filters\merge\merge.h" />
-    <ClInclude Include="..\filters\merge\merge16.h" />
     <ClInclude Include="..\filters\morphologic\functions16.h" />
     <ClInclude Include="..\filters\morphologic\functions32.h" />
     <ClInclude Include="..\filters\morphologic\morphologic.h" />
@@ -576,6 +575,7 @@
     <ClCompile Include="..\filters\invert\invert.cpp" />
     <ClCompile Include="..\filters\binarize\binarize.cpp" />
     <ClCompile Include="..\filters\logic\logic16.cpp" />
+    <ClCompile Include="..\filters\logic\logic32.cpp" />
     <ClCompile Include="..\filters\lut\lutxyza\lutxyza.cpp" />
     <ClCompile Include="..\filters\lut\lut\lut16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask16.cpp" />
