@@ -2,8 +2,22 @@
 #define __Common_Avs2x_Filter_H__
 
 #include "params.h"
+#include "../common/constraints/constraints.h"
+#include <avs/cpuid.h>
 
 namespace Filtering { namespace Avisynth2x {
+
+static CpuFlags AvsToInternalCpuFlags(int avsCpuFlags) {
+  if (avsCpuFlags & CPUF_AVX2) return (CpuFlags)CPU_AVX2;
+  if (avsCpuFlags & CPUF_AVX) return (CpuFlags)CPU_AVX;
+  if (avsCpuFlags & CPUF_SSE4_2) return (CpuFlags)CPU_SSE4_2;
+  if (avsCpuFlags & CPUF_SSE4_1) return (CpuFlags)CPU_SSE4_1;
+  if (avsCpuFlags & CPUF_SSSE3) return (CpuFlags)CPU_SSSE3;
+  if (avsCpuFlags & CPUF_SSE3) return (CpuFlags)CPU_SSE3;
+  if (avsCpuFlags & CPUF_SSE2) return (CpuFlags)CPU_SSE2;
+  return (CpuFlags)CPU_NONE;
+}
+
 
 template<class T>
 class Filter : public GenericVideoFilter
@@ -17,7 +31,7 @@ class Filter : public GenericVideoFilter
         return new Filter<T>(args[0].AsClip(), GetParameters(args, T::filter_signature(), env), env);
     }
 public:
-    Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters), GenericVideoFilter(child), signature(T::filter_signature())
+    Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
     {
         if (_filter.is_error())
         {
