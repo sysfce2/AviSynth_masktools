@@ -55,9 +55,9 @@ protected:
 
 public:
 
-    Filter(const Parameters &parameters, FilterProcessingType processingType) :
+    Filter(const Parameters &parameters, FilterProcessingType processingType, CpuFlags _flags) :
         parameters(parameters),
-        flags(Functions::get_cpu_flags()),
+        flags(_flags),
         inPlace_(processingType == FilterProcessingType::INPLACE),
         nXOffset(parameters["offx"].toInt()),
         nYOffset(parameters["offy"].toInt()),
