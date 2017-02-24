@@ -79,7 +79,9 @@ DEFINE_NINE(max);
 #define DEFINE_PROCESSOR(name) \
    extern Processor32 *name##_32_c; \
    extern Processor32 *name##_32_sse2; \
-   extern Processor32 *name##_32_asse2;
+   extern Processor32 *name##_32_asse2; \
+   extern Processor32 *name##_32_avx; \
+   extern Processor32 *name##_32_aavx;
 
 DEFINE_PROCESSOR(and);
 DEFINE_PROCESSOR(or );
@@ -360,6 +362,8 @@ public:
       processors32.push_back( Filtering::Processor<Processor32>( mode##_32_c, Constraint( CPU_NONE, 1, 1, 1, 1 ), 0 ) ); \
       processors32.push_back( Filtering::Processor<Processor32>( mode##_32_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
       processors32.push_back( Filtering::Processor<Processor32>( mode##_32_asse2, Constraint( CPU_SSE2 , 1, 1, 16, 16 ), 2 ) ); \
+      processors32.push_back( Filtering::Processor<Processor32>( mode##_32_avx, Constraint( CPU_AVX , 1, 1, 1, 1 ), 3 ) ); \
+      processors32.push_back( Filtering::Processor<Processor32>( mode##_32_aavx, Constraint( CPU_AVX , 1, 1, 32, 32 ), 4 ) ); \
    } while(0)
 
       float nTh1 = (float) parameters["th1"].toFloat();
