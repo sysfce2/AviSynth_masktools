@@ -80,7 +80,7 @@ protected:
     }
 
 public:
-   MotionMask(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
+   MotionMask(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags )
    {
      bits_per_pixel = bit_depths[C];
      bool isFloat = bits_per_pixel == 32;

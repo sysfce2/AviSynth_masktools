@@ -32,7 +32,7 @@ protected:
     }
 
 public:
-    Hysteresis(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::CHILD), stack(nullptr) {
+    Hysteresis(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), stack(nullptr) {
       int bits_per_pixel = bit_depths[C];
       int pixelsize = bits_per_pixel == 8 ? 1 : (bits_per_pixel == 32 ? 4 : 2);
       switch (bits_per_pixel) {

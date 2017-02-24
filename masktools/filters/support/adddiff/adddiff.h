@@ -65,7 +65,7 @@ protected:
     }
 
 public:
-    AddDiff(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE) 
+    AddDiff(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
     {
       bool isStacked = parameters["stacked"].toBool();
       int bits_per_pixel = bit_depths[C];

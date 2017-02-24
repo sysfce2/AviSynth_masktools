@@ -70,7 +70,7 @@ protected:
     }
 
 public:
-    MorphologicFilter(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::CHILD), coordinates_list(NULL), coordinates_count(0)
+    MorphologicFilter(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), coordinates_list(NULL), coordinates_count(0)
     {
       isStacked = parameters["stacked"].toBool();
       bits_per_pixel = bit_depths[C];

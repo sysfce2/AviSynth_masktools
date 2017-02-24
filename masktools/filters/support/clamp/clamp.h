@@ -71,7 +71,7 @@ protected:
   }
 
 public:
-    Clamp(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
+    Clamp(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
     {
         nUndershoot = parameters["undershoot"].toInt();
         nOvershoot = parameters["overshoot"].toInt();

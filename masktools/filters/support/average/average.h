@@ -52,7 +52,7 @@ protected:
     }
 
 public:
-    Average(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
+    Average(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
     {
       bool isStacked = parameters["stacked"].toBool();
       bits_per_pixel = bit_depths[C];

@@ -78,7 +78,7 @@ protected:
     }
   }
 public:
-   Convolution(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
+   Convolution(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags)
    {
       bits_per_pixel = bit_depths[C];
      

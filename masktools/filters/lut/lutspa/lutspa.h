@@ -25,7 +25,7 @@ protected:
     }
 
 public:
-   Lutspa(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::CHILD)
+   Lutspa(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags)
    {
       bits_per_pixel = bit_depths[C];
       pixelsize = bits_per_pixel == 8 ? 1 : (bits_per_pixel <= 16) ? 2 : 4;

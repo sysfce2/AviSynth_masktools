@@ -47,24 +47,24 @@ extern Processor32 *inpand32_custom_c;
 class Inpand : public Morphologic::MorphologicFilter
 {
 public:
-  Inpand(const Parameters&parameters) : Morphologic::MorphologicFilter(parameters)
+  Inpand(const Parameters&parameters, CpuFlags cpuFlags) : Morphologic::MorphologicFilter(parameters, (CpuFlags)cpuFlags)
   {
-    int bits_per_pixel = bit_depths[C];
-    bool isStacked = parameters["stacked"].toBool();
-    if (isStacked)
-      bits_per_pixel = 16;
+    int _bits_per_pixel = bit_depths[C];
+    bool _isStacked = parameters["stacked"].toBool();
+    if (_isStacked)
+      _bits_per_pixel = 16;
     /* add the processors */
     if (parameters["mode"].toString() == "square")
     {
-      if (bits_per_pixel == 8) {
+      if (_bits_per_pixel == 8) {
         processors.push_back(Filtering::Processor<Processor>(inpand_square_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         processors.push_back(Filtering::Processor<Processor>(inpand_square_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 3));
         processors.push_back(Filtering::Processor<Processor>(inpand_square_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 4));
       }
-      else if (isStacked) {
+      else if (_isStacked) {
         stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inpand_square_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
-      else if (bits_per_pixel <= 16) {
+      else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(inpand_square_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
       else {
@@ -73,15 +73,15 @@ public:
     }
     else if (parameters["mode"].toString() == "horizontal")
     {
-      if (bits_per_pixel == 8) {
+      if (_bits_per_pixel == 8) {
         processors.push_back(Filtering::Processor<Processor>(inpand_horizontal_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         processors.push_back(Filtering::Processor<Processor>(inpand_horizontal_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 3));
         processors.push_back(Filtering::Processor<Processor>(inpand_horizontal_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 4));
       }
-      else if (isStacked) {
+      else if (_isStacked) {
         stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inpand_horizontal_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
-      else if (bits_per_pixel <= 16) {
+      else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(inpand_horizontal_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
       else {
@@ -90,15 +90,15 @@ public:
     }
     else if (parameters["mode"].toString() == "vertical")
     {
-      if (bits_per_pixel == 8) {
+      if (_bits_per_pixel == 8) {
         processors.push_back(Filtering::Processor<Processor>(inpand_vertical_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         processors.push_back(Filtering::Processor<Processor>(inpand_vertical_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 3));
         processors.push_back(Filtering::Processor<Processor>(inpand_vertical_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 4));
       }
-      else if (isStacked) {
+      else if (_isStacked) {
         stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inpand_vertical_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
-      else if (bits_per_pixel <= 16) {
+      else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(inpand_vertical_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
       else {
@@ -107,15 +107,15 @@ public:
     }
     else if (parameters["mode"].toString() == "both")
     {
-      if (bits_per_pixel == 8) {
+      if (_bits_per_pixel == 8) {
         processors.push_back(Filtering::Processor<Processor>(inpand_both_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         processors.push_back(Filtering::Processor<Processor>(inpand_both_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 3));
         processors.push_back(Filtering::Processor<Processor>(inpand_both_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 4));
       }
-      else if (isStacked) {
+      else if (_isStacked) {
         stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inpand_both_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
-      else if (bits_per_pixel <= 16) {
+      else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(inpand_both_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
       else {
@@ -124,13 +124,13 @@ public:
     }
     else
     {
-      if (bits_per_pixel == 8) {
+      if (_bits_per_pixel == 8) {
         processors.push_back(Filtering::Processor<Processor>(inpand_custom_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
-      else if (isStacked) {
+      else if (_isStacked) {
         stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(inpand_custom_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
-      else if (bits_per_pixel <= 16) {
+      else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(inpand_custom_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       }
       else {

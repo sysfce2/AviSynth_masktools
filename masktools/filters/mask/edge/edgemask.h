@@ -105,7 +105,7 @@ protected:
     }
 
 public:
-   EdgeMask(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::CHILD )
+   EdgeMask(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags)
    {
      int bits_per_pixel = bit_depths[C];
      bool isFloat = bits_per_pixel == 32;

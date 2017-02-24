@@ -35,7 +35,7 @@ protected:
     }
 
 public:
-  Invert(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
+  Invert(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
   {
     int bits_per_pixel = bit_depths[C];
 

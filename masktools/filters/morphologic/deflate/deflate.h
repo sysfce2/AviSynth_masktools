@@ -18,22 +18,22 @@ extern Processor32 *deflate32_c;
 class Deflate : public Morphologic::MorphologicFilter
 {
 public:
-  Deflate(const Parameters &parameters) : Morphologic::MorphologicFilter(parameters)
+  Deflate(const Parameters &parameters, CpuFlags cpuFlags) : Morphologic::MorphologicFilter(parameters, (CpuFlags)cpuFlags)
   {
-    int bits_per_pixel = bit_depths[C];
-    bool isStacked = parameters["stacked"].toBool();
-    if (isStacked)
-      bits_per_pixel = 16;
+    int _bits_per_pixel = bit_depths[C];
+    bool _isStacked = parameters["stacked"].toBool();
+    if (_isStacked)
+      _bits_per_pixel = 16;
     /* add the processors */
-    if (bits_per_pixel == 8) {
+    if (_bits_per_pixel == 8) {
       processors.push_back(Filtering::Processor<Processor>(deflate_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       processors.push_back(Filtering::Processor<Processor>(deflate_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
       processors.push_back(Filtering::Processor<Processor>(deflate_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
     }
-    else if (isStacked) {
+    else if (_isStacked) {
       stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(deflate_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
     }
-    else if (bits_per_pixel <= 16) {
+    else if (_bits_per_pixel <= 16) {
       processors16.push_back(Filtering::Processor<Processor16>(deflate_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
     }
     else {

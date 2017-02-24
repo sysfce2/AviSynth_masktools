@@ -83,7 +83,7 @@ protected:
     }
 
 public:
-   Lutxyza(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
+   Lutxyza(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
       for (int i = 0; i < 3; i++) {
         parsed_expressions[i] = nullptr;

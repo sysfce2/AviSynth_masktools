@@ -107,7 +107,7 @@ protected:
    }
 
 public:
-   Binarize(const Parameters &parameters) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE)
+   Binarize(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
      bool isStacked = parameters["stacked"].toBool();
      bits_per_pixel = bit_depths[C];

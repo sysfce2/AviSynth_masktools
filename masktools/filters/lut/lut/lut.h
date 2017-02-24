@@ -57,7 +57,7 @@ protected:
     }
 
 public:
-   Lut(const Parameters &parameters) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE )
+   Lut(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
      for (int i = 0; i < 3; i++) {
         luts16[i] = nullptr;
