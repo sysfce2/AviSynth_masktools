@@ -95,7 +95,7 @@ static MT_FORCEINLINE void simd_store_ps(T *ptr, __m128 value) {
 }
 
 template<MemoryMode mem_mode, typename T>
-static MT_FORCEINLINE __m256i simd256_load_si128(const T* ptr) {
+static MT_FORCEINLINE __m256i simd256_load_si256(const T* ptr) {
 #ifdef USE_MOVPS
   if (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_castps_si256(_mm256_load_ps(reinterpret_cast<const float*>(ptr)));
@@ -247,6 +247,10 @@ static MT_FORCEINLINE __m128i simd_blend_epi8(__m128i const &selector, __m128i c
     }
 }
 
+static MT_FORCEINLINE __m256i simd256_blend_epi8(__m256i const &selector, __m256i const &a, __m256i const &b) {
+  return _mm256_blendv_epi8(b, a, selector);
+}
+
 // another blendv, good param order
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_blendv_epi8(__m128i x, __m128i y, __m128i mask)
@@ -258,6 +262,11 @@ static MT_FORCEINLINE __m128i simd_blendv_epi8(__m128i x, __m128i y, __m128i mas
     // Replace bit in x with bit in y when matching bit in mask is set:
     return _mm_or_si128(_mm_andnot_si128(mask, x), _mm_and_si128(mask, y));
   }
+}
+
+static MT_FORCEINLINE __m256i simd256_blendv_epi8(__m256i x, __m256i y, __m256i mask)
+{
+  return _mm256_blendv_epi8(x, y, mask);
 }
 
 template<CpuFlags flags>
@@ -273,6 +282,10 @@ static MT_FORCEINLINE __m128i simd_mullo_epi32(__m128i &a, __m128i &b) {
         auto prod23 = _mm_unpackhi_epi32(prod02,prod13);   // (-,-,a3*b3,a2*b2) 
         return _mm_unpacklo_epi64(prod01,prod23);   // (ab3,ab2,ab1,ab0)
     }
+}
+
+static MT_FORCEINLINE __m256i simd256_mullo_epi32(__m256i &a, __m256i &b) {
+  return _mm256_mullo_epi32(a, b);
 }
 
 // sse2 replacement of _mm_mullo_epi32 in SSE4.1
@@ -303,6 +316,13 @@ static MT_FORCEINLINE __m128i _MM_CMPLE_EPU16(__m128i x, __m128i y)
 {
   // Returns 0xFFFF where x <= y:
   return _mm_cmpeq_epi16(_mm_subs_epu16(x, y), _mm_setzero_si128());
+}
+
+// non-existant in simd
+static MT_FORCEINLINE __m256i _MM256_CMPLE_EPU16(__m256i x, __m256i y)
+{
+  // Returns 0xFFFF where x <= y:
+  return _mm256_cmpeq_epi16(_mm256_subs_epu16(x, y), _mm256_setzero_si256());
 }
 
 // SSE2 version of SSE4.1-only _mm_max_epu16
