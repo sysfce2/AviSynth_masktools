@@ -13,7 +13,8 @@ Differences to Masktools 2.0b1
 - no special function names for high bit depth filters
 - filters are auto registering their mt mode as MT_NICE_FILTER for Avisynth+
 - Avisynth+ high bit depth support (incl. planar RGB, but color spaces with alpha plane are not yet supported)
-  All filters are now supporting 10, 12, 14, 16 bits and float (except mt_logic which is 8-16 only)
+  All filters are now supporting 10, 12, 14, 16 bits and float
+  Note that parameters like threshold are not scaled automatically to the current bit depth
 - YV411 (8 bit 4:1:1) support
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
@@ -101,7 +102,7 @@ Example #3 (new, with constants)
       mt_lutsx       X         X         X        -      when bits>=10
       mt_lutspa      X         X         X        -
       mt_merge       X         X         X        X
-      mt_logic       X         X         -        X
+      mt_logic       X         X         X        X
       mt_convolution X         X         X        -
       mt_mappedblur  X         X         X        -
       mt_gradient    X         X         X        -
@@ -127,6 +128,8 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.3 (20170224)**
+- mt_logic to 32 bit float (final filter lacking it)
 
 **v2.2.2 (20170223)** completed high bit depth support
 - All filters work in 10,12,14,16 bits and float (except mt_logic which is 8-16 only)
