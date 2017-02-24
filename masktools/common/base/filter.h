@@ -49,6 +49,8 @@ protected:
       signature.add( Parameter( true, "sse3" ) );
       signature.add( Parameter( true, "ssse3" ) );
       signature.add( Parameter( true, "sse4" ) );
+      signature.add( Parameter( true, "avx"));
+      signature.add( Parameter( true, "avx2"));
 
       return signature;
    }
@@ -138,6 +140,8 @@ public:
             flags &= ~CPU_SSE4_1;
             flags &= ~CPU_SSE4_2;
         }
+        if (!parameters["avx"].toBool()) flags &= ~CPU_AVX;
+        if (!parameters["avx2"].toBool()) flags &= ~CPU_AVX2;
 
         print(LOG_DEBUG, "using cpu flags : 0x%x\n", flags);
 
