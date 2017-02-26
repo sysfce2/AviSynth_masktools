@@ -7,7 +7,7 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
 
 typedef Float (Operator)(Float, Float, Float, Float, Float, Float, Float, Float, Float, const Float matrix[10], Float nLowThreshold, Float nHighThreshold);
-typedef void (ProcessLineSse2)(Float *pDst, const Float *pSrcp, const Float *pSrc, const Float *pSrcn, const Float matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width);
+typedef void (ProcessLineSse2)(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width);
 
 template<Operator op, class T>
 void generic32_c(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, T &thresholds, const Float matrix[10], int nWidth, int nHeight)
@@ -65,19 +65,19 @@ void generic32_c(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t 
    pDst[nWidth-1] = op(pSrcp[nWidth-2], pSrcp[nWidth-1], pSrcp[nWidth-1], pSrc[nWidth-2], pSrc[nWidth-1], pSrc[nWidth-1], pSrc[nWidth-2], pSrc[nWidth-1], pSrc[nWidth-1], matrix, thresholds.min(nWidth-1), thresholds.max(nWidth-1));
 }
 
-// todo float
 template<ProcessLineSse2 process_line_left, ProcessLineSse2 process_line, ProcessLineSse2 process_line_right>
-static void generic_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Float matrix[10], float nLowThreshold, float nHighThreshold, int nWidth, int nHeight) {
+static void generic32_sse2(Float *pDst0, ptrdiff_t nDstPitch, const Float *pSrc0, ptrdiff_t nSrcPitch, const Float matrix[10], float nLowThreshold, float nHighThreshold, int nWidth, int nHeight) {
+    Byte *pDst = reinterpret_cast<Byte *>(pDst0);
+    const Byte *pSrc = reinterpret_cast<const Byte *>(pSrc0);
+
+    nWidth *= sizeof(float); // byte size for sse
+  
     const Byte *pSrcp = pSrc - nSrcPitch; // prev
     const Byte *pSrcn = pSrc + nSrcPitch; // next
-    // _v: vector of
-    //auto v128 = _mm_set1_epi8(Byte(128)); // signed helper?
     auto low_thr_v = _mm_set1_ps(nLowThreshold);
-    //low_thr_v = _mm_sub_epi8(low_thr_v, v128);
     auto high_thr_v = _mm_set1_ps(nHighThreshold);
-    //high_thr_v = _mm_sub_epi8(high_thr_v, v128);
 
-    int sse2_width = (nWidth/sizeof(uint16_t) - 1 - 16) / 16 * 16 + 16;
+    size_t sse2_width = (nWidth - sizeof(float) - 16) / 16 * 16 + 16;
     /* top-left */
     process_line_left(pDst, pSrc, pSrc, pSrcn, matrix, low_thr_v, high_thr_v, 16);
     /* top */

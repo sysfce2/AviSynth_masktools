@@ -118,557 +118,324 @@ void mask32_t(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSr
    Filters::Mask::generic32_c<op, Thresholds>(pDst, nDstPitch, pSrc, nSrcPitch, thresholds, matrix, nWidth, nHeight);
 }
 
-#if 0
-
-template <CpuFlags flags>
-static MT_FORCEINLINE __m128i simd_packed_abs_epi32(__m128i a, __m128i b) {
-    if (flags >= CPU_SSSE3) {
-        auto absa = _mm_abs_epi32(a);
-        auto absb = _mm_abs_epi32(b);
-        return _mm_packus_epi32(absa, absb);
-    } else {
-        auto suba = _mm_sub_epi32(_mm_setzero_si128(), a);
-        auto subb = _mm_sub_epi32(_mm_setzero_si128(), b);
-        auto t1 = simd_packus_epi32<flags>(a, b);
-        auto t2 = simd_packus_epi32<flags>(suba, subb);
-        return simd_max_epu16<flags>(t1, t2);
-    }
-}
-
-template <CpuFlags flags>
-static MT_FORCEINLINE __m128i simd_abs_diff_epu16(__m128i a, __m128i b) {
-    if (flags >= CPU_SSSE3) {
-        auto diff = _mm_sub_epi16(a, b);
-        return _mm_abs_epi16(diff);
-    } else {
-        auto gt = _mm_subs_epu16(a, b);
-        auto lt = _mm_subs_epu16(b, a);
-        return _mm_add_epi16(gt, lt);
-    }
-}
-
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_convolution_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_convolution_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(pSrcp);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
-    auto coef0 = _mm_set1_epi16(matrix[0]);
-    auto coef1 = _mm_set1_epi16(matrix[1]);
-    auto coef2 = _mm_set1_epi16(matrix[2]);
-    auto coef3 = _mm_set1_epi16(matrix[3]);
-    auto coef4 = _mm_set1_epi16(matrix[4]);
-    auto coef5 = _mm_set1_epi16(matrix[5]);
-    auto coef6 = _mm_set1_epi16(matrix[6]);
-    auto coef7 = _mm_set1_epi16(matrix[7]);
-    auto coef8 = _mm_set1_epi16(matrix[8]);
+    auto zero = _mm_setzero_ps();
+    auto coef0 = _mm_set1_ps(matrix[0]);
+    auto coef1 = _mm_set1_ps(matrix[1]);
+    auto coef2 = _mm_set1_ps(matrix[2]);
+    auto coef3 = _mm_set1_ps(matrix[3]);
+    auto coef4 = _mm_set1_ps(matrix[4]);
+    auto coef5 = _mm_set1_ps(matrix[5]);
+    auto coef6 = _mm_set1_ps(matrix[6]);
+    auto coef7 = _mm_set1_ps(matrix[7]);
+    auto coef8 = _mm_set1_ps(matrix[8]);
     
-    auto divisor = _mm_set_epi32(0, 0, 0, simd_bit_scan_forward(matrix[9]));
+    auto divisor = _mm_set1_ps(1.0f/matrix[9]);
 
     for (int x = 0; x < width; x+=16) {
-        auto up_left = load_one_to_left<borderMode, mem_mode>(pSrcp+x);
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
-        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_center = simd_load_si128<mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_center = simd_load_ps<mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load_one_to_left<borderMode, mem_mode>(pSrcn+x);
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
-        auto down_right = load_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right<borderMode, mem_mode>(pSrcn+x);
 
-        auto up_left_lo = _mm_unpacklo_epi8(up_left, zero);
-        auto up_left_hi = _mm_unpackhi_epi8(up_left, zero);
+        auto acc = _mm_mul_ps(up_left, coef0);
+        acc = _mm_add_ps(acc, _mm_mul_ps(up_center, coef1));
+        acc = _mm_add_ps(acc, _mm_mul_ps(up_right, coef2));
+        acc = _mm_add_ps(acc, _mm_mul_ps(middle_left, coef3));
+        acc = _mm_add_ps(acc, _mm_mul_ps(middle_center, coef4));
+        acc = _mm_add_ps(acc, _mm_mul_ps(middle_right, coef5));
+        acc = _mm_add_ps(acc, _mm_mul_ps(down_left, coef6));
+        acc = _mm_add_ps(acc, _mm_mul_ps(down_center, coef7));
+        acc = _mm_add_ps(acc, _mm_mul_ps(down_right, coef8));
 
-        auto up_center_lo = _mm_unpacklo_epi8(up_center, zero);
-        auto up_center_hi = _mm_unpackhi_epi8(up_center, zero);
+        acc = simd_abs_ps(acc);
 
-        auto up_right_lo = _mm_unpacklo_epi8(up_right, zero);
-        auto up_right_hi = _mm_unpackhi_epi8(up_right, zero);
+        auto result = threshold32_sse2<flags>(acc, lowThresh, highThresh);
 
-        auto middle_left_lo = _mm_unpacklo_epi8(middle_left, zero);
-        auto middle_left_hi = _mm_unpackhi_epi8(middle_left, zero);
-
-        auto middle_center_lo = _mm_unpacklo_epi8(middle_center, zero);
-        auto middle_center_hi = _mm_unpackhi_epi8(middle_center, zero);
-
-        auto middle_right_lo = _mm_unpacklo_epi8(middle_right, zero);
-        auto middle_right_hi = _mm_unpackhi_epi8(middle_right, zero);
-
-        auto down_left_lo = _mm_unpacklo_epi8(down_left, zero);
-        auto down_left_hi = _mm_unpackhi_epi8(down_left, zero);
-
-        auto down_center_lo = _mm_unpacklo_epi8(down_center, zero);
-        auto down_center_hi = _mm_unpackhi_epi8(down_center, zero);
-
-        auto down_right_lo = _mm_unpacklo_epi8(down_right, zero);
-        auto down_right_hi = _mm_unpackhi_epi8(down_right, zero);
-
-        auto acc_lo = _mm_mullo_epi16(up_left_lo, coef0);
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(up_center_lo, coef1));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(up_right_lo, coef2));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(middle_left_lo, coef3));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(middle_center_lo, coef4));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(middle_right_lo, coef5));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(down_left_lo, coef6));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(down_center_lo, coef7));
-        acc_lo = _mm_add_epi16(acc_lo, _mm_mullo_epi16(down_right_lo, coef8));
-
-        auto acc_hi = _mm_mullo_epi16(up_left_hi, coef0);
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(up_center_hi, coef1));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(up_right_hi, coef2));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(middle_left_hi, coef3));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(middle_center_hi, coef4));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(middle_right_hi, coef5));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(down_left_hi, coef6));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(down_center_hi, coef7));
-        acc_hi = _mm_add_epi16(acc_hi, _mm_mullo_epi16(down_right_hi, coef8));
-
-        auto shift_lo = _mm_srai_epi16(acc_lo, 15);
-        auto shift_hi = _mm_srai_epi16(acc_hi, 15);
-        
-        acc_lo = _mm_xor_si128(acc_lo, shift_lo);
-        acc_hi = _mm_xor_si128(acc_hi, shift_hi);
-
-        acc_lo = _mm_sub_epi16(acc_lo, shift_lo);
-        acc_hi = _mm_sub_epi16(acc_hi, shift_hi);
-
-        acc_lo = _mm_srl_epi16(acc_lo, divisor);
-        acc_hi = _mm_srl_epi16(acc_hi, divisor);
-
-        auto acc = _mm_packus_epi16(acc_lo, acc_hi);
-        auto result = threshold_sse2(acc, lowThresh, highThresh, v128);
-
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_sobel_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_sobel_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(matrix);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
+    auto oneHalf = _mm_set1_ps(0.5f);
 
     for (int x = 0; x < width; x+=16) {
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
 
-        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
 
-        auto up_center_lo = _mm_unpacklo_epi8(up_center, zero);
-        auto up_center_hi = _mm_unpackhi_epi8(up_center, zero);
+        auto pos = _mm_add_ps(middle_right, down_center);
 
-        auto middle_left_lo = _mm_unpacklo_epi8(middle_left, zero);
-        auto middle_left_hi = _mm_unpackhi_epi8(middle_left, zero);
+        auto neg = _mm_add_ps(middle_left, up_center);
+        
+        auto diff = simd_abs_diff_ps(pos, neg);
+        diff = _mm_mul_ps(diff, oneHalf); //  (abs(a32 + a23 - a12 - a21) / 2.0f
+        
+        auto result = threshold32_sse2<flags>(diff, lowThresh, highThresh);
 
-        auto middle_right_lo = _mm_unpacklo_epi8(middle_right, zero);
-        auto middle_right_hi = _mm_unpackhi_epi8(middle_right, zero);
-
-        auto down_center_lo = _mm_unpacklo_epi8(down_center, zero);
-        auto down_center_hi = _mm_unpackhi_epi8(down_center, zero);
-
-        auto pos_lo = _mm_add_epi16(middle_right_lo, down_center_lo);
-        auto pos_hi = _mm_add_epi16(middle_right_hi, down_center_hi);
-
-        auto neg_lo = _mm_add_epi16(middle_left_lo, up_center_lo);
-        auto neg_hi = _mm_add_epi16(middle_left_hi, up_center_hi);
-
-        auto diff_lo = simd_abs_diff_epu16<flags>(pos_lo, neg_lo);
-        auto diff_hi = simd_abs_diff_epu16<flags>(pos_hi, neg_hi);
-
-        diff_lo = _mm_srai_epi16(diff_lo, 1);
-        diff_hi = _mm_srai_epi16(diff_hi, 1);
-
-        auto diff = _mm_packus_epi16(diff_lo, diff_hi);
-        auto result = threshold_sse2(diff, lowThresh, highThresh, v128);
-
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_roberts_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_roberts_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(pSrcp);
     UNUSED(matrix);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
+    auto oneHalf = _mm_set1_ps(0.5f);
 
     for (int x = 0; x < width; x+=16) {
-        auto middle_center = simd_load_si128<mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_center = simd_load_ps<mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
 
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
+        auto pos = _mm_add_ps(middle_center, middle_center);
 
-        auto middle_center_lo = _mm_unpacklo_epi8(middle_center, zero);
-        auto middle_center_hi = _mm_unpackhi_epi8(middle_center, zero);
+        auto neg = _mm_add_ps(middle_right, down_center);
 
-        auto middle_right_lo = _mm_unpacklo_epi8(middle_right, zero);
-        auto middle_right_hi = _mm_unpackhi_epi8(middle_right, zero);
+        auto diff = simd_abs_diff_ps(pos, neg);
 
-        auto down_center_lo = _mm_unpacklo_epi8(down_center, zero);
-        auto down_center_hi = _mm_unpackhi_epi8(down_center, zero);
+        diff = _mm_mul_ps(diff, oneHalf); 
 
-        auto pos_lo = _mm_add_epi16(middle_center_lo, middle_center_lo);
-        auto pos_hi = _mm_add_epi16(middle_center_hi, middle_center_hi);
+        auto result = threshold32_sse2<flags>(diff, lowThresh, highThresh);
 
-        auto neg_lo = _mm_add_epi16(middle_right_lo, down_center_lo);
-        auto neg_hi = _mm_add_epi16(middle_right_hi, down_center_hi);
-
-        auto diff_lo = simd_abs_diff_epu16<flags>(pos_lo, neg_lo);
-        auto diff_hi = simd_abs_diff_epu16<flags>(pos_hi, neg_hi);
-
-        diff_lo = _mm_srai_epi16(diff_lo, 1);
-        diff_hi = _mm_srai_epi16(diff_hi, 1);
-
-        auto diff = _mm_packus_epi16(diff_lo, diff_hi);
-        auto result = threshold_sse2(diff, lowThresh, highThresh, v128);
-
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_laplace_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_laplace_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(pSrcp);
     UNUSED(matrix);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
-
+    auto oneEightth = _mm_set1_ps(1.0f/8);
+    auto Eight = _mm_set1_ps(8.0f);
+    // abs( (a22 * 8.0f) - a32 - a23 - a11 - a21 - a31 - a12 - a13 - a33 ) / 8.0f
     for (int x = 0; x < width; x+=16) {
-        auto up_left = load_one_to_left<borderMode, mem_mode>(pSrcp+x);
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
-        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_center = simd_load_si128<mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_center = simd_load_ps<mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load_one_to_left<borderMode, mem_mode>(pSrcn+x);
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
-        auto down_right = load_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right<borderMode, mem_mode>(pSrcn+x);
 
-        auto up_left_lo = _mm_unpacklo_epi8(up_left, zero);
-        auto up_left_hi = _mm_unpackhi_epi8(up_left, zero);
 
-        auto up_center_lo = _mm_unpacklo_epi8(up_center, zero);
-        auto up_center_hi = _mm_unpackhi_epi8(up_center, zero);
+        auto acc = _mm_add_ps(up_left, up_center);
+        acc = _mm_add_ps(acc, up_right);
+        acc = _mm_add_ps(acc, middle_left);
+        acc = _mm_add_ps(acc, middle_right);
+        acc = _mm_add_ps(acc, down_left);
+        acc = _mm_add_ps(acc, down_center);
+        acc = _mm_add_ps(acc, down_right);
 
-        auto up_right_lo = _mm_unpacklo_epi8(up_right, zero);
-        auto up_right_hi = _mm_unpackhi_epi8(up_right, zero);
+        auto pos = _mm_mul_ps(middle_center, Eight);
 
-        auto middle_left_lo = _mm_unpacklo_epi8(middle_left, zero);
-        auto middle_left_hi = _mm_unpackhi_epi8(middle_left, zero);
+        auto diff = simd_abs_diff_ps(pos, acc);
+        diff = _mm_mul_ps(diff, oneEightth);
 
-        auto middle_center_lo = _mm_unpacklo_epi8(middle_center, zero);
-        auto middle_center_hi = _mm_unpackhi_epi8(middle_center, zero);
+        auto result = threshold32_sse2<flags>(diff, lowThresh, highThresh);
 
-        auto middle_right_lo = _mm_unpacklo_epi8(middle_right, zero);
-        auto middle_right_hi = _mm_unpackhi_epi8(middle_right, zero);
-
-        auto down_left_lo = _mm_unpacklo_epi8(down_left, zero);
-        auto down_left_hi = _mm_unpackhi_epi8(down_left, zero);
-
-        auto down_center_lo = _mm_unpacklo_epi8(down_center, zero);
-        auto down_center_hi = _mm_unpackhi_epi8(down_center, zero);
-
-        auto down_right_lo = _mm_unpacklo_epi8(down_right, zero);
-        auto down_right_hi = _mm_unpackhi_epi8(down_right, zero);
-
-        auto acc_lo = _mm_add_epi16(up_left_lo, up_center_lo);
-        acc_lo = _mm_add_epi16(acc_lo, up_right_lo);
-        acc_lo = _mm_add_epi16(acc_lo, middle_left_lo);
-        acc_lo = _mm_add_epi16(acc_lo, middle_right_lo);
-        acc_lo = _mm_add_epi16(acc_lo, down_left_lo);
-        acc_lo = _mm_add_epi16(acc_lo, down_center_lo);
-        acc_lo = _mm_add_epi16(acc_lo, down_right_lo);
-
-        auto acc_hi = _mm_add_epi16(up_left_hi, up_center_hi);
-        acc_hi = _mm_add_epi16(acc_hi, up_right_hi);
-        acc_hi = _mm_add_epi16(acc_hi, middle_left_hi);
-        acc_hi = _mm_add_epi16(acc_hi, middle_right_hi);
-        acc_hi = _mm_add_epi16(acc_hi, down_left_hi);
-        acc_hi = _mm_add_epi16(acc_hi, down_center_hi);
-        acc_hi = _mm_add_epi16(acc_hi, down_right_hi);
-
-        auto pos_lo = _mm_slli_epi16(middle_center_lo, 3);
-        auto pos_hi = _mm_slli_epi16(middle_center_hi, 3);
-
-        auto diff_lo = simd_abs_diff_epu16<flags>(pos_lo, acc_lo);
-        auto diff_hi = simd_abs_diff_epu16<flags>(pos_hi, acc_hi);
-        
-        diff_lo = _mm_srai_epi16(diff_lo, 3);
-        diff_hi = _mm_srai_epi16(diff_hi, 3);
-
-        auto diff = _mm_packus_epi16(diff_lo, diff_hi);
-        auto result = threshold_sse2(diff, lowThresh, highThresh, v128);
-
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_morpho_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_morpho_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(matrix);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
 
     for (int x = 0; x < width; x+=16) {
-        auto up_left = load_one_to_left<borderMode, mem_mode>(pSrcp+x);
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
-        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_center = simd_load_si128<mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_center = simd_load_ps<mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load_one_to_left<borderMode, mem_mode>(pSrcn+x);
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
-        auto down_right = load_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right<borderMode, mem_mode>(pSrcn+x);
 
-        auto maxv = _mm_max_epu8(middle_right, up_right);
-        maxv = _mm_max_epu8(maxv, down_center);
-        maxv = _mm_max_epu8(maxv, down_right);
-        maxv = _mm_max_epu8(maxv, middle_center);
-        maxv = _mm_max_epu8(maxv, up_left);
-        maxv = _mm_max_epu8(maxv, down_left);
-        maxv = _mm_max_epu8(maxv, up_center);
-        maxv = _mm_max_epu8(maxv, middle_left);
+        auto maxv = _mm_max_ps(middle_right, up_right);
+        maxv = _mm_max_ps(maxv, down_center);
+        maxv = _mm_max_ps(maxv, down_right);
+        maxv = _mm_max_ps(maxv, middle_center);
+        maxv = _mm_max_ps(maxv, up_left);
+        maxv = _mm_max_ps(maxv, down_left);
+        maxv = _mm_max_ps(maxv, up_center);
+        maxv = _mm_max_ps(maxv, middle_left);
 
-        auto minv = _mm_min_epu8(middle_right, up_right);
-        minv = _mm_min_epu8(minv, down_center);
-        minv = _mm_min_epu8(minv, down_right);
-        minv = _mm_min_epu8(minv, middle_center);
-        minv = _mm_min_epu8(minv, up_left);
-        minv = _mm_min_epu8(minv, down_left);
-        minv = _mm_min_epu8(minv, up_center);
-        minv = _mm_min_epu8(minv, middle_left);
+        auto minv = _mm_min_ps(middle_right, up_right);
+        minv = _mm_min_ps(minv, down_center);
+        minv = _mm_min_ps(minv, down_right);
+        minv = _mm_min_ps(minv, middle_center);
+        minv = _mm_min_ps(minv, up_left);
+        minv = _mm_min_ps(minv, down_left);
+        minv = _mm_min_ps(minv, up_center);
+        minv = _mm_min_ps(minv, middle_left);
         
-        auto diff = _mm_sub_epi8(maxv, minv);
-        auto result = threshold_sse2(diff, lowThresh, highThresh, v128);
+        auto diff = _mm_sub_ps(maxv, minv);
+        auto result = threshold32_sse2<flags>(diff, lowThresh, highThresh);
 
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_cartoon_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_cartoon_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(matrix); UNUSED(pSrcn);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
-
+    /*
+    Float val = (a21 * 2.0f) - a22 - a31;
+    return val > 0 ? 0 : threshold<Float, Float>(-val, nLowThreshold, nHighThreshold);
+    */
     for (int x = 0; x < width; x+=16) {
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
-        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
-        auto middle_center = simd_load_si128<mem_mode>(pSrc+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto middle_center = simd_load_ps<mem_mode>(pSrc+x);
         
-        auto up_center_lo = _mm_unpacklo_epi8(up_center, zero);
-        auto up_center_hi = _mm_unpackhi_epi8(up_center, zero);
+        auto acc = _mm_add_ps(up_right, middle_center);
 
-        auto up_right_lo = _mm_unpacklo_epi8(up_right, zero);
-        auto up_right_hi = _mm_unpackhi_epi8(up_right, zero);
+        acc = _mm_sub_ps(acc, up_center); // -up_center*2
+        acc = _mm_sub_ps(acc, up_center);
 
-        auto middle_center_lo = _mm_unpacklo_epi8(middle_center, zero);
-        auto middle_center_hi = _mm_unpackhi_epi8(middle_center, zero);
+        auto result = threshold32_sse2<flags>(acc, lowThresh, highThresh);
 
-        auto acc_lo = _mm_adds_epu16(up_right_lo, middle_center_lo);
-        auto acc_hi = _mm_adds_epu16(up_right_hi, middle_center_hi);
-
-        acc_lo = _mm_subs_epu16(acc_lo, up_center_lo);
-        acc_hi = _mm_subs_epu16(acc_hi, up_center_hi);
-
-        acc_lo = _mm_subs_epi16(acc_lo, up_center_lo);
-        acc_hi = _mm_subs_epi16(acc_hi, up_center_hi);
-
-        auto acc = _mm_packus_epi16(acc_lo, acc_hi);
-        auto result = threshold_sse2(acc, lowThresh, highThresh, v128);
-
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_prewitt_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_prewitt_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(matrix);
     auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
+    auto zero = _mm_setzero_ps();
 
     for (int x = 0; x < width; x+=16) {
-        auto up_left = load_one_to_left<borderMode, mem_mode>(pSrcp+x);
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
-        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load_one_to_left<borderMode, mem_mode>(pSrcn+x);
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
-        auto down_right = load_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right<borderMode, mem_mode>(pSrcn+x);
 
-        auto up_left_lo = _mm_unpacklo_epi8(up_left, zero);
-        auto up_left_hi = _mm_unpackhi_epi8(up_left, zero);
 
-        auto up_center_lo = _mm_unpacklo_epi8(up_center, zero);
-        auto up_center_hi = _mm_unpackhi_epi8(up_center, zero);
-
-        auto up_right_lo = _mm_unpacklo_epi8(up_right, zero);
-        auto up_right_hi = _mm_unpackhi_epi8(up_right, zero);
-
-        auto middle_left_lo = _mm_unpacklo_epi8(middle_left, zero);
-        auto middle_left_hi = _mm_unpackhi_epi8(middle_left, zero);
-
-        auto middle_right_lo = _mm_unpacklo_epi8(middle_right, zero);
-        auto middle_right_hi = _mm_unpackhi_epi8(middle_right, zero);
-
-        auto down_left_lo = _mm_unpacklo_epi8(down_left, zero);
-        auto down_left_hi = _mm_unpackhi_epi8(down_left, zero);
-
-        auto down_center_lo = _mm_unpacklo_epi8(down_center, zero);
-        auto down_center_hi = _mm_unpackhi_epi8(down_center, zero);
-
-        auto down_right_lo = _mm_unpacklo_epi8(down_right, zero);
-        auto down_right_hi = _mm_unpackhi_epi8(down_right, zero);
-
-        auto a21_minus_a23_lo = _mm_sub_epi16(up_center_lo, down_center_lo); // a21 - a23
-        auto a21_minus_a23_hi = _mm_sub_epi16(up_center_hi, down_center_hi);
+        auto a21_minus_a23 = _mm_sub_ps(up_center, down_center); // a21 - a23
         
-        auto a11_minus_a33_lo = _mm_sub_epi16(up_left_lo, down_right_lo); // a11 - a33
-        auto a11_minus_a33_hi = _mm_sub_epi16(up_left_hi, down_right_hi);
+        auto a11_minus_a33 = _mm_sub_ps(up_left, down_right); // a11 - a33
 
-        auto t1_lo = _mm_add_epi16(a21_minus_a23_lo, a11_minus_a33_lo); // a11 + a21 - a23 - a33
-        auto t1_hi = _mm_add_epi16(a21_minus_a23_hi, a11_minus_a33_hi);
+        auto t1 = _mm_add_ps(a21_minus_a23, a11_minus_a33); // a11 + a21 - a23 - a33
 
-        auto a12_minus_a32_lo = _mm_sub_epi16(middle_left_lo, middle_right_lo); // a12 - a32
-        auto a12_minus_a32_hi = _mm_sub_epi16(middle_left_hi, middle_right_hi);
+        auto a12_minus_a32 = _mm_sub_ps(middle_left, middle_right); // a12 - a32
 
-        auto a13_minus_a31_lo = _mm_sub_epi16(down_left_lo, up_right_lo); // a13 - a31
-        auto a13_minus_a31_hi = _mm_sub_epi16(down_left_hi, up_right_hi);
+        auto a13_minus_a31 = _mm_sub_ps(down_left, up_right); // a13 - a31
 
-        auto t2_lo = _mm_add_epi16(a12_minus_a32_lo, a13_minus_a31_lo); //a13 + a12 - a31 - a32
-        auto t2_hi = _mm_add_epi16(a12_minus_a32_hi, a13_minus_a31_hi);
+        auto t2 = _mm_add_ps(a12_minus_a32, a13_minus_a31); //a13 + a12 - a31 - a32
 
-        auto p135_lo = _mm_sub_epi16(t2_lo, a21_minus_a23_lo); //a13 + a12 + a23 - a31 - a32 - a21
-        auto p135_hi = _mm_sub_epi16(t2_hi, a21_minus_a23_hi);
+        auto p135 = _mm_sub_ps(t2, a21_minus_a23); //a13 + a12 + a23 - a31 - a32 - a21
 
-        auto p180_lo = _mm_add_epi16(t2_lo, a11_minus_a33_lo); //a11+ a12+ a13 - a31 - a32 - a33
-        auto p180_hi = _mm_add_epi16(t2_hi, a11_minus_a33_hi);
+        auto p180 = _mm_add_ps(t2, a11_minus_a33); //a11+ a12+ a13 - a31 - a32 - a33
 
-        auto p90_lo = _mm_sub_epi16(a13_minus_a31_lo, t1_lo); // a13 - a31 - a11 - a21 + a23 + a33 //negative
-        auto p90_hi = _mm_sub_epi16(a13_minus_a31_hi, t1_hi);
+        auto p90 = _mm_sub_ps(a13_minus_a31, t1); // a13 - a31 - a11 - a21 + a23 + a33 //negative
 
-        auto p45_lo = _mm_add_epi16(t1_lo, a12_minus_a32_lo); // a12 + a11 + a21 - a33 - a32 - a23
-        auto p45_hi = _mm_add_epi16(t1_hi, a12_minus_a32_hi);
+        auto p45 = _mm_add_ps(t1, a12_minus_a32); // a12 + a11 + a21 - a33 - a32 - a23
 
-        auto p45 = simd_packed_abs_epi16<flags>(p45_lo, p45_hi);
-        auto p90 = simd_packed_abs_epi16<flags>(p90_lo, p90_hi);
-        auto p135 = simd_packed_abs_epi16<flags>(p135_lo, p135_hi);
-        auto p180 = simd_packed_abs_epi16<flags>(p180_lo, p180_hi);
+        p45 = simd_abs_ps(p45);
+        p90 = simd_abs_ps(p90);
+        p135 = simd_abs_ps(p135);
+        p180 = simd_abs_ps(p180);
 
-        auto max1 = _mm_max_epu8(p45, p90);
-        auto max2 = _mm_max_epu8(p135, p180);
+        auto max1 = _mm_max_ps(p45, p90);
+        auto max2 = _mm_max_ps(p135, p180);
 
-        auto result = _mm_max_epu8(max1, max2);
+        auto result = _mm_max_ps(max1, max2);
 
-        result = threshold_sse2(result, lowThresh, highThresh, v128);
+        result = threshold32_sse2<flags>(result, lowThresh, highThresh);
 
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
 
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
-static MT_FORCEINLINE void process_line_half_prewitt_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width) {
+static MT_FORCEINLINE void process_line_half_prewitt_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(matrix);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_si128();
 
     for (int x = 0; x < width; x+=16) {
-        auto up_left = load_one_to_left<borderMode, mem_mode>(pSrcp+x);
-        auto up_center = simd_load_si128<mem_mode>(pSrcp+x);
-        auto up_right = load_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_center = simd_load_ps<mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_right = load_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load_one_to_left<borderMode, mem_mode>(pSrcn+x);
-        auto down_center = simd_load_si128<mem_mode>(pSrcn+x);
-        auto down_right = load_one_to_right<borderMode, mem_mode>(pSrcn+x);
-
-        auto up_left_lo = _mm_unpacklo_epi8(up_left, zero);
-        auto up_left_hi = _mm_unpackhi_epi8(up_left, zero);
-
-        auto up_center_lo = _mm_unpacklo_epi8(up_center, zero);
-        auto up_center_hi = _mm_unpackhi_epi8(up_center, zero);
-
-        auto up_right_lo = _mm_unpacklo_epi8(up_right, zero);
-        auto up_right_hi = _mm_unpackhi_epi8(up_right, zero);
-
-        auto middle_left_lo = _mm_unpacklo_epi8(middle_left, zero);
-        auto middle_left_hi = _mm_unpackhi_epi8(middle_left, zero);
-
-        auto middle_right_lo = _mm_unpacklo_epi8(middle_right, zero);
-        auto middle_right_hi = _mm_unpackhi_epi8(middle_right, zero);
-
-        auto down_left_lo = _mm_unpacklo_epi8(down_left, zero);
-        auto down_left_hi = _mm_unpackhi_epi8(down_left, zero);
-
-        auto down_center_lo = _mm_unpacklo_epi8(down_center, zero);
-        auto down_center_hi = _mm_unpackhi_epi8(down_center, zero);
-
-        auto down_right_lo = _mm_unpacklo_epi8(down_right, zero);
-        auto down_right_hi = _mm_unpackhi_epi8(down_right, zero);
+        auto down_left = load32_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_center = simd_load_ps<mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right<borderMode, mem_mode>(pSrcn+x);
 
         //a11 + 2 * (a21 - a23) + a31 - a13 - a33
-        auto t1_lo = _mm_sub_epi16(up_center_lo, down_center_lo); //2 * (a21 - a23)
-        auto t1_hi = _mm_sub_epi16(up_center_hi, down_center_hi);
-        t1_lo = _mm_slli_epi16(t1_lo, 1);
-        t1_hi = _mm_slli_epi16(t1_hi, 1);
+        auto t1 = _mm_sub_ps(up_center, down_center); //2 * (a21 - a23)
+        t1 = _mm_add_ps(t1, t1); // *2
         
-        auto t2_lo = _mm_sub_epi16(up_left_lo, down_left_lo); //a11 - a13
-        auto t2_hi = _mm_sub_epi16(up_left_hi, down_left_hi);
+        auto t2 = _mm_sub_ps(up_left, down_left); //a11 - a13
         
-        auto t3_lo = _mm_sub_epi16(up_right_lo, down_right_lo); //a31 - a33
-        auto t3_hi = _mm_sub_epi16(up_right_hi, down_right_hi);
+        auto t3 = _mm_sub_ps(up_right, down_right); //a31 - a33
 
-        t1_lo = _mm_add_epi16(t1_lo, t2_lo);
-        t1_hi = _mm_add_epi16(t1_hi, t2_hi);
+        t1 = _mm_add_ps(t1, t2);
 
-        auto p90_lo = _mm_add_epi16(t1_lo, t3_lo);
-        auto p90_hi = _mm_add_epi16(t1_hi, t3_hi);
+        auto p90 = _mm_add_ps(t1, t3);
 
         //a11 + 2 * (a12 - a32) + a13 - a31 - a33
-        t1_lo = _mm_sub_epi16(middle_left_lo, middle_right_lo); //2 * (a12 - a32)
-        t1_hi = _mm_sub_epi16(middle_left_hi, middle_right_hi);
-        t1_lo = _mm_slli_epi16(t1_lo, 1);
-        t1_hi = _mm_slli_epi16(t1_hi, 1);
+        t1 = _mm_sub_ps(middle_left, middle_right); //2 * (a12 - a32)
+        t1 = _mm_add_ps(t1, t2); // 2*
 
-        t2_lo = _mm_sub_epi16(up_left_lo, up_right_lo); //a11 - a31
-        t2_hi = _mm_sub_epi16(up_left_hi, up_right_hi);
+        t2 = _mm_sub_ps(up_left, up_right); //a11 - a31
 
-        t3_lo = _mm_sub_epi16(down_left_lo, down_right_lo); //a13 - a33
-        t3_hi = _mm_sub_epi16(down_left_hi, down_right_hi);
+        t3 = _mm_sub_ps(down_left, down_right); //a13 - a33
 
-        t1_lo = _mm_add_epi16(t1_lo, t2_lo);
-        t1_hi = _mm_add_epi16(t1_hi, t2_hi);
+        t1 = _mm_add_ps(t1, t2);
 
-        auto p180_lo = _mm_add_epi16(t1_lo, t3_lo);
-        auto p180_hi = _mm_add_epi16(t1_hi, t3_hi);
+        auto p180 = _mm_add_ps(t1, t3);
 
-        auto p90 = simd_packed_abs_epi16<flags>(p90_lo, p90_hi);
-        auto p180 = simd_packed_abs_epi16<flags>(p180_lo, p180_hi);
+        p90 = simd_abs_ps(p90);
+        p180 = simd_abs_ps(p180);
 
-        auto result = _mm_max_epu8(p90, p180);
+        auto result = _mm_max_ps(p90, p180);
 
-        result = threshold_sse2(result, lowThresh, highThresh, v128);
+        result = threshold32_sse2<flags>(result, lowThresh, highThresh);
 
-        simd_store_si128<mem_mode>(pDst+x, result);
+        simd_store_ps<mem_mode>(pDst+x, result);
     }
 }
-#endif // 0
 
 using namespace Filters::Mask;
 
 #define DEFINE_C_AND_SSE2_VERSIONS(name) \
-Processor32 *name##_32_c          = &mask32_t<name>;
+Processor32 *name##_32_c          = &mask32_t<name>; \
+Processor32 *name##_32_sse2 = &generic32_sse2< \
+    process_line_##name##_sse2<CPU_SSE2, Border::Left, MemoryMode::SSE2_UNALIGNED>, \
+    process_line_##name##_sse2<CPU_SSE2, Border::None, MemoryMode::SSE2_UNALIGNED>, \
+    process_line_##name##_sse2<CPU_SSE2, Border::Right, MemoryMode::SSE2_UNALIGNED> \
+>; 
 
 
 #define DEFINE_ALL_VERSIONS(name) \

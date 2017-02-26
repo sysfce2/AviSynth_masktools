@@ -2,6 +2,7 @@
 #define __Mt_SIMD_H__
 
 #include <emmintrin.h>
+#include <immintrin.h>
 #include "common.h"
 
 namespace Filtering {
@@ -278,30 +279,14 @@ static MT_FORCEINLINE __m128i simd_movehl_si128(const __m128i &a, const __m128i 
     return _mm_castps_si128(_mm_movehl_ps(_mm_castsi128_ps(a), _mm_castsi128_ps(b)));
 }
 
-static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &v128) {
-    auto sat = _mm_sub_epi8(value, v128);
-    auto low = _mm_cmpgt_epi8(sat, lowThresh);
-    auto high = _mm_cmpgt_epi8(sat, highThresh);
-    auto result = _mm_and_si128(value, low);
-    return _mm_or_si128(result, high);
-}
-
-//  thresholds are decreased by half range in order to do signed comparison
-static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &vHalf) {
-  auto sat = _mm_sub_epi16(value, vHalf);
-  auto low = _mm_cmpgt_epi16(sat, lowThresh);
-  auto high = _mm_cmpgt_epi16(sat, highThresh);
-  auto result = _mm_and_si128(value, low);
-  return _mm_or_si128(result, high);
-}
-
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_blend_epi8(__m128i const &selector, __m128i const &a, __m128i const &b) {
-    if (flags >= CPU_SSE4_1) {
-        return _mm_blendv_epi8 (b, a, selector);
-    } else {
-        return _mm_or_si128(_mm_and_si128(selector, a), _mm_andnot_si128(selector, b));
-    }
+  if (flags >= CPU_SSE4_1) {
+    return _mm_blendv_epi8(b, a, selector);
+  }
+  else {
+    return _mm_or_si128(_mm_and_si128(selector, a), _mm_andnot_si128(selector, b));
+  }
 }
 
 static MT_FORCEINLINE __m256i simd256_blend_epi8(__m256i const &selector, __m256i const &a, __m256i const &b) {
@@ -321,9 +306,74 @@ static MT_FORCEINLINE __m128i simd_blendv_epi8(__m128i x, __m128i y, __m128i mas
   }
 }
 
+template<CpuFlags flags>
+static MT_FORCEINLINE __m128 simd_blendv_ps(__m128 x, __m128 y, __m128 mask)
+{
+  if (flags >= CPU_SSE4_1) {
+    return _mm_blendv_ps(x, y, mask);
+  }
+  else {
+    // Replace bit in x with bit in y when matching bit in mask is set:
+    return _mm_or_ps(_mm_andnot_ps(mask, x), _mm_and_ps(mask, y));
+  }
+}
+
+static MT_FORCEINLINE __m256 simd256_blendv_ps(__m256 x, __m256 y, __m256 mask)
+{
+  return _mm256_blendv_ps(x, y, mask);
+}
+
 static MT_FORCEINLINE __m256i simd256_blendv_epi8(__m256i x, __m256i y, __m256i mask)
 {
   return _mm256_blendv_epi8(x, y, mask);
+}
+
+
+
+static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &v128) {
+    auto sat = _mm_sub_epi8(value, v128);
+    auto low = _mm_cmpgt_epi8(sat, lowThresh);
+    auto high = _mm_cmpgt_epi8(sat, highThresh);
+    auto result = _mm_and_si128(value, low);
+    return _mm_or_si128(result, high);
+}
+
+//  thresholds are decreased by half range in order to do signed comparison
+static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &vHalf) {
+  auto sat = _mm_sub_epi16(value, vHalf);
+  auto low = _mm_cmpgt_epi16(sat, lowThresh);
+  auto high = _mm_cmpgt_epi16(sat, highThresh);
+  auto result = _mm_and_si128(value, low);
+  return _mm_or_si128(result, high);
+}
+
+template<CpuFlags flags>
+static MT_FORCEINLINE __m128 threshold32_sse2(const __m128 &value, const __m128 &lowThresh, const __m128 &highThresh) {
+  // create final mask 0.0 or 1.0 or x if between
+  // value <= low ? 0.0f : value > high ? 1.0 : x
+  auto tOne = _mm_set1_ps(1.0f);
+  auto lowMask = _mm_cmpgt_ps(value, lowThresh);   // (value > lowTh) ? FFFFFFFF : 00000000
+  auto tmpValue = _mm_and_ps(lowMask, value); // 0 where value <= lowTh, value otherwise
+
+  auto highMask = _mm_cmpgt_ps(tmpValue, highThresh); // value > highTh) ? FFFFFFFF : 00000000
+  auto result = simd_blendv_ps<flags>(tmpValue, tOne, highMask);
+  return result;
+}
+
+static MT_FORCEINLINE __m256 _mm256_cmpgt_ps(__m256 a, __m256 b) {
+  return _mm256_cmp_ps(a, b, _CMP_NLE_US); // NLE = GT
+}
+
+static MT_FORCEINLINE __m256 threshold32_avx(const __m256 &value, const __m256 &lowThresh, const __m256 &highThresh) {
+  // create final mask 0.0 or 1.0 or x if between
+  // value <= low ? 0.0f : value > high ? 1.0 : x
+  auto tOne = _mm256_set1_ps(1.0f);
+  auto lowMask = _mm256_cmpgt_ps(value, lowThresh);   // (value > lowTh) ? FFFFFFFF : 00000000
+  auto tmpValue = _mm256_and_ps(lowMask, value); // 0 where value <= lowTh, value otherwise
+
+  auto highMask = _mm256_cmpgt_ps(tmpValue, highThresh); // value > highTh) ? FFFFFFFF : 00000000
+  auto result = simd256_blendv_ps(tmpValue, tOne, highMask);
+  return result;
 }
 
 template<CpuFlags flags>
@@ -357,6 +407,7 @@ static MT_FORCEINLINE __m128i _MM_MULLO_EPI32(const __m128i &a, const __m128i &b
   return _mm_unpacklo_epi32(_mm_shuffle_epi32(tmp1, _MM_SHUFFLE(0, 0, 2, 0)), _mm_shuffle_epi32(tmp2, _MM_SHUFFLE(0, 0, 2, 0)));
 }
 
+#pragma warning(disable: 4309)
 // fake _mm_packus_epi32 (orig is SSE4.1 only)
 static MT_FORCEINLINE __m128i _MM_PACKUS_EPI32(__m128i a, __m128i b)
 {
@@ -370,6 +421,8 @@ static MT_FORCEINLINE __m128i _MM_PACKUS_EPI32(__m128i a, __m128i b)
   a = _mm_add_epi16(a, val_16);
   return a;
 }
+#pragma warning(default: 4309)
+
 
 // non-existant in simd
 static MT_FORCEINLINE __m128i _MM_CMPLE_EPU16(__m128i x, __m128i y)
@@ -419,6 +472,17 @@ static MT_FORCEINLINE __m128i simd_packus_epi32(__m128i &a, __m128i &b) {
   }
 }
 
+static MT_FORCEINLINE __m128 simd_abs_ps(__m128 a) {
+  // maybe not optimal, mask may be generated 
+  const __m128 absmask = _mm_castsi128_ps(_mm_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
+  return _mm_and_ps(a, absmask);
+}
+
+static MT_FORCEINLINE __m128 simd_abs_diff_ps(__m128 a, __m128 b) {
+  // maybe not optimal, mask may be generated 
+  const __m128 absmask = _mm_castsi128_ps(_mm_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
+  return _mm_and_ps(_mm_sub_ps(a, b), absmask);
+}
 
 static MT_FORCEINLINE __m128i read_word_stacked_simd(const Byte *pMsb, const Byte *pLsb, int x) {
     auto msb = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(pMsb+x));
