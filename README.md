@@ -132,12 +132,14 @@ Changelog
 **v2.2.3 (2017022?)**
 - mt_logic to 32 bit float (final filter lacking it)
 - get CpuInfo from Avisynth (avx/avx2 preparation)
-  Note: AVX/AVX2 works if 
-  - recent Avisynth+ that reports extra CPU flags
+  Note: AVX/AVX2 prequisites
+  - recent Avisynth+ which reports extra CPU flags
   - 64 bit OS (but Avisynth can be 32 bits)
-  - Windows 7 SP1 or newer
+  - Windows 7 SP1 or later
 - mt_merge: 8-16 bit: AVX2, float:AVX
-_ mt_logic: 8-16 bit: AVX2, float:AVX
+- mt_logic: 8-16 bit: AVX2, float:AVX
+- mt_edge: 10-16 bit and 32 bit float: SSE2/SSE4 optimization
+- mt_edge: 32 bit float AVX
 
 **v2.2.2 (20170223)** completed high bit depth support
 - All filters work in 10,12,14,16 bits and float (except mt_logic which is 8-16 only)
