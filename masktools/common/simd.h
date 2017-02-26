@@ -266,10 +266,34 @@ static MT_FORCEINLINE __m128 load32_one_to_right(const Byte *ptr) {
   if (border_mode == Border::Right) {
     auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF, 0xFF, 0xFF, 0xFF);
     auto val = simd_load_si128<mem_mode>(ptr);
-    return _mm_castsi128_ps(_mm_or_si128(_mm_srli_si128(val, 2), _mm_and_si128(val, mask_right)));
+    return _mm_castsi128_ps(_mm_or_si128(_mm_srli_si128(val, 4), _mm_and_si128(val, mask_right)));
   }
   else {
     return simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr + 4);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m256 load32_256_one_to_left(const Byte *ptr) {
+  if (border_mode == Border::Left) {
+    auto lo128 = load32_one_to_left<border_mode, mem_mode>(ptr); // really left!
+    auto hi128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 4);
+    return _mm256_set_m128(hi128, lo128);
+  }
+  else {
+    return simd256_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr - 4);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m256 load32_256_one_to_right(const Byte *ptr) {
+  if (border_mode == Border::Right) {
+    auto lo128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr+4);
+    auto hi128 = load32_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
+    return _mm256_set_m128(hi128, lo128);
+  }
+  else {
+    return simd256_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr + 4);
   }
 }
 
@@ -479,9 +503,21 @@ static MT_FORCEINLINE __m128 simd_abs_ps(__m128 a) {
 }
 
 static MT_FORCEINLINE __m128 simd_abs_diff_ps(__m128 a, __m128 b) {
-  // maybe not optimal, mask may be generated 
+  // maybe not optimal
   const __m128 absmask = _mm_castsi128_ps(_mm_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
   return _mm_and_ps(_mm_sub_ps(a, b), absmask);
+}
+
+static MT_FORCEINLINE __m256 simd256_abs_ps(__m256 a) {
+  // maybe not optimal, mask may be generated 
+  const __m256 absmask = _mm256_castsi256_ps(_mm256_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
+  return _mm256_and_ps(a, absmask);
+}
+
+static MT_FORCEINLINE __m256 simd256_abs_diff_ps(__m256 a, __m256 b) {
+  // maybe not optimal
+  const __m256 absmask = _mm256_castsi256_ps(_mm256_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
+  return _mm256_and_ps(_mm256_sub_ps(a, b), absmask);
 }
 
 static MT_FORCEINLINE __m128i read_word_stacked_simd(const Byte *pMsb, const Byte *pLsb, int x) {

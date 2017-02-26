@@ -83,6 +83,14 @@ extern Processor32 *half_prewitt_32_sse2;
 extern Processor32 *prewitt_32_sse2;
 extern Processor32 *morpho_32_sse2;
 
+extern Processor32 *convolution_32_avx;
+extern Processor32 *sobel_32_avx;
+extern Processor32 *roberts_32_avx;
+extern Processor32 *laplace_32_avx;
+extern Processor32 *cartoon_32_avx;
+extern Processor32 *half_prewitt_32_avx;
+extern Processor32 *prewitt_32_avx;
+extern Processor32 *morpho_32_avx;
 
 class EdgeMask : public MaskTools::Filter
 {
@@ -189,6 +197,7 @@ public:
          case 32: 
            processors32.push_back(Filtering::Processor<Processor32>(sobel_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            processors32.push_back(Filtering::Processor<Processor32>(sobel_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+           processors32.push_back(Filtering::Processor<Processor32>(sobel_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
            break;
          }
       }
@@ -224,6 +233,7 @@ public:
          case 32: 
            processors32.push_back(Filtering::Processor<Processor32>(roberts_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
            processors32.push_back(Filtering::Processor<Processor32>(roberts_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+           processors32.push_back(Filtering::Processor<Processor32>(roberts_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
            break;
          }
       }
@@ -259,6 +269,7 @@ public:
         case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(laplace_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors32.push_back(Filtering::Processor<Processor32>(laplace_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          processors32.push_back(Filtering::Processor<Processor32>(laplace_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
           break;
         }
       }
@@ -293,6 +304,7 @@ public:
         case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(cartoon_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors32.push_back(Filtering::Processor<Processor32>(cartoon_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          processors32.push_back(Filtering::Processor<Processor32>(cartoon_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
           break;
         }
       }
@@ -327,6 +339,7 @@ public:
         case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(morpho_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors32.push_back(Filtering::Processor<Processor32>(morpho_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          processors32.push_back(Filtering::Processor<Processor32>(morpho_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE ,32), 2));
           break;
         }
       }
@@ -362,6 +375,7 @@ public:
         case 32: 
           processors32.push_back(Filtering::Processor<Processor32>(prewitt_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors32.push_back(Filtering::Processor<Processor32>(prewitt_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          processors32.push_back(Filtering::Processor<Processor32>(prewitt_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
           break;
         }
       }
@@ -397,6 +411,7 @@ public:
         case 32:
           processors32.push_back(Filtering::Processor<Processor32>(half_prewitt_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors32.push_back(Filtering::Processor<Processor32>(half_prewitt_32_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+          processors32.push_back(Filtering::Processor<Processor32>(half_prewitt_32_avx, Constraint(CPU_AVX, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
           break;
         }
       }
@@ -543,7 +558,8 @@ public:
            break;
          case 32:
            processors32.push_back(Filtering::Processor<Processor32>(convolution_32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-           processors32.push_back(Filtering::Processor<Processor32>(convolution_32_sse2, Constraint(CPU_SSE2, MODULO_8, MODULO_NONE, ALIGNMENT_NONE, 1), 1));
+           processors32.push_back(Filtering::Processor<Processor32>(convolution_32_sse2, Constraint(CPU_SSE2, MODULO_8, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+           processors32.push_back(Filtering::Processor<Processor32>(convolution_32_avx, Constraint(CPU_AVX, MODULO_8, MODULO_NONE, ALIGNMENT_NONE, 32), 2));
            break;
          }
       }
