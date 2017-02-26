@@ -529,6 +529,7 @@
     <ClInclude Include="..\filters\lut\lutxyza\lutxyza.h" />
     <ClInclude Include="..\filters\mask\functions16.h" />
     <ClInclude Include="..\filters\mask\functions32.h" />
+    <ClInclude Include="..\filters\mask\functions32_avx.h" />
     <ClInclude Include="..\filters\merge\merge.h" />
     <ClInclude Include="..\filters\morphologic\functions16.h" />
     <ClInclude Include="..\filters\morphologic\functions32.h" />
@@ -601,6 +602,16 @@
     <ClCompile Include="..\filters\lut\lut\lut16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask16.cpp" />
     <ClCompile Include="..\filters\mask\edge\edgemask32.cpp" />
+    <ClCompile Include="..\filters\mask\edge\edgemask32_avx.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\filters\mask\motion\motionmask16.cpp" />
     <ClCompile Include="..\filters\mask\motion\motionmask32.cpp" />
     <ClCompile Include="..\filters\merge\merge.cpp" />
