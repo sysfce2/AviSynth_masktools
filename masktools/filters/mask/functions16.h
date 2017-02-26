@@ -7,7 +7,7 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
 
 typedef Word (Operator)(Word, Word, Word, Word, Word, Word, Word, Word, Word, const Short matrix[10], int nLowThreshold, int nHighThreshold);
-typedef void (ProcessLineSse2)(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width);
+typedef void (ProcessLineSse2)(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Short matrix[10], const __m128i &lowThresh, const __m128i &highThresh, int width);
 
 template<Operator op, class T>
 void generic16_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, T &thresholds, const Short matrix[10], int nWidth, int nHeight)
@@ -66,18 +66,23 @@ void generic16_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nS
 }
 
 // todo bitdepth template
-template<ProcessLineSse2 process_line_left, ProcessLineSse2 process_line, ProcessLineSse2 process_line_right>
-static void generic_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Short matrix[10], int nLowThreshold, int nHighThreshold, int nWidth, int nHeight) {
+template<int bits_per_pixel, ProcessLineSse2 process_line_left, ProcessLineSse2 process_line, ProcessLineSse2 process_line_right>
+void generic16_sse2(Word *pDst0, ptrdiff_t nDstPitch, const Word *pSrc0, ptrdiff_t nSrcPitch, const Short matrix[10], int nLowThreshold, int nHighThreshold, int nWidth, int nHeight) {
+    Byte *pDst = reinterpret_cast<Byte *>(pDst0);
+    const Byte *pSrc = reinterpret_cast<const Byte *>(pSrc0);
+
+    nWidth *= sizeof(uint16_t); // byte size for sse
+
     const Byte *pSrcp = pSrc - nSrcPitch;
     const Byte *pSrcn = pSrc + nSrcPitch;
 
-    auto v128 = _mm_set1_epi8(Byte(128));
-    auto low_thr_v = _mm_set1_epi8(Byte(nLowThreshold));
-    low_thr_v = _mm_sub_epi8(low_thr_v, v128);
-    auto high_thr_v = _mm_set1_epi8(Byte(nHighThreshold));
-    high_thr_v = _mm_sub_epi8(high_thr_v, v128);
+    auto vHalf = _mm_set1_epi16(1 << (bits_per_pixel - 1));
+    auto low_thr_v = _mm_set1_epi16(Word(nLowThreshold)); // for faster sse2 signed comparison
+    low_thr_v = _mm_sub_epi16(low_thr_v, vHalf);
+    auto high_thr_v = _mm_set1_epi16(Word(nHighThreshold));
+    high_thr_v = _mm_sub_epi16(high_thr_v, vHalf);
 
-    int sse2_width = (nWidth/sizeof(uint16_t) - 1 - 16) / 16 * 16 + 16;
+    int sse2_width = (nWidth - sizeof(uint16_t) - 16) / 16 * 16 + 16;
     /* top-left */
     process_line_left(pDst, pSrc, pSrc, pSrcn, matrix, low_thr_v, high_thr_v, 16);
     /* top */
