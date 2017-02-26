@@ -3,7 +3,10 @@
 #include "../../../avs2x/avisynth-2_5.h"
 #elif defined(FILTER_AVS_26)
 #include <windows.h>
+#pragma warning( push )
+#pragma warning(disable:4100) // disable possible loss of data conversion
 #include <avisynth.h>
+#pragma warning( pop )
 #endif
 #include "../../../common/utils/utils.h"
 #include "../../helpers/forms/forms.h"

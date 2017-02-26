@@ -8,7 +8,10 @@
 #include "avisynth-2_5.h"
 #elif defined(FILTER_AVS_26)
 #include <windows.h>
+#pragma warning( push )
+#pragma warning(disable:4100) // disable possible loss of data conversion
 #include <avisynth.h>
+#pragma warning( pop )
 #else
 #error FILTER_AVS_2x not defined
 #endif
