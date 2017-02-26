@@ -8,14 +8,15 @@
 namespace Filtering { namespace Avisynth2x {
 
 static CpuFlags AvsToInternalCpuFlags(int avsCpuFlags) {
-  if (avsCpuFlags & CPUF_AVX2) return (CpuFlags)CPU_AVX2;
-  if (avsCpuFlags & CPUF_AVX) return (CpuFlags)CPU_AVX;
-  if (avsCpuFlags & CPUF_SSE4_2) return (CpuFlags)CPU_SSE4_2;
-  if (avsCpuFlags & CPUF_SSE4_1) return (CpuFlags)CPU_SSE4_1;
-  if (avsCpuFlags & CPUF_SSSE3) return (CpuFlags)CPU_SSSE3;
-  if (avsCpuFlags & CPUF_SSE3) return (CpuFlags)CPU_SSE3;
-  if (avsCpuFlags & CPUF_SSE2) return (CpuFlags)CPU_SSE2;
-  return (CpuFlags)CPU_NONE;
+  int flags = CPU_NONE;
+  if (avsCpuFlags & CPUF_AVX2) flags |= CPU_AVX2;
+  if (avsCpuFlags & CPUF_AVX) flags |= CPU_AVX;
+  if (avsCpuFlags & CPUF_SSE4_2) flags |= CPU_SSE4_2;
+  if (avsCpuFlags & CPUF_SSE4_1) flags |= CPU_SSE4_1;
+  if (avsCpuFlags & CPUF_SSSE3) flags |= CPU_SSSE3;
+  if (avsCpuFlags & CPUF_SSE3) flags |= CPU_SSE3;
+  if (avsCpuFlags & CPUF_SSE2) flags |= CPU_SSE2;
+  return flags;
 }
 
 
