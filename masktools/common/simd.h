@@ -224,6 +224,54 @@ static MT_FORCEINLINE __m128i load_one_to_right(const Byte *ptr) {
     }
 }
 
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m128i load16_one_to_left(const Byte *ptr) {
+  if (border_mode == Border::Left) {
+    auto mask_left = _mm_setr_epi8(0xFF, 0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
+    auto val = simd_load_si128<mem_mode>(ptr);
+    return _mm_or_si128(_mm_slli_si128(val, 2), _mm_and_si128(val, mask_left));
+  }
+  else {
+    return simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr - 2);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m128i load16_one_to_right(const Byte *ptr) {
+  if (border_mode == Border::Right) {
+    auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF, 0xFF);
+    auto val = simd_load_si128<mem_mode>(ptr);
+    return _mm_or_si128(_mm_srli_si128(val, 2), _mm_and_si128(val, mask_right));
+  }
+  else {
+    return simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m128 load32_one_to_left(const Byte *ptr) {
+  if (border_mode == Border::Left) {
+    auto mask_left = _mm_setr_epi8(0xFF, 0xFF, 0xFF, 0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
+    auto val = simd_load_si128<mem_mode>(ptr);
+    return _mm_castsi128_ps(_mm_or_si128(_mm_slli_si128(val, 4), _mm_and_si128(val, mask_left)));
+  }
+  else {
+    return simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr - 4);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m128 load32_one_to_right(const Byte *ptr) {
+  if (border_mode == Border::Right) {
+    auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF, 0xFF, 0xFF, 0xFF);
+    auto val = simd_load_si128<mem_mode>(ptr);
+    return _mm_castsi128_ps(_mm_or_si128(_mm_srli_si128(val, 2), _mm_and_si128(val, mask_right)));
+  }
+  else {
+    return simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr + 4);
+  }
+}
+
 #pragma warning(default: 4309)
 
 static MT_FORCEINLINE __m128i simd_movehl_si128(const __m128i &a, const __m128i &b) {
@@ -236,6 +284,15 @@ static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i
     auto high = _mm_cmpgt_epi8(sat, highThresh);
     auto result = _mm_and_si128(value, low);
     return _mm_or_si128(result, high);
+}
+
+//  thresholds are decreased by half range in order to do signed comparison
+static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &vHalf) {
+  auto sat = _mm_sub_epi16(value, vHalf);
+  auto low = _mm_cmpgt_epi16(sat, lowThresh);
+  auto high = _mm_cmpgt_epi16(sat, highThresh);
+  auto result = _mm_and_si128(value, low);
+  return _mm_or_si128(result, high);
 }
 
 template<CpuFlags flags>
@@ -303,11 +360,14 @@ static MT_FORCEINLINE __m128i _MM_MULLO_EPI32(const __m128i &a, const __m128i &b
 // fake _mm_packus_epi32 (orig is SSE4.1 only)
 static MT_FORCEINLINE __m128i _MM_PACKUS_EPI32(__m128i a, __m128i b)
 {
-  a = _mm_slli_epi32(a, 16);
-  a = _mm_srai_epi32(a, 16);
-  b = _mm_slli_epi32(b, 16);
-  b = _mm_srai_epi32(b, 16);
+  
+  const static __m128i val_32 = _mm_set1_epi32(0x8000);
+  const static __m128i val_16 = _mm_set1_epi16(0x8000);
+
+  a = _mm_sub_epi32(a, val_32);
+  b = _mm_sub_epi32(b, val_32);
   a = _mm_packs_epi32(a, b);
+  a = _mm_add_epi16(a, val_16);
   return a;
 }
 
