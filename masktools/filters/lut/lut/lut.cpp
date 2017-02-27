@@ -34,9 +34,8 @@ void realtime16_t_c(Byte *dstp, ptrdiff_t dst_pitch, int width, int height, Pars
       Word pixel = reinterpret_cast<uint16_t *>(dstp)[x] ;
       if (bits_per_pixel != 16) pixel = min(pixel, max_pixel_value);
 
-      Word result = ctx.compute_word(pixel, 0.0f, -1.0 /*n/a*/, -1.0 /*n/a*/, bits_per_pixel);
-      
-      if (bits_per_pixel != 16) result = min(result, max_pixel_value);
+      Word result = ctx.compute_word_x<bits_per_pixel>(pixel);
+
       reinterpret_cast<uint16_t *>(dstp)[x] = result;
     }
     dstp += dst_pitch;

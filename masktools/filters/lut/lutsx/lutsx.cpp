@@ -99,10 +99,7 @@ static void custom_realtime_uint16_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte
         new_value1.add(pSrc1_16[x + (y - j) * nSrc1Pitch]);
         new_value2.add(pSrc2_16[x + (y - j) * nSrc2Pitch]);
       }
-      if (bits_per_pixel == 16) // no clamp, word is enough
-        pDst_16[i] = ctx->compute_word(pDst_16[i], new_value1.finalize(), new_value2.finalize(), -1, bits_per_pixel);
-      else
-        pDst_16[i] = min((Word)ctx->compute_word(pDst_16[i], new_value1.finalize(), new_value2.finalize(),-1, bits_per_pixel), max_pixel_value);
+      pDst_16[i] = ctx->compute_word_xyz<bits_per_pixel>(pDst_16[i], new_value1.finalize(), new_value2.finalize());
     }
     pSrc1_16 += nSrc1Pitch;
     pSrc2_16 += nSrc2Pitch;

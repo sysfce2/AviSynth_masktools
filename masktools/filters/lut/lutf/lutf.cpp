@@ -83,7 +83,7 @@ static void frame16_c(Word *dstp, ptrdiff_t dst_pitch, const Word *srcp, ptrdiff
     Word miniLut[65536]; // full 16, anti overflow
     const int real_buf_size = (1 << bits_per_pixel);
     for (int i = 0; i < real_buf_size; i++)
-      miniLut[i] = bits_per_pixel == 16 ? ctx->compute_word(X, i, -1.0, -1.0, bits_per_pixel) : min(ctx->compute_word(X, i,-1.0, -1.0, bits_per_pixel), max_pixel_value); // clamp for full 16 bit
+      miniLut[i] = ctx->compute_word_xy<bits_per_pixel>(X, i);
     for (int i = real_buf_size; i < 65536; i++)
       miniLut[i] = max_pixel_value;
 

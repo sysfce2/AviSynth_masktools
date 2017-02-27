@@ -38,7 +38,6 @@ class Lutxy : public MaskTools::Filter
    static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
      Parser::Context ctx(expr);
      int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
-     Word max_pixel_value = (1 << bits_per_pixel) - 1;
      size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
      Byte *lut = new Byte[buffer_size];
 
@@ -51,23 +50,23 @@ class Lutxy : public MaskTools::Filter
      case 10:
        for (int x = 0; x < 1024; x++)
          for (int y = 0; y < 1024; y++)
-           reinterpret_cast<Word *>(lut)[(x << 10) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+           reinterpret_cast<Word *>(lut)[(x << 10) + y] = ctx.compute_word_xy<10>(x, y);
        break;
      case 12:
        for (int x = 0; x < 4096; x++)
          for (int y = 0; y < 4096; y++)
-           reinterpret_cast<Word *>(lut)[(x << 12) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+           reinterpret_cast<Word *>(lut)[(x << 12) + y] = ctx.compute_word_xy<12>(x, y);
        break;
      case 14:
        for (int x = 0; x < 16384; x++)
          for (int y = 0; y < 16384; y++)
-           reinterpret_cast<Word *>(lut)[(x << 14) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+           reinterpret_cast<Word *>(lut)[(x << 14) + y] = ctx.compute_word_xy<14>(x, y);
        break;
      case 16:
        // 64bit only
        for (int x = 0; x < 65536; x++)
          for (int y = 0; y < 65536; y++)
-           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel);
+           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word_xy<16>(x, y);
        break;
      }
      return lut;

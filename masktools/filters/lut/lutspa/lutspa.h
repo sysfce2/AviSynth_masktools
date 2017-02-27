@@ -77,52 +77,60 @@ public:
 
          luts[i] = reinterpret_cast<Byte*>(_aligned_malloc(w*h*pixelsize, 16));
 
-         if (bits_per_pixel == 8) {
+         switch(bits_per_pixel) {
+         case 8:
            for (int x = 0; x < w; x++)
              for (int y = 0; y < h; y++)
                luts[i][x + y*w] = is_relative ?
                ctx.compute_byte(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
                  y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
                  -1, /* n/a */
+                 -1, /* n/a */
                  bits_per_pixel // new: bit-depth goes to param B
-               ) : ctx.compute_byte(x, y, -1 /*n/a*/, bits_per_pixel);
-         }
-         else if (bits_per_pixel < 16) { // clamp to max_pixel_value
-           uint16_t max_pixel_value = (1 << bits_per_pixel) - 1;
+               ) : ctx.compute_byte(x, y, -1, -1, bits_per_pixel);
+           break;
+         case 10:
+         case 12:
+         case 14:
            for (int x = 0; x < w; x++)
              for (int y = 0; y < h; y++) {
+               // input is not integer, don't use compute_word_xy<n>
                uint16_t val = is_relative ?
-                 ctx.compute_word(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
+                 ctx.compute_word_safe(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
                    y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
                    -1, /* n/a */
-                   bits_per_pixel // new: bit-depth goes to param B
-                 ) : ctx.compute_word(x, y, -1 /*n/a*/, bits_per_pixel);
-               reinterpret_cast<uint16_t *>(luts[i])[x + y*w] = min(val, max_pixel_value);
-             }
-         }
-         else if (bits_per_pixel == 16) {
-           for (int x = 0; x < w; x++)
-             for (int y = 0; y < h; y++) {
-               uint16_t val = is_relative ?
-                 ctx.compute_word(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
-                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
                    -1, /* n/a */
                    bits_per_pixel // new: bit-depth goes to param B
-                 ) : ctx.compute_word(x, y, -1 /*n/a*/, bits_per_pixel);
+                 ) : ctx.compute_word_safe(x, y, -1, -1, bits_per_pixel);
                reinterpret_cast<uint16_t *>(luts[i])[x + y*w] = val;
              }
-         }
-         else { // float
+           break;
+         case 16:
+           for (int x = 0; x < w; x++)
+             for (int y = 0; y < h; y++) {
+               uint16_t val = is_relative ?
+                 ctx.compute_word(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
+                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
+                   -1, /* n/a */
+                   -1, /* n/a */
+                   bits_per_pixel // new: bit-depth goes to param B
+                 ) : ctx.compute_word(x, y, -1, -1, bits_per_pixel);
+               reinterpret_cast<uint16_t *>(luts[i])[x + y*w] = val;
+             }
+           break;
+         case 32:
            for (int x = 0; x < w; x++)
              for (int y = 0; y < h; y++) {
                float val = is_relative ?
                  ctx.compute_float(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
                    y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
                    -1, /* n/a */
+                   -1, /* n/a */
                    bits_per_pixel // new: bit-depth goes to param B
-                 ) : ctx.compute_float(x, y, -1 /*n/a*/, bits_per_pixel);
+                 ) : ctx.compute_float(x, y, -1, -1, bits_per_pixel);
                reinterpret_cast<float *>(luts[i])[x + y*w] = val;
              }
+           break;
          }
       }
    }

@@ -134,18 +134,32 @@ public:
         if(bits_per_pixel >=8 && bits_per_pixel <= 16) 
           luts16[i] = reinterpret_cast<Word*>(_aligned_malloc(65536*sizeof(uint16_t), 16));
 
-        if (bits_per_pixel == 8) {
+        switch(bits_per_pixel) {
+        case 8: 
           for (int x = 0; x < 256; x++)
             luts[i][x] = ctx.compute_byte(x, 0.0f);
+          break;
+        case 10:
+          for (int x = 0; x < 1024; x++)
+            luts16[i][x] = ctx.compute_word_x<10>(x);
+          break;
+        case 12:
+          for (int x = 0; x < 4096; x++)
+            luts16[i][x] = ctx.compute_word_x<12>(x);
+          break;
+        case 14:
+          for (int x = 0; x < 16384; x++)
+            luts16[i][x] = ctx.compute_word_x<14>(x);
+          break;
+        case 16:
+          // real or stacked 16 bit
+          for (int x = 0; x < 65536; x++)
+            luts16[i][x] = ctx.compute_word_x<16>(x);
+          break;
         }
-        else if (bits_per_pixel == 16) { // real or stacked 16 bit
-          for (int x = 0; x <= 65535; x++)
-            luts16[i][x] = ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, -1.0 /*n/a*/, bits_per_pixel); // 4th parameter: bitdepth conversion support in expressions
-        }
-        else if (bits_per_pixel < 16) {
-          for (int x = 0; x <= max_pixel_value; x++)
-            luts16[i][x] = min(ctx.compute_word(x, 0.0f, -1.0 /*n/a*/, -1.0 /*n/a*/, bits_per_pixel), Word(max_pixel_value)); // clamp to 65535 is not enough for 10-16 bit
-          for (int x = max_pixel_value; x < 65536; x++) // 17.02.13 4th parameter: bitdepth conversion support in expressions
+        // fill the rest against invalid input values for 10-14 bits
+        if (bits_per_pixel > 8 && bits_per_pixel < 16) {
+          for (int x = max_pixel_value; x < 65536; x++)
             luts16[i][x] = Word(max_pixel_value);
         }
 
