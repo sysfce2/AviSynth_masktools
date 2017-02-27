@@ -196,9 +196,9 @@ type(type), value(value), value2(""), nParameter(nParameter), dValue(dValue), pr
 {
 }
 
-void Symbol::setValue(double dValue)
+void Symbol::setValue(double _dValue)
 {
-   this->dValue = dValue;
+   this->dValue = _dValue;
 }
 
 double Symbol::getValue(double x, double y, double z) const
@@ -315,16 +315,15 @@ double Context::rec_compute()
    }
 }
 
-double Context::compute(double x, double y, double z, double a, double bitdepth)
+double Context::compute(double _x, double _y, double _z, double _a, int _bitdepth)
 {
    nPos = nSymbols;
-   this->x = x;
-   this->y = y;
-   this->z = z;
-   this->a = a;
+   this->x = _x;
+   this->y = _y;
+   this->z = _z;
+   this->a = _a;
 
-   this->bitdepth = (int)bitdepth;
-   // this->sbitdepth = 8; already filled
+   this->bitdepth = _bitdepth;
    // all other expr constants are calculated from bitdepth
 
    return rec_compute();
