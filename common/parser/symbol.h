@@ -4,6 +4,13 @@
 #include "../utils/utils.h"
 #include <deque>
 
+//because ICC is smart enough on its own and force inlining actually makes it slower
+#ifdef __INTEL_COMPILER
+#define MT_FORCEINLINE inline
+#else
+#define MT_FORCEINLINE __forceinline
+#endif
+
 namespace Filtering { namespace Parser {
 
 class Symbol {
@@ -159,11 +166,48 @@ public:
 
    bool check();
    // v2.2.1: variable a
-   double compute(double x, double y = -1.0f, double z = -1.0f, double a = -1.0f, double bitdepth = 8);
+   double compute(double x, double y = -1.0f, double z = -1.0f, double a = -1.0f, int bitdepth = 8);
    String infix();
-   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, double _b = 8) { return clip<Byte, double>( compute(_x, _y, _z, _a, _b) ); } // byte: default 8 bit
-   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, double _b = 16) { return clip<Word, double>( compute(_x, _y, _z, _a, _b) ); } // word: default 16 bit
-   Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, double _b = 0) { return (float)(compute(_x, _y, _z, _a, _b)); } // float: 1<<0 = 1.0 default base
+   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 8) { return clip<Byte, double>( compute(_x, _y, _z, _a, _bitdepth) ); } // byte: default 8 bit
+   
+   template<int bits_per_pixel>
+   Word compute_word_x(int _x) {
+     if(bits_per_pixel == 16)
+       return clip<Word, double>(compute(_x, -1.0, -1.0, -1.0, bits_per_pixel));
+     else
+       return min(clip<Word, double>(compute(_x, -1.0, -1.0, -1.0, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+   }
+
+   template<int bits_per_pixel>
+   Word compute_word_xy(int _x, int _y) {
+     if (bits_per_pixel == 16)
+       return clip<Word, double>(compute(_x, _y, -1.0, -1.0, bits_per_pixel));
+     else
+       return min(clip<Word, double>(compute(_x, _y, -1.0, -1.0, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+   }
+
+   template<int bits_per_pixel>
+   Word compute_word_xyz(int _x, int _y, int _z) {
+     if (bits_per_pixel == 16)
+       return clip<Word, double>(compute(_x, _y, _z, -1.0, bits_per_pixel));
+     else
+       return min(clip<Word, double>(compute(_x, _y, _z, -1.0, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+   }
+
+   template<int bits_per_pixel>
+   Word compute_word_xyza(int _x, int _y, int _z, int _a) {
+     if (bits_per_pixel == 16)
+       return clip<Word, double>(compute(_x, _y, _z, _a, bits_per_pixel));
+     else
+       return min(clip<Word, double>(compute(_x, _y, _z, _a, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+   }
+
+   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 16) { return clip<Word, double>(compute(_x, _y, _z, _a, _bitdepth)); } // word: default 16 bit
+   Word compute_word_safe(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 16)
+   { 
+     return min(clip<Word, double>( compute(_x, _y, _z, _a, _bitdepth) ), (Word)((1 << _bitdepth) - 1));
+   } // clamp valid range for 10-14 bits
+   Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _b = 0) { return (float)(compute(_x, _y, _z, _a, _b)); } // float: 1<<0 = 1.0 default base
 };
 
 } } // namespace Parser, Filtering
