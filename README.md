@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.3 (2017022?)**
+**Masktools2 v2.2.3 (20170227)**
 
 mod by pinterf
 
@@ -19,8 +19,30 @@ Differences to Masktools 2.0b1
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
 - mt_merge to discard U and V automatically when input is greyscale
-- some filters got AVX (float) and AVX2 (integer) support: mt_merge, mt_logic
+- some filters got AVX (float) and AVX2 (integer) support:
+  mt_merge: 8-16 bit: AVX2, float:AVX
+  mt_logic: 8-16 bit: AVX2, float:AVX
+  mt_edge: 10-16 bit and 32 bit float: SSE2/SSE4 optimization
+  mt_edge: 32 bit float AVX
 - new: mt_lutxyza. Accepts four clips. 4th variable name is 'a' (besides x, y and z)
+- new: mt_luts: weight expressions as an addon for then main expression(s) (martin53's idea)
+    - wexpr
+    - ywExpr, uwExpr, vwExpr
+  If the relevant parameter strings exist, the weighting expression is evaluated
+  for each source/neighborhood pixel values (lut or realtime, depending on the bit depth and the "realtime" parameter). 
+  Then the usual lut result is premultiplied by this weight factor before it gets accumulated. 
+  
+  Weights are float values. Weight luts are x,y (2D) luts, similarly to the base working mode,
+  where x is the base pixel, y is the current pixel from the neighbourhood, defined in "pixels".
+  
+  When the weighting expression is "1", the result is the same as the basic weightless mode.
+  
+  For modes "average" and "std" the weights are summed up. Result is: sum(value_i*weight_i)/sum(weight_i).
+  
+  When all weights are equal to 1.0 then the expression will result in the average: sum(value_i)/n.
+  
+  Same logic works for min/max/median/etc., the "old" lut values are pre-multiplied with the weights before accumulation.
+
 - expression syntax supporting bit depth independent expressions
   - bit-depth aware scale operators
   
@@ -129,7 +151,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.3 (2017022?)**
+**v2.2.3 (20170227)**
 - mt_logic to 32 bit float (final filter lacking it)
 - get CpuInfo from Avisynth (avx/avx2 preparation)
   Note: AVX/AVX2 prequisites
@@ -140,6 +162,12 @@ Changelog
 - mt_logic: 8-16 bit: AVX2, float:AVX
 - mt_edge: 10-16 bit and 32 bit float: SSE2/SSE4 optimization
 - mt_edge: 32 bit float AVX
+- new: mt_luts: weight expressions as an addon for then main expression(s) (martin53's idea)
+    - wexpr
+    - ywExpr, uwExpr, vwExpr
+  If the relevant parameter strings exist, the weighting expression is evaluated
+  for each source/neighborhood pixel values (lut or realtime, depending on the bit depth and the "realtime" parameter). 
+  Then the usual lut result is premultiplied by this weight factor before it gets accumulated. 
 
 **v2.2.2 (20170223)** completed high bit depth support
 - All filters work in 10,12,14,16 bits and float (except mt_logic which is 8-16 only)
