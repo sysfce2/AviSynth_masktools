@@ -1,6 +1,8 @@
 #ifndef __Mt_Lut_Functions_H__
 #define __Mt_Lut_Functions_H__
 
+#include <limits>
+
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut {
 
 typedef enum {
@@ -26,10 +28,10 @@ typedef enum {
 #define MPROCESSOR(realtime, expr, param, mode) \
 { \
    expr( realtime, param, mode, Nonizer ), \
-   expr( realtime, param, mode, Averager<int> ), \
+   expr( realtime, param, mode, Averager<int64_t> ), \
    expr( realtime, param, mode, Minimizer ), \
    expr( realtime, param, mode, Maximizer ), \
-   expr( realtime, param, mode, Deviater<int> ), \
+   expr( realtime, param, mode, Deviater<int64_t> ), \
    expr( realtime, param, mode, Rangizer ), \
    expr( realtime, param, mode, Medianizer ), \
    expr( realtime, param, mode, MedianizerBetter<4> ), \
@@ -145,6 +147,11 @@ public:
    {
       return clip<Byte, Int64>(convert<Int64, Double>(dSum / dTotalCoefficients));
    }
+
+   void reset_w() { reset(); }
+   void add_w(int nValue, float nWeight) { add(clip<Byte, Float>(nValue*nWeight)); }
+   Byte finalize_w() const { return finalize(); }
+
 };
 
 class Minimizer {
@@ -157,6 +164,10 @@ public:
    void reset() { nMin = 255; }
    void add(int nValue) { nMin = min<int>( nMin, nValue ); }
    Byte finalize() const { return static_cast<Byte>(nMin); }
+
+   void reset_w() { reset(); }
+   void add_w(int nValue, float nWeight) { add(clip<Byte, Float>(nValue*nWeight)); }
+   Byte finalize_w() const { return finalize(); }
 
 };
 
@@ -193,6 +204,11 @@ public:
          }
       }
    }
+
+   void reset_w() { reset(); }
+   void add_w(int nValue, float nWeight) { add(clip<Byte, Float>(nValue*nWeight)); }
+   Byte finalize_w() const { return finalize(); }
+
 };
 
 template<int n>
@@ -237,6 +253,11 @@ public:
          }
       }
    }
+
+   void reset_w() { reset(); }
+   void add_w(int nValue, float nWeight) { add(clip<Byte, Float>(nValue*nWeight)); }
+   Byte finalize_w() const { return finalize(); }
+
 };
 
 class Maximizer {
@@ -249,6 +270,10 @@ public:
    void reset() { nMax = 0; }
    void add(int nValue) { nMax = max<int>( nMax, nValue ); }
    Byte finalize() const { return static_cast<Byte>(nMax); }
+
+   void reset_w() { reset(); }
+   void add_w(int nValue, float nWeight) { add(clip<Byte, Float>(nValue*nWeight)); }
+   Byte finalize_w() const { return finalize(); }
 
 };
 
@@ -263,6 +288,10 @@ public:
    void add(int nValue) { nMin = min<int>( nMin, nValue ); nMax = max<int>( nMax, nValue ); }
    Byte finalize() const { return static_cast<Byte>(nMax - nMin); }
 
+   void reset_w() { reset(); }
+   void add_w(int nValue, float nWeight) { add(clip<Byte,Float>(nValue*nWeight)); }
+   Byte finalize_w() const { return finalize(); }
+
 };
 
 // only <int> is used, for 4K+ videos <int64_t> needed
@@ -271,18 +300,24 @@ class Averager
 {
 
    T nSum, nCount;
+  // for weight mode:
+   double fSum;
+   float fWeightSum;
 
 public:
 
    Averager(const String &mode) { UNUSED(mode); }
    void reset() { nSum = 0; nCount = 0; }
-   void add(int nValue) { nSum += nValue; nCount++; } 
+   void add(int nValue) { nSum += nValue; nCount++; }
    // 4K era warning!! Integer can hold the sum of 8 421 504 pixels (worst case 255)
    // 3840 x 2180 = 8371200, just below limit
    // 4096 x 2180 = 8929280 pixels, over limit!
    // unsigned int32 is OK, but is not enough for 8K videos
    Byte finalize() const { return static_cast<Byte>(rounded_division<T>( nSum, nCount )); }
 
+   void reset_w() { fSum = 0.0; fWeightSum = 0.0f; }
+   void add_w(int nValue, float nWeight) { fSum += nValue*nWeight; fWeightSum += nWeight; }
+   Byte finalize_w() const { return clip<Byte, Float>((Float)(fSum / fWeightSum)); }
 };
 
 template<typename T>
@@ -290,6 +325,9 @@ class Deviater
 {
    T nSum, nCount;
    Int64 nSum2;
+   // for weight mode:
+   double fSum, fSum2;
+   float fWeightSum;
 
 public:
 
@@ -297,7 +335,12 @@ public:
    void reset() { nSum = 0; nSum2 = 0; nCount = 0; }
    void reset(int nValue) { nSum = nValue; nSum2 = nValue * nValue; nCount = 1; }
    void add(int nValue) { nSum += nValue; nSum2 += nValue * nValue; nCount++; }
-   Byte finalize() const { return convert<Byte, Double>( sqrt( ( Double( nSum2 ) * nCount - Double( nSum ) * Double( nSum ) ) / ( Double( nCount ) * nCount ) ) ); }
+   Byte finalize() const { return clip<Byte, Double>(sqrt((Double(nSum2) * nCount - Double(nSum) * Double(nSum)) / (Double(nCount) * nCount))); }
+
+   void reset_w() { fSum = 0.0; fSum2 = 0.0; fWeightSum = 0.0f; }
+   void reset_w(int nValue, float nWeight) { fSum = nValue*nWeight; fSum2 = fSum * fSum; fWeightSum = nWeight; }
+   void add_w(int nValue, float nWeight) { fSum += nValue*nWeight; fSum += nValue*nValue*nWeight*nWeight; fWeightSum += nWeight; }
+   Byte finalize_w() const { return clip<Byte, Double>(sqrt((Double(fSum2) * fWeightSum - Double(fSum) * Double(fSum)) / (Double(fWeightSum) * fWeightSum))); }
 
 };
 
@@ -348,6 +391,11 @@ public:
   {
     return clip<Word, Int64>(convert<Int64, Double>(dSum / dTotalCoefficients));
   }
+
+  void reset_w() { reset(); }
+  void add_w(int nValue, float nWeight) { add(clip<Word, Float>(nValue*nWeight)); }
+  Word finalize_w() const { return finalize(); }
+
 };
 
 template<int bits_per_pixel>
@@ -361,6 +409,10 @@ public:
   void reset() { nMin = (1 << bits_per_pixel) - 1; }
   void add(int nValue) { nMin = min<int>(nMin, nValue); }
   Word finalize() const { return static_cast<Word>(nMin); }
+
+  void reset_w() { reset(); }
+  void add_w(int nValue, float nWeight) { add(clip<Word, Float>(nValue*nWeight)); }
+  Word finalize_w() const { return finalize(); }
 
 };
 
@@ -398,6 +450,11 @@ public:
       }
     }
   }
+
+  void reset_w() { reset(); }
+  void add_w(int nValue, float nWeight) { add(clip<Word, Float>(nValue*nWeight)); }
+  Word finalize_w() const { return finalize(); }
+
 };
 
 // no bits_per_pixel template
@@ -443,6 +500,11 @@ public:
       }
     }
   }
+
+  void reset_w() { reset(); }
+  void add_w(int nValue, float nWeight) { add(clip<Word, Float>(nValue*nWeight)); }
+  Word finalize_w() const { return finalize(); }
+
 };
 
 // no bits_per_pixel template
@@ -456,6 +518,10 @@ public:
   void reset() { nMax = 0; }
   void add(int nValue) { nMax = max<int>(nMax, nValue); }
   Word finalize() const { return static_cast<Word>(nMax); }
+
+  void reset_w() { reset(); }
+  void add_w(int nValue, float nWeight) { add(clip<Word, Float>(nValue*nWeight)); }
+  Word finalize_w() const { return finalize(); }
 
 };
 
@@ -471,6 +537,10 @@ public:
   void add(int nValue) { nMin = min<int>(nMin, nValue); nMax = max<int>(nMax, nValue); }
   Word finalize() const { return static_cast<Word>(nMax - nMin); }
 
+  void reset_w() { reset(); }
+  void add_w(int nValue, float nWeight) { add(clip<Word, Float>(nValue*nWeight)); }
+  Word finalize_w() const { return finalize(); }
+
 };
 
 // for 4K+ videos or high bit depth <int64_t> needed
@@ -480,17 +550,20 @@ class Averager16
 
   int64_t nSum;
   int nCount;
+  // for weight mode:
+  double fSum;
+  float fWeightSum;
 
 public:
 
   Averager16(const String &mode) { UNUSED(mode); }
   void reset() { nSum = 0; nCount = 0; }
   void add(int nValue) { nSum += nValue; nCount++; }
-  // 4K era warning!! Integer can hold the sum of 8 421 504 pixels (worst case 255)
-  // 3840 x 2180 = 8371200, just below limit
-  // 4096 x 2180 = 8929280 pixels, over limit!
-  // unsigned int32 is OK, but is not enough for 8K videos
   Word finalize() const { return static_cast<Word>(rounded_division<int64_t>(nSum, nCount)); }
+
+  void reset_w() { fSum = 0.0; fWeightSum = 0.0f; }
+  void add_w(int nValue, float nWeight) { fSum += nValue*nWeight; fWeightSum += nWeight; }
+  Word finalize_w() const { return clip<Word, Int64>(convert<Int64, Double>(fSum / fWeightSum)); }
 
 };
 
@@ -499,6 +572,9 @@ class Deviater16
   Int64 nSum;
   int nCount;
   Int64 nSum2;
+  // for weight mode:
+  double fSum, fSum2;
+  float fWeightSum;
 
 public:
 
@@ -507,6 +583,11 @@ public:
   void reset(int nValue) { nSum = nValue; nSum2 = nValue * nValue; nCount = 1; }
   void add(int nValue) { nSum += nValue; nSum2 += nValue * nValue; nCount++; }
   Word finalize() const { return convert<Word, Double>(sqrt((Double(nSum2) * nCount - Double(nSum) * Double(nSum)) / (Double(nCount) * nCount))); }
+  
+  void reset_w() { fSum = 0.0; fSum2 = 0.0; fWeightSum = 0.0f; }
+  void reset_w(int nValue, float nWeight) { fSum = nValue*nWeight; fSum2 = fSum * fSum; fWeightSum = nWeight; }
+  void add_w(int nValue, float nWeight) { fSum += nValue*nWeight; fSum += nValue*nValue*nWeight*nWeight; fWeightSum += nWeight; }
+  Word finalize_w() const { return clip<Word, Double>(sqrt((Double(fSum2) * fWeightSum - Double(fSum) * Double(fSum)) / (Double(fWeightSum) * fWeightSum))); }
 
 };
 
@@ -556,6 +637,11 @@ public:
   {
     return (Float)(dSum / dTotalCoefficients);
   }
+
+  void reset_w() { reset(); }
+  void add_w(Float nValue, float nWeight) { add(nValue*nWeight); }
+  Float finalize_w() const { return finalize(); }
+
 };
 
 class Minimizer32 {
@@ -568,6 +654,10 @@ public:
   void reset() { nMin = 1.0f; }
   void add(Float nValue) { nMin = min<Float>(nMin, nValue); }
   Float finalize() const { return nMin; }
+
+  void reset_w() { reset(); }
+  void add_w(Float nValue, float nWeight) { add(nValue*nWeight); }
+  Float finalize_w() const { return finalize(); }
 
 };
 
@@ -605,6 +695,11 @@ public:
       }
     }
   }
+
+  void reset_w() { reset(); }
+  void add_w(float nValue, float nWeight) { add(nValue*nWeight); }
+  Float finalize_w() const { return finalize(); }
+
 };
 
 template<int n>
@@ -618,7 +713,7 @@ class MedianizerBetter32
 public:
   MedianizerBetter32(const String &mode) { UNUSED(mode); }
   void reset() { nSize = 0; memset(elements, 0, sizeof(elements)); memset(elements2, 0, sizeof(elements2)); }
-  void add(Float nValue) { int nValueNew = nValue <= 0.0f ? 0 : (nValue >= 1.0f ? 65535 : Word(nValue * 65535));  elements[nValueNew]++; elements2[nValueNew >> n]++; nSize++; }
+  void add(Float nValue) { int nValueNew = nValue < 0.0f ? 0 : (nValue >= 1.0f ? 65535 : Word(nValue * 65535));  elements[nValueNew]++; elements2[nValueNew >> n]++; nSize++; }
 
   Float finalize() const
   {
@@ -650,6 +745,10 @@ public:
       }
     }
   }
+
+  void reset_w() { reset(); }
+  void add_w(float nValue, float nWeight) { add(nValue*nWeight); }
+  Float finalize_w() const { return finalize(); }
 };
 
 class Maximizer32 {
@@ -662,6 +761,10 @@ public:
   void reset() { nMax = 0; }
   void add(Float nValue) { nMax = max<Float>(nMax, nValue); }
   Float finalize() const { return nMax; }
+
+  void reset_w() { reset(); }
+  void add_w(Float nValue, float nWeight) { add(nValue*nWeight); }
+  Float finalize_w() const { return finalize(); }
 
 };
 
@@ -676,6 +779,10 @@ public:
   void add(Float nValue) { nMin = min<Float>(nMin, nValue); nMax = max<Float>(nMax, nValue); }
   Float finalize() const { return nMax - nMin; }
 
+  void reset_w() { reset(); }
+  void add_w(Float nValue, float nWeight) { add(nValue*nWeight); }
+  Float finalize_w() const { return finalize(); }
+
 };
 
 // for 4K+ videos or high bit depth <int64_t> needed
@@ -685,6 +792,9 @@ class Averager32
 
   double nSum;
   int nCount;
+  // for weight mode:
+  double fSum;
+  float fWeightSum;
 
 public:
 
@@ -693,6 +803,10 @@ public:
   void add(Float nValue) { nSum = nSum + nValue; nCount++; }
   Float finalize() const { return (Float)(nSum / nCount); }
 
+  void reset_w() { fSum = 0.0; fWeightSum = 0.0f; }
+  void add_w(float nValue, float nWeight) { fSum += nValue*nWeight; fWeightSum += nWeight; }
+  Float finalize_w() const { return Float(fSum / fWeightSum); }
+
 };
 
 class Deviater32
@@ -700,6 +814,9 @@ class Deviater32
   Float nSum;
   int nCount;
   Float nSum2;
+  // for weight mode:
+  double fSum, fSum2;
+  float fWeightSum;
 
 public:
 
@@ -708,6 +825,11 @@ public:
   void reset(Float nValue) { nSum = nValue; nSum2 = nValue * nValue; nCount = 1; }
   void add(Float nValue) { nSum += nValue; nSum2 += nValue * nValue; nCount++; }
   Float finalize() const { return (Float)(sqrt((Double(nSum2) * nCount - Double(nSum) * Double(nSum)) / (Double(nCount) * nCount))); }
+
+  void reset_w() { fSum = 0.0; fSum2 = 0.0; fWeightSum = 0.0f; }
+  void reset_w(float nValue, float nWeight) { fSum = nValue*nWeight; fSum2 = fSum * fSum; fWeightSum = nWeight; }
+  void add_w(Float nValue, float nWeight) { fSum += nValue*nWeight; fSum += nValue*nValue*nWeight*nWeight; fWeightSum += nWeight; }
+  Float finalize_w() const { return (Float)(sqrt((Double(fSum2) * fWeightSum - Double(fSum) * Double(fSum)) / (Double(fWeightSum) * fWeightSum))); }
 
 };
 

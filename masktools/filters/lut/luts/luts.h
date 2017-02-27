@@ -8,7 +8,7 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Spatial {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], Parser::Context *ctx, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], const Float lut_w[65536], Parser::Context *ctx, Parser::Context *ctx_w, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode);
 
 // lut 8-16
 extern Processor *processors_array[NUM_MODES];
@@ -16,6 +16,12 @@ extern Processor *processors_10_array[NUM_MODES];
 extern Processor *processors_12_array[NUM_MODES];
 extern Processor *processors_14_array[NUM_MODES];
 extern Processor *processors_16_array[NUM_MODES];
+
+extern Processor *processors_weight_array[NUM_MODES];
+extern Processor *processors_weight_10_array[NUM_MODES];
+extern Processor *processors_weight_12_array[NUM_MODES];
+extern Processor *processors_weight_14_array[NUM_MODES];
+extern Processor *processors_weight_16_array[NUM_MODES];
 // realtime 8-32
 extern Processor *processors_realtime_8_array[NUM_MODES];
 extern Processor *processors_realtime_10_array[NUM_MODES];
@@ -24,15 +30,24 @@ extern Processor *processors_realtime_14_array[NUM_MODES];
 extern Processor *processors_realtime_16_array[NUM_MODES];
 extern Processor *processors_realtime_32_array[NUM_MODES];
 
+extern Processor *processors_weight_realtime_8_array[NUM_MODES];
+extern Processor *processors_weight_realtime_10_array[NUM_MODES];
+extern Processor *processors_weight_realtime_12_array[NUM_MODES];
+extern Processor *processors_weight_realtime_14_array[NUM_MODES];
+extern Processor *processors_weight_realtime_16_array[NUM_MODES];
+extern Processor *processors_weight_realtime_32_array[NUM_MODES];
+
 class Luts : public MaskTools::Filter
 {
    int *pCoordinates;
    int nCoordinates;
 
    ProcessorList<Processor> processors;
+   ProcessorList<Processor> processors_weight;
 
    // for realtime
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions_w[3];
 
    int bits_per_pixel;
    bool realtime;
@@ -47,12 +62,20 @@ class Luts : public MaskTools::Filter
 
    Lut luts[4];
 
+   struct Lut_w {
+     bool used;
+     Float *ptr;
+   };
+
+   Lut_w luts_weight[4];
+
    static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
      Parser::Context ctx(expr);
      int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
-     Word max_pixel_value = (1 << bits_per_pixel) - 1;
      size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
      Byte *lut = new Byte[buffer_size];
+
+     const int size = 1 << bits_per_pixel;
 
      switch (bits_per_pixel) {
      case 8:
@@ -61,29 +84,45 @@ class Luts : public MaskTools::Filter
            lut[(x << 8) + y] = ctx.compute_byte(x, y);
        break;
      case 10:
-       for (int x = 0; x < 1024; x++)
-         for (int y = 0; y < 1024; y++)
-           reinterpret_cast<Word *>(lut)[(x << 10) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+       for (int x = 0; x < size; x++)
+         for (int y = 0; y < size; y++)
+           reinterpret_cast<Word *>(lut)[(x << 10) + y] = ctx.compute_word_xy<10>(x, y);
        break;
      case 12:
-       for (int x = 0; x < 4096; x++)
-         for (int y = 0; y < 4096; y++)
-           reinterpret_cast<Word *>(lut)[(x << 12) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+       for (int x = 0; x < size; x++)
+         for (int y = 0; y < size; y++)
+           reinterpret_cast<Word *>(lut)[(x << 12) + y] = ctx.compute_word_xy<12>(x, y);
        break;
      case 14:
-       for (int x = 0; x < 16384; x++)
-         for (int y = 0; y < 16384; y++)
-           reinterpret_cast<Word *>(lut)[(x << 14) + y] = min(ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel), (Word)max_pixel_value);
+       for (int x = 0; x < size; x++)
+         for (int y = 0; y < size; y++)
+           reinterpret_cast<Word *>(lut)[(x << 14) + y] = ctx.compute_word_xy<14>(x, y);
        break;
      case 16:
        // 64bit only
        for (int x = 0; x < 65536; x++)
          for (int y = 0; y < 65536; y++)
-           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word(x, y, -1.0, -1.0, bits_per_pixel);
+           reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word_xy<16>(x, y);
        break;
      }
      return lut;
    }
+
+   // weight luts: float content
+   static Float *calculateLut_w(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
+     Parser::Context ctx(expr);
+     const int size = 1 << bits_per_pixel;
+
+     size_t buffer_size = ((size_t)size) * ((size_t)size);
+     Float *lut = new Float[buffer_size];
+
+     for (int x = 0; x < size; x++)
+       for (int y = 0; y < size; y++)
+         lut[(x << bits_per_pixel) + y] = ctx.compute_float(x, y - 1.0, -1.0, bits_per_pixel);
+     return lut;
+   }
+
+
    void FillCoordinates(const String &coordinates)
    {
       auto coeffs = Parser::getDefaultParser().parse( coordinates, " (),;." ).getExpression();
@@ -105,14 +144,31 @@ protected:
         if (realtime) {
           // thread safety
           Parser::Context ctx(*parsed_expressions[nPlane]);
-          processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-           nullptr, &ctx, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+          if (!parsed_expressions_w[nPlane]) {
+            // no weights
+            processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              nullptr, nullptr, &ctx, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+          }
+          else {
+            Parser::Context ctx_w(*parsed_expressions_w[nPlane]);
+            processors_weight.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              nullptr, nullptr, &ctx, &ctx_w, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+          }
         }
         else {
-          processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            luts[nPlane].ptr, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+          if (!luts_weight[nPlane].ptr) {
+            // no weights
+            processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              luts[nPlane].ptr, nullptr, nullptr, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+          }
+          else {
+            processors_weight.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              luts[nPlane].ptr, luts_weight[nPlane].ptr, nullptr, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+          }
         }
     }
 
@@ -121,14 +177,18 @@ public:
    {
      for (int i = 0; i < 3; i++) {
        parsed_expressions[i] = nullptr;
+       parsed_expressions_w[i] = nullptr;
      }
 
      for (int i = 0; i < 4; ++i) {
        luts[i].used = false;
        luts[i].ptr = nullptr;
+       luts_weight[i].used = false;
+       luts_weight[i].ptr = nullptr;
      }
 
      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+     static const char *expr_strs_w[] = { "ywExpr", "uwExpr", "vwExpr" };
 
      Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
 
@@ -156,6 +216,8 @@ public:
        }
      }
 
+     bool hasWeights = false;
+
      /* compute the luts */
      for (int i = 0; i < 3; i++)
      {
@@ -168,6 +230,7 @@ public:
          continue;
        }
 
+       //----- main expression
        bool customExpressionDefined = false;
        if (parameters[expr_strs[i]].is_defined()) {
          parser.parse(parameters[expr_strs[i]].toString(), " ");
@@ -185,24 +248,70 @@ public:
          return;
        }
 
+       // store expression on compute lut
        if (realtime) {
          parsed_expressions[i] = new std::deque<Parser::Symbol>(parser.getExpression());
-         continue;
-       }
-
-       // pure lut, no realtime
-
-       // save memory, reuse luts, like in xyz
-       if (customExpressionDefined) {
-         luts[i].used = true;
-         luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+         // fallthough to optimal weigth mode
        }
        else {
-         if (luts[3].ptr == nullptr) {
-           luts[3].used = true;
-           luts[3].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+         // pure lut, no realtime
+         // save memory, reuse luts, like in xyz
+         if (customExpressionDefined) {
+           luts[i].used = true;
+           luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
          }
-         luts[i].ptr = luts[3].ptr;
+         else {
+           if (luts[3].ptr == nullptr) {
+             luts[3].used = true;
+             luts[3].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+           }
+           luts[i].ptr = luts[3].ptr;
+         }
+       }
+
+       //Part #2 ----- weight expression
+       bool customExpressionDefined_w = false;
+       if (parameters[expr_strs_w[i]].is_defined()) {
+         parser.parse(parameters[expr_strs_w[i]].toString(), " ");
+         customExpressionDefined_w = true;
+       }
+       else if (parameters["wexpr"].is_defined()) {
+         parser.parse(parameters["wexpr"].toString(), " ");
+       }
+       else {
+         continue; // no parse context/lut will be used for weights
+       }
+
+       hasWeights = true;
+
+       // for check:
+       Parser::Context ctx_w(parser.getExpression());
+
+       if (!ctx_w.check())
+       {
+         error = "invalid expression in the lut";
+         return;
+       }
+
+       // store expression on compute lut
+       if (realtime) {
+         parsed_expressions_w[i] = new std::deque<Parser::Symbol>(parser.getExpression());
+         continue;
+       }
+       else {
+         // pure lut, no realtime
+         // save memory, reuse luts, like in xyz
+         if (customExpressionDefined_w) {
+           luts_weight[i].used = true;
+           luts_weight[i].ptr = calculateLut_w(parser.getExpression(), bits_per_pixel);
+         }
+         else {
+           if (luts_weight[3].ptr == nullptr) {
+             luts_weight[3].used = true;
+             luts_weight[3].ptr = calculateLut_w(parser.getExpression(), bits_per_pixel);
+           }
+           luts_weight[i].ptr = luts_weight[3].ptr;
+         }
        }
      }
 
@@ -230,6 +339,27 @@ public:
        case 16:  processors.push_back(processors_16_array[ModeToInt(mode)]); break;
        }
      };
+     if (hasWeights) {
+       if (realtime) {
+         switch (bits_per_pixel) {
+         case 8:  processors_weight.push_back(processors_weight_realtime_8_array[ModeToInt(mode)]); break;
+         case 10:  processors_weight.push_back(processors_weight_realtime_10_array[ModeToInt(mode)]); break;
+         case 12:  processors_weight.push_back(processors_weight_realtime_12_array[ModeToInt(mode)]); break;
+         case 14:  processors_weight.push_back(processors_weight_realtime_14_array[ModeToInt(mode)]); break;
+         case 16:  processors_weight.push_back(processors_weight_realtime_16_array[ModeToInt(mode)]); break;
+         case 32:  processors_weight.push_back(processors_weight_realtime_32_array[ModeToInt(mode)]); break;
+         }
+       }
+       else {
+         switch (bits_per_pixel) {
+         case 8:  processors_weight.push_back(processors_weight_array[ModeToInt(mode)]); break;
+         case 10:  processors_weight.push_back(processors_weight_10_array[ModeToInt(mode)]); break;
+         case 12:  processors_weight.push_back(processors_weight_12_array[ModeToInt(mode)]); break;
+         case 14:  processors_weight.push_back(processors_weight_14_array[ModeToInt(mode)]); break;
+         case 16:  processors_weight.push_back(processors_weight_16_array[ModeToInt(mode)]); break;
+         }
+       };
+     }
    }
 
    ~Luts()
@@ -240,9 +370,13 @@ public:
        if (luts[i].used) {
          delete[] luts[i].ptr;
        }
+       if (luts_weight[i].used) {
+         delete[] luts_weight[i].ptr;
+       }
      }
      for (int i = 0; i < 3; i++) {
        delete parsed_expressions[i];
+       delete parsed_expressions_w[i];
      }
    }
 
@@ -261,6 +395,10 @@ public:
       signature.add( Parameter( String( "y" ), "uExpr" ) );
       signature.add( Parameter( String( "y" ), "vExpr" ) );
       signature.add( Parameter( false, "realtime"));
+      signature.add( Parameter( String("1"), "wexpr"));
+      signature.add( Parameter( String("1"), "ywExpr"));
+      signature.add( Parameter( String("1"), "uwExpr"));
+      signature.add( Parameter( String("1"), "vwExpr"));
 
       return add_defaults( signature );
    }
