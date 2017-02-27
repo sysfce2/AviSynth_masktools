@@ -141,6 +141,9 @@ Example #3 (new, with constants)
 Masktools2 info:
 http://avisynth.nl/index.php/MaskTools2
 
+Forum:
+https://forum.doom9.org/showthread.php?t=174333
+
 Article by tp7
 http://tp7.github.io/articles/masktools/
 
