@@ -92,10 +92,33 @@ public:
       definition( Syntax const &self )
       {
          /* variables and numbers are processed in the same way */
-         factor = strict_real_p[AddDouble(self.rpn)] | int_p[AddInteger(self.rpn)] | ('(' >> termter >> ')') | ( ch_p('x')[AddNamedSymbol("x", self.rpn)] | ch_p('y')[AddNamedSymbol("y", self.rpn)] | ch_p('z')[AddNamedSymbol("z", self.rpn)] | str_p("pi")[AddNamedSymbol("pi", self.rpn)] ) | term0;
+         factor = strict_real_p[AddDouble(self.rpn)] | int_p[AddInteger(self.rpn)] | ('(' >> termter >> ')') | 
+           ( 
+             ch_p('x')[AddNamedSymbol("x", self.rpn)] |
+             ch_p('y')[AddNamedSymbol("y", self.rpn)] |
+             ch_p('z')[AddNamedSymbol("z", self.rpn)] |
+             // v2.2.4
+             ch_p('a')[AddNamedSymbol("a", self.rpn)] | 
+             str_p("bitdepth")[AddNamedSymbol("bitdepth", self.rpn)] |
+             str_p("sbitdepth")[AddNamedSymbol("sbitdepth", self.rpn)] |
+             str_p("range_half")[AddNamedSymbol("range_half", self.rpn)] |
+             str_p("range_max")[AddNamedSymbol("range_max", self.rpn)] |
+             str_p("range_size")[AddNamedSymbol("range_size", self.rpn)] |
+             str_p("ymin")[AddNamedSymbol("ymin", self.rpn)] |
+             str_p("ymax")[AddNamedSymbol("ymax", self.rpn)] |
+             str_p("cmin")[AddNamedSymbol("cmin", self.rpn)] |
+             str_p("cmax")[AddNamedSymbol("cmax", self.rpn)] |
+             // ---
+             str_p("pi")[AddNamedSymbol("pi", self.rpn)]
+           ) | term0;
 
          /* functions */
-         term0 = (str_p("abs") >> '(' >> (termter) >> ')')[AddNamedSymbol("abs", self.rpn)] |
+         term0 = /* one operand functions/operators should appear as fn_name(x), e.g. #F(100) */
+                 (str_p("#F") >> '(' >> (termter) >> ')')[AddNamedSymbol("#F", self.rpn)] |  // scaling v2.2.4 
+                 (str_p("#B") >> '(' >> (termter) >> ')')[AddNamedSymbol("#B", self.rpn)] |  // scaling
+                 (str_p("~u") >> '(' >> (termter) >> ')')[AddNamedSymbol("~u", self.rpn)] |  // negateUB
+                 (str_p("~s") >> '(' >> (termter) >> ')')[AddNamedSymbol("~s", self.rpn)] |  // negateSB
+                 (str_p("abs") >> '(' >> (termter) >> ')')[AddNamedSymbol("abs", self.rpn)] |
                  (str_p("sin") >> '(' >> (termter) >> ')')[AddNamedSymbol("sin", self.rpn)] |
                  (str_p("cos") >> '(' >> (termter) >> ')')[AddNamedSymbol("cos", self.rpn)] |
                  (str_p("tan") >> '(' >> (termter) >> ')')[AddNamedSymbol("tan", self.rpn)] |
@@ -129,7 +152,31 @@ public:
          term6 = term5 >> *( ("!&" >> term5)[AddNamedSymbol("!&", self.rpn)] |
             ('|' >> term5)[AddNamedSymbol("|", self.rpn)] |
             ("&" >> term5)[AddNamedSymbol("&", self.rpn)] |
-            ('°' >> term5)[AddNamedSymbol("°", self.rpn)]);
+            ('°' >> term5)[AddNamedSymbol("°", self.rpn)] |
+            // addons from 2.2.4
+            ("@" >> term5)[AddNamedSymbol("@", self.rpn)] |
+
+            ("&u" >> term5)[AddNamedSymbol("&u", self.rpn)] |
+            ("|u" >> term5)[AddNamedSymbol("|u", self.rpn)] |
+            ("°u" >> term5)[AddNamedSymbol("°u", self.rpn)] |
+            ("@u" >> term5)[AddNamedSymbol("@u", self.rpn)] |
+
+            (">>" >> term5)[AddNamedSymbol(">>", self.rpn)] |
+            (">>u" >> term5)[AddNamedSymbol(">>u", self.rpn)] |
+            ("<<" >> term5)[AddNamedSymbol("<<", self.rpn)] |
+            ("<<u" >> term5)[AddNamedSymbol("<<u", self.rpn)] |
+  
+            ("&s" >> term5)[AddNamedSymbol("&s", self.rpn)] |
+            ("|s" >> term5)[AddNamedSymbol("|s", self.rpn)] |
+            ("°s" >> term5)[AddNamedSymbol("°s", self.rpn)] |
+            ("@s" >> term5)[AddNamedSymbol("@s", self.rpn)] |
+
+            (">>s" >> term5)[AddNamedSymbol(">>s", self.rpn)] |
+            ("<<s" >> term5)[AddNamedSymbol("<<s", self.rpn)]
+
+           );
+
+
          /* ternary ops */
          termter = term6 >> *((ch_p('?') >> term6 >> ch_p(':') >> term6)[AddNamedSymbol("?", self.rpn)]);
         }
