@@ -1,5 +1,6 @@
 ### MaskTools 2 ###
 
+**Masktools2 v2.2.4 (20170228 ??)
 **Masktools2 v2.2.3 (20170227)**
 
 mod by pinterf
@@ -24,6 +25,8 @@ Differences to Masktools 2.0b1
   mt_logic: 8-16 bit: AVX2, float:AVX
   mt_edge: 10-16 bit and 32 bit float: SSE2/SSE4 optimization
   mt_edge: 32 bit float AVX
+- mt_polish to recognize new constants and scaling operator, and some other operators introduced in earlier versions.
+  For a complete list, see v2.2.4 change log
 - new: mt_lutxyza. Accepts four clips. 4th variable name is 'a' (besides x, y and z)
 - new: mt_luts: weight expressions as an addon for then main expression(s) (martin53's idea)
     - wexpr
@@ -154,6 +157,17 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.4 (20170228?)
+- mt_polish to recognize:
+  - new v2.2.x constants and variables
+    a, bitdepth, sbitdepth, range_half, range_max, range_size, ymin, ymax, cmin, cmax
+  - v2.2.x scaling functions (written as #B(expression) and #F(expression) for mt_polish)
+    #B() #F
+  - one opearand unsigned and signed negate introduced in older versions
+    ~u and ~s (written as ~u(expression)and ~s(expression) for mt_polish)
+  - other operators introduced in older versions:
+    @, &u, |u, °u, @u, >>, >>u, <<, <<u, &s, |s, °s, @s, >>s, <<s,
+
 **v2.2.3 (20170227)**
 - mt_logic to 32 bit float (final filter lacking it)
 - get CpuInfo from Avisynth (avx/avx2 preparation)
