@@ -95,9 +95,9 @@ protected:
     {
         UNUSED(n); UNUSED(frames);
         if(bits_per_pixel == 8)
-          processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height());
+          processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), (Byte)nThreshold, dst.width(), dst.height());
         else if(bits_per_pixel <= 16)
-          processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold, dst.width(), dst.height(), dst.origheight());
+          processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),(Word)nThreshold, dst.width(), dst.height(), dst.origheight());
         else
           processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), nThreshold_f, dst.width(), dst.height());
     }
