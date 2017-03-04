@@ -162,8 +162,8 @@ Symbol Symbol::Ceil           ("ceil", FUNCTION, 1, ceil);
 Symbol Symbol::Floor          ("floor", FUNCTION, 1, floor);
 Symbol Symbol::Trunc          ("trunc", FUNCTION, 1, trunc);
 // automatic bit-depth scaling helpers, since v2.2.1
-Symbol Symbol::UpscaleByShift  ("#B", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByShift);
-Symbol Symbol::UpscaleByStretch("#F", FUNCTION_WITH_B_AS_PARAM, 1, upscaleByStretch);
+Symbol Symbol::UpscaleByShift  ("#B", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByShift);
+Symbol Symbol::UpscaleByStretch("#F", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByStretch);
 // admin config
 Symbol Symbol::SetScriptBitDepthI8("i8", 8.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetScriptBitDepthI10("i10", 10.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
@@ -171,6 +171,13 @@ Symbol Symbol::SetScriptBitDepthI12("i12", 12.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH
 Symbol Symbol::SetScriptBitDepthI14("i14", 14.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetScriptBitDepthI16("i16", 16.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetScriptBitDepthF32("f32", 32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseI8Range("clamp_f_i8", -8.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseI10Range("clamp_f_i10", -10.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseI12Range("clamp_f_i12", -12.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseI14Range("clamp_f_i14", -14.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseI16Range("clamp_f_i16", -16.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseF32Range("clamp_f_f32", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::SetFloatToClampUseF32Range_2("clamp_f", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 
 Symbol::Symbol() :
 type(UNDEFINED), value(""), value2("")
@@ -240,16 +247,38 @@ Context::Context(const std::deque<Symbol> &expression)
    auto it = expression.begin();
 
    int default_sbitdepth = 8;
+   int default_float_autoscale_bitdepth = 0; // no clamp and autoscale
 
    int symbolCount = 0;
    for (int i = 0; i < nSymbols; i++, it++) {
-     if (it->type == Symbol::FUNCTION_CONFIG_SCRIPT_BITDEPTH)
-       default_sbitdepth = (int)it->dValue;
-     else
+     // control mnemonics are filtered here, they are not put in the expression
+     if (it->type == Symbol::FUNCTION_CONFIG_SCRIPT_BITDEPTH) {
+       if (it->dValue > 0) {
+         // i8, i10, i12, i14, i16, f32
+         default_sbitdepth = (int)it->dValue;
+       }
+       else {
+         // negative values show the bitdepth that inputs and output should autoscale.
+         // clamp_f
+         // clamp_f_i8..clamp_f_i16..clamp_f_f32
+         default_float_autoscale_bitdepth = -(int)it->dValue;
+       }
+     }
+     else {
        pSymbols[symbolCount++] = *it;
+     }
    }
    nSymbols = symbolCount;
    sbitdepth = default_sbitdepth;
+
+   float_autoscale_bitdepth = default_float_autoscale_bitdepth;
+
+   // precalculate scale factor and its inverse
+   float_input_scalefactor = 1.0; // for default and 32 bit
+   if (float_autoscale_bitdepth >= 8 && float_autoscale_bitdepth <= 16)
+     float_input_scalefactor = double((1 << float_autoscale_bitdepth) - 1);
+   float_input_invscalefactor = 1.0 / float_input_scalefactor;
+
 }
 
 Context::~Context()
@@ -279,7 +308,7 @@ double Context::rec_compute()
    case Symbol::VARIABLE_CMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
    case Symbol::VARIABLE_CMAX: return bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8));  // 240 scaled
 
-   case Symbol::FUNCTION_WITH_B_AS_PARAM: // silent bit-depth parameter for autoscale
+   case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
      switch (s.nParameter)
      {
      case 1: return s.process(rec_compute(), bitdepth, sbitdepth); // automatic bit-depth parameters
@@ -371,7 +400,7 @@ String Context::rec_infix()
             auto op2 = rec_infix();
             return "((" + rec_infix() + ") ? " + op2 + " : " + op3 + ")";
         }
-    case Symbol::FUNCTION_WITH_B_AS_PARAM:
+    case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM:
     {
       if (s.nParameter == 1) {
         return s.value + "(" + rec_infix() + "," + std::to_string(this->bitdepth) + "," + std::to_string(this->sbitdepth) + ")";
