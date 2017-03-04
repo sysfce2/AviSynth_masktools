@@ -403,7 +403,7 @@ String Context::rec_infix()
     case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM:
     {
       if (s.nParameter == 1) {
-        return s.value + "(" + rec_infix() + "," + std::to_string(this->bitdepth) + "," + std::to_string(this->sbitdepth) + ")";
+        return s.value + "(" + rec_infix() + ")";
       }
     }
 
