@@ -1,7 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.4 (20170228 ??)
-**Masktools2 v2.2.3 (20170227)**
+**Masktools2 v2.2.4 (20170304)**
 
 mod by pinterf
 
@@ -100,6 +99,26 @@ Example #3 (new, with constants)
       expr_luma = "x ymin - ymax ymin - / range_max *"
       expr_chroma = "x cmin - cmax cmin - / range_max *"
 ```
+  - new expression syntax: auto scale modifiers for float clips (test for real.finder):
+    Keyword at the beginning of the expression:
+    - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
+    - clamp_f_f32 or clamp_f: for clamping the result to 0..1
+  
+    Input values 'x', 'y', 'z' and 'a' are autoscaled by 255.0, 1023.0, ... 65535.0 before the expression evaluation,
+    so the working range is similar to native 8, 10, ... 16 bits. The predefined constants 'range_max', etc. will behave for 8, 10,..16 bits accordingly.
+  
+    The result is automatically scaled back to 0..1 _and_ is clamped to that range.
+    When using clamp_f_f32 (or clamp_f) the scale factor is 1.0 (so there is no scaling), but the final clamping will be done anyway.
+    No integer rounding occurs.
+
+```
+    expr = "x y - range_half +"  # good for 8..32 bits but float is not clamped
+    expr = "clamp_f y - range_half +"  # good for 8..32 bits and float clamped to 0..1
+    expr = "x y - 128 + "  # good for 8 bits
+    expr = "clamp_f_i8 x y - 128 +" # good for 8 bits and float, float will be clamped to 0..1
+    expr = "clamp_f_i8 x y - range_half +" # good for 8..32 bits, float will be clamped to 0..1
+```  
+
 - parameter "stacked" (default false) for filters with stacked format support
   Stacked support is not intentional, but since tp7 did it, I did not remove the feature.
   Filters currently without stacked support will never have it. 
@@ -157,16 +176,28 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.4 (20170228?)
+**v2.2.4 (20170304)
 - mt_polish to recognize:
   - new v2.2.x constants and variables
     a, bitdepth, sbitdepth, range_half, range_max, range_size, ymin, ymax, cmin, cmax
   - v2.2.x scaling functions (written as #B(expression) and #F(expression) for mt_polish)
     #B() #F
-  - one opearand unsigned and signed negate introduced in older versions
+  - single operand unsigned and signed negate introduced in 2.0.48
     ~u and ~s (written as ~u(expression)and ~s(expression) for mt_polish)
-  - other operators introduced in older versions:
-    @, &u, |u, °u, @u, >>, >>u, <<, <<u, &s, |s, °s, @s, >>s, <<s,
+  - other operators introduced in 2.0.48:
+    @, &u, |u, °u, @u, >>, >>u, <<, <<u, &s, |s, °s, @s, >>s, <<s
+- mt_infix: don't put extra parameter after #F( and #B(
+- new expression syntax: auto scale modifiers for float clips (test for real.finder):
+  Keyword at the beginning of the expression:
+  - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
+  - clamp_f_f32 or clamp_f: for clamping the result to 0..1
+  
+  Input values 'x', 'y', 'z' and 'a' are autoscaled by 255.0, 1023.0, ... 65535.0 before the expression evaluation,
+  so the working range is similar to native 8, 10, ... 16 bits. The predefined constants 'range_max', etc. will behave for 8, 10,..16 bits accordingly.
+  
+  The result is automatically scaled back to 0..1 _and_ is clamped to that range.
+  When using clamp_f_f32 (or clamp_f) the scale factor is 1.0 (so there is no scaling), but the final clamping will be done anyway.
+  No integer rounding occurs.
 
 **v2.2.3 (20170227)**
 - mt_logic to 32 bit float (final filter lacking it)
