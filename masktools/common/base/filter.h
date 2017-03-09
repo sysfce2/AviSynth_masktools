@@ -160,7 +160,7 @@ public:
 
         /* check the colorspace */
         if (C == COLORSPACE_NONE)
-            error = "unsupported colorspace. masktools only support planar YUV colorspaces (YV12, YV16, YV24)";
+            error = "masktools: unsupported colorspace, use Y8, YV12, YV16, YV24, YV411, greyscale, YUVxxxP10-16/S, Planar RGB";
     }
 
     void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[3], const Frame<const byte> frames[3])
