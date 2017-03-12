@@ -134,8 +134,8 @@ public:
    static Symbol Floor;
    static Symbol Trunc;
    // auto bit depth conversions
-   static Symbol UpscaleByShift;
-   static Symbol UpscaleByStretch;
+   static Symbol ScaleByShift;
+   static Symbol ScaleByStretch;
    // script bit depth setters
    static Symbol SetScriptBitDepthI8;
    static Symbol SetScriptBitDepthI10;

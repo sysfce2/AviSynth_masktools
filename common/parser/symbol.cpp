@@ -162,8 +162,8 @@ Symbol Symbol::Ceil           ("ceil", FUNCTION, 1, ceil);
 Symbol Symbol::Floor          ("floor", FUNCTION, 1, floor);
 Symbol Symbol::Trunc          ("trunc", FUNCTION, 1, trunc);
 // automatic bit-depth scaling helpers, since v2.2.1
-Symbol Symbol::UpscaleByShift  ("#B", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByShift);
-Symbol Symbol::UpscaleByStretch("#F", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByStretch);
+Symbol Symbol::ScaleByShift  ("@B", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByShift); // v 2.2.5: #B, #F -> @B, @F
+Symbol Symbol::ScaleByStretch("@F", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByStretch);
 // admin config
 Symbol Symbol::SetScriptBitDepthI8("i8", 8.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetScriptBitDepthI10("i10", 10.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);

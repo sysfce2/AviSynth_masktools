@@ -11,11 +11,12 @@
 // 2.) Binaries: vc14 for VS2015 both 64 and 32 bit
 //     https://sourceforge.net/projects/boost/files/boost-binaries/1.62.0/
 //     Set library paths for x64 and x32 in VC++ Directories | Library directories project properties
-//     Needed libs:
+//     Needed libs (name-kind-version):
 //      libboost_date_time-vc140-mt-s-1_62.lib
 //      libboost_thread-vc140-mt-s-1_62.lib
 //      libboost_chrono-vc140-mt-s-1_62.lib
 //      libboost_system-vc140-mt-s-1_62.lib
+//     or choose the static/nonstatic/debug versions of them
 #include <boost/spirit/home/classic.hpp>
 
 using namespace boost;
@@ -114,8 +115,8 @@ public:
 
          /* functions */
          term0 = /* one operand functions/operators should appear as fn_name(x), e.g. #F(100) */
-                 (str_p("#F") >> '(' >> (termter) >> ')')[AddNamedSymbol("#F", self.rpn)] |  // scaling v2.2.4 
-                 (str_p("#B") >> '(' >> (termter) >> ')')[AddNamedSymbol("#B", self.rpn)] |  // scaling
+                 (str_p("@F") >> '(' >> (termter) >> ')')[AddNamedSymbol("@F", self.rpn)] |  // scaling v2.2.4 v2.2.5: #F #B -> @F @B
+                 (str_p("@B") >> '(' >> (termter) >> ')')[AddNamedSymbol("@B", self.rpn)] |  // scaling
                  (str_p("~u") >> '(' >> (termter) >> ')')[AddNamedSymbol("~u", self.rpn)] |  // negateUB
                  (str_p("~s") >> '(' >> (termter) >> ')')[AddNamedSymbol("~s", self.rpn)] |  // negateSB
                  (str_p("abs") >> '(' >> (termter) >> ')')[AddNamedSymbol("abs", self.rpn)] |
