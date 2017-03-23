@@ -80,75 +80,123 @@ protected:
     }
 
 public:
-   MotionMask(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags )
-   {
-     bits_per_pixel = bit_depths[C];
-     bool isFloat = bits_per_pixel == 32;
+  MotionMask(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
+  {
+    bits_per_pixel = bit_depths[C];
+    bool isFloat = bits_per_pixel == 32;
 
+    bool fullscale = planes_isRGB[C];
 
-     if (!isFloat) {
-       // default value of 10 scaled by bit depth
-       int nLow0, nLow1;
-       int nHigh0, nHigh1;
-       int max_pixel_value = (1 << bits_per_pixel) - 1;
-       nLow0 = parameters["thY1"].is_defined() ? parameters["thY1"].toInt() : (10 << (bits_per_pixel - 8));
-       nLow1 = parameters["thC1"].is_defined() ? parameters["thC1"].toInt() : (10 << (bits_per_pixel - 8));
-       nHigh0 = parameters["thY2"].is_defined() ? parameters["thY2"].toInt() : (10 << (bits_per_pixel - 8));
-       nHigh1 = parameters["thC2"].is_defined() ? parameters["thC2"].toInt() : (10 << (bits_per_pixel - 8));
+    String scalemode = parameters["paramscale"].toString();
 
-       nMotionThreshold = parameters["thT"].is_defined() ? parameters["thT"].toInt() : (10 << (bits_per_pixel - 8));
-       nMotionThreshold = min(max(nMotionThreshold, 0), max_pixel_value);
+    int thY1, thC1, thY2, thC2, thT, scvalue;
+    float thY1_f, thC1_f, thY2_f, thC2_f, thT_f, scvalue_f;
 
-       nLowThresholds[0] = min(max(nLow0, 0), max_pixel_value);
-       nLowThresholds[1] = nLowThresholds[2] = min(max(nLow1, 0), max_pixel_value);
-       nHighThresholds[0] = min(max(nHigh0, 0), max_pixel_value);
-       nHighThresholds[1] = nHighThresholds[2] = min(max(nHigh1, 0), max_pixel_value);
+    // defaults
+    thY1_f = thC1_f = thY2_f = thC2_f = thT_f = 10.0f / 255;
+    thY1 = thC1 = thY2 = thC2 = thT = 10 << (bits_per_pixel - 8);
+    scvalue = 0;
+    scvalue_f = 0.0f;
 
-       // value copied into the whole frame when scenechange is detected
-       nSceneChangeValue = parameters["scvalue"].is_defined() ? parameters["scvalue"].toInt() : 0;
-       nSceneChangeValue = min(max(nSceneChangeValue, 0), max_pixel_value);
-     }
-     else {
-       float nLow0, nLow1;
-       float nHigh0, nHigh1;
-       nLow0 = parameters["thY1"].is_defined() ? (float)parameters["thY1"].toFloat() : (10.0f / 255);
-       nLow1 = parameters["thC1"].is_defined() ? (float)parameters["thC1"].toFloat() : (10.0f / 255);
-       nHigh0 = parameters["thY2"].is_defined() ? (float)parameters["thY2"].toFloat() : (10.0f / 255);
-       nHigh1 = parameters["thC2"].is_defined() ? (float)parameters["thC2"].toFloat() : (10.0f / 255);
-       
-       nMotionThreshold_f = parameters["thT"].is_defined() ? (float)parameters["thC2"].toFloat() : (10.0f / 255);
+    const char *errortxt = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
 
-       nLowThresholds_f[0] = nLow0;
-       nLowThresholds_f[1] = nLowThresholds_f[2] = nLow1;
-       nHighThresholds_f[0] = nHigh0;
-       nHighThresholds_f[1] = nHighThresholds_f[2] = nHigh1;
-
-       nSceneChangeValue_f = (Float)(parameters["scvalue"].toFloat());
-     }
-
-
-      /* add the processors */
-      switch (bits_per_pixel) {
-      case 8:
-        processors.push_back(Filtering::Processor<Processor>(mask_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-        processors.push_back(Filtering::Processor<Processor>(mask_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-        processors.push_back(Filtering::Processor<Processor>(mask_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-        break;
-      case 10:
-      case 12:
-      case 14:
-      case 16:
-        processors16.push_back(Filtering::Processor<Processor16>(mask10_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-        processors16.push_back(Filtering::Processor<Processor16>(mask10_16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-        processors16.push_back(Filtering::Processor<Processor16>(mask10_16_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-        break;
-      case 32:
-        processors32.push_back(Filtering::Processor<Processor32>(mask32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-        processors32.push_back(Filtering::Processor<Processor32>(mask32_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1)); // only sad is sse2
-        processors32.push_back(Filtering::Processor<Processor32>(mask32_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-        break;
+     // Y threshold
+    if (parameters["thY1"].is_defined()) {
+      thY1_f = (float)parameters["thY1"].toFloat();
+      if (!ScaleParam(scalemode, thY1_f, bits_per_pixel, thY1_f, thY1, fullscale))
+      {
+        error = errortxt;
+        return;
       }
+    }
+
+    if (parameters["thY2"].is_defined()) {
+      thY2_f = (float)parameters["thY2"].toFloat();
+      if (!ScaleParam(scalemode, thY2_f, bits_per_pixel, thY2_f, thY2, fullscale))
+      {
+        error = errortxt;
+        return;
       }
+    }
+
+   // chroma threshold
+    if (parameters["thC1"].is_defined()) {
+      thC1_f = (float)parameters["thC1"].toFloat();
+      if (!ScaleParam(scalemode, thC1_f, bits_per_pixel, thC1_f, thC1, fullscale))
+      {
+        error = errortxt;
+        return;
+      }
+    }
+
+    if (parameters["thC2"].is_defined()) {
+      thC2_f = (float)parameters["thC2"].toFloat();
+      if (!ScaleParam(scalemode, thC2_f, bits_per_pixel, thC2_f, thC2, fullscale))
+      {
+        error = errortxt;
+        return;
+      }
+    }
+
+    // motion threshold
+    if (parameters["thT"].is_defined()) {
+      thT_f = (float)parameters["thT"].toFloat();
+      if (!ScaleParam(parameters["paramscale"].toString(), thT_f, bits_per_pixel, thT_f, thT, fullscale))
+      {
+        error = errortxt;
+        return;
+      }
+    }
+
+    // scvalue: value copied into the whole frame when scenechange is detected
+    if (parameters["sc_value"].is_defined()) {
+      scvalue_f = (float)parameters["sc_value"].toFloat();
+      if (!ScaleParam(parameters["paramscale"].toString(), thT_f, bits_per_pixel, scvalue_f, scvalue, fullscale))
+      {
+        error = errortxt;
+        return;
+      }
+    }
+
+    if (isFloat) {
+      nLowThresholds_f[0] = thY1_f;
+      nLowThresholds_f[1] = nLowThresholds_f[2] = thC1_f;
+      nHighThresholds_f[0] = thY2_f;
+      nHighThresholds_f[1] = nHighThresholds_f[2] = thC2_f;
+      nMotionThreshold_f = thT_f;
+      nSceneChangeValue_f = scvalue_f;
+    }
+    else {
+      nLowThresholds[0] = thY1;
+      nLowThresholds[1] = nLowThresholds[2] = thC1;
+      nHighThresholds[0] = thY2;
+      nHighThresholds[1] = nHighThresholds[2] = thC2;
+      nMotionThreshold = thT;
+      nSceneChangeValue = scvalue;
+    }
+
+    /* add the processors */
+    switch (bits_per_pixel) {
+    case 8:
+      processors.push_back(Filtering::Processor<Processor>(mask_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors.push_back(Filtering::Processor<Processor>(mask_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      processors.push_back(Filtering::Processor<Processor>(mask_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+      break;
+    case 10:
+    case 12:
+    case 14:
+    case 16:
+      processors16.push_back(Filtering::Processor<Processor16>(mask10_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(mask10_16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      processors16.push_back(Filtering::Processor<Processor16>(mask10_16_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+      break;
+    case 32:
+      processors32.push_back(Filtering::Processor<Processor32>(mask32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors32.push_back(Filtering::Processor<Processor32>(mask32_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1)); // only sad is sse2
+      processors32.push_back(Filtering::Processor<Processor32>(mask32_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+      break;
+    }
+  }
 
    InputConfiguration &input_configuration() const { return InPlaceTemporalOneFrame(); }
 
@@ -163,6 +211,7 @@ public:
       signature.add(Parameter(10.0f, "thC2"));
       signature.add(Parameter(10.0f, "thT"));
       signature.add(Parameter(0.0f, "sc_value"));
+      signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
 
       return add_defaults( signature );
    }
