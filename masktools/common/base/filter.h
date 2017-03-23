@@ -55,6 +55,78 @@ protected:
       return signature;
    }
 
+   // general helper function
+   static bool ScaleParam(String scalemode, float input, int clip_bits_per_pixel, float &scaled_f, int &scaled_i, bool fullscale)
+   {
+     int param_bits_per_pixel;
+     int max_pixel_value = (1 << clip_bits_per_pixel) - 1;
+     if (scalemode == "i8") param_bits_per_pixel = 8;
+     else if (scalemode == "i10") param_bits_per_pixel = 10;
+     else if (scalemode == "i12") param_bits_per_pixel = 12;
+     else if (scalemode == "i14") param_bits_per_pixel = 14;
+     else if (scalemode == "i16") param_bits_per_pixel = 16;
+     else if (scalemode == "f32") param_bits_per_pixel = 32;
+     else if ((scalemode == "none") || scalemode == "") {
+       scaled_f = input;
+       if(clip_bits_per_pixel != 32)
+         scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+       return true;
+     }
+     else {
+       return false; // invalid parameter
+     }
+
+     // identical bit-depth, return original
+     if (param_bits_per_pixel == clip_bits_per_pixel) {
+       scaled_f = input;
+       if (clip_bits_per_pixel != 32)
+         scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+       return true;
+     }
+
+     // param_bits_per_pixel -> clip_bits_per_pixel
+     if (fullscale) {
+       // stretch mode
+       if (param_bits_per_pixel >= 8 && param_bits_per_pixel <= 16) {
+         input = input / ((1 << param_bits_per_pixel) - 1); // convert to 0..1 range
+       }
+       // input is now scaled_f to 0..1
+       if (clip_bits_per_pixel == 32)
+         scaled_f = input; // as-is
+       else
+         scaled_f = input * ((1 << clip_bits_per_pixel) - 1); // scaling up to video bit depth
+     }
+     else {
+       // bit shift mode, but preserves if max is specified
+       if (clip_bits_per_pixel == 32) { // convert to float
+         scaled_f = input / ((1 << param_bits_per_pixel) - 1);
+       }
+       else if (param_bits_per_pixel == 32) {
+         scaled_f = input * ((1 << clip_bits_per_pixel) - 1);
+       }
+       else {
+         float input_range_max = (float)((1 << param_bits_per_pixel) - 1);
+         if (abs(input_range_max - input) < 0.000001) {
+           scaled_f = (float)((1 << clip_bits_per_pixel) - 1); // keep max range
+         }
+         else {
+           if (param_bits_per_pixel > clip_bits_per_pixel)
+             scaled_f = input / ((1 << (param_bits_per_pixel - clip_bits_per_pixel))); // scale down by diff bits
+           else
+             scaled_f = input * ((1 << (clip_bits_per_pixel - param_bits_per_pixel))); // scale up by diff bits
+         }
+       }
+     }
+
+     if (clip_bits_per_pixel != 32)
+       scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+
+     return true;
+   }
+
+
+
+
 public:
 
     Filter(const Parameters &parameters, FilterProcessingType processingType, CpuFlags _flags) :
