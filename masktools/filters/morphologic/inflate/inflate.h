@@ -50,6 +50,7 @@ public:
     signature.add(Parameter(TYPE_FLOAT, "thY")); // overwritten to default 255..65535 in morphologic.h
     signature.add(Parameter(TYPE_FLOAT, "thC"));
     signature.add(Parameter(false, "stacked"));
+    signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
 
     return add_defaults(signature);
   }

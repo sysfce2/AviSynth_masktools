@@ -150,6 +150,7 @@ public:
     signature.add(Parameter(TYPE_FLOAT, "thC"));
     signature.add(Parameter(String("square"), "mode"));
     signature.add(Parameter(false, "stacked"));
+    signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
 
     return add_defaults(signature);
   }

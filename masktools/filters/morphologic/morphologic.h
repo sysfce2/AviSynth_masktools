@@ -84,18 +84,45 @@ public:
         bits_per_pixel = 16;
 
       bool isFloat = bits_per_pixel == 32;
+      bool fullscale = planes_isRGB[C];
+      String scalemode = parameters["paramscale"].toString();
+
+      int thY, thC;
+      float thY_f, thC_f;
+
+      const char *errortxt = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+
+      // defaults
+      thY_f = thC_f = 1.0;
+      thY = thC = (1 << bits_per_pixel) - 1;
+
+      // Y threshold
+      if (parameters["thY"].is_defined()) {
+        thY_f = (float)parameters["thY"].toFloat();
+        if (!ScaleParam(scalemode, thY_f, bits_per_pixel, thY_f, thY, fullscale))
+        {
+          error = errortxt;
+          return;
+        }
+      }
+
+      // chroma threshold
+      if (parameters["thC"].is_defined()) {
+        thC_f = (float)parameters["thC"].toFloat();
+        if (!ScaleParam(scalemode, thC_f, bits_per_pixel, thC_f, thC, fullscale))
+        {
+          error = errortxt;
+          return;
+        }
+      }
 
       if (isFloat) {
-        nMaxDeviations_f[0] = parameters["thY"].is_defined() ? (Float)parameters["thY"].toFloat() : 1.0f;
-        nMaxDeviations_f[1] =
-          nMaxDeviations_f[2] = parameters["thC"].is_defined() ? (Float)parameters["thC"].toFloat() : 1.0f;
+        nMaxDeviations_f[0] = thY_f;
+        nMaxDeviations_f[1] = nMaxDeviations_f[2] = thC_f;
       }
       else {
-        int max_pixel_value = (1 << bits_per_pixel) - 1;
-
-        nMaxDeviations[0] = clip<int, int>(parameters["thY"].is_defined() ? parameters["thY"].toInt() : max_pixel_value, 0, max_pixel_value);
-        nMaxDeviations[1] =
-          nMaxDeviations[2] = clip<int, int>(parameters["thC"].is_defined() ? parameters["thC"].toInt() : max_pixel_value, 0, max_pixel_value);
+        nMaxDeviations[0] = thY;
+        nMaxDeviations[1] = nMaxDeviations[2] = thC;
       }
 
     }
