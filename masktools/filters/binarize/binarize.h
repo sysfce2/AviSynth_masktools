@@ -121,22 +121,22 @@ public:
        bits_per_pixel = 16;
 
      bool isFloat = bits_per_pixel == 32;
-
+     
      if (parameters["threshold"].is_defined()) {
-       if (isFloat) {
-         nThreshold_f = (float)parameters["threshold"].toFloat();
-       }
-       else {
-         nThreshold = parameters["threshold"].toInt();
-         nThreshold = min(nThreshold, (1 << bits_per_pixel) - 1);
+       nThreshold_f = (float)parameters["threshold"].toFloat();
+       nThreshold = parameters["threshold"].toInt();
+       String scalemode = parameters["paramscale"].toString();
+       bool fullscale = planes_isRGB[C];
+       if (!ScaleParam(scalemode, nThreshold_f, bits_per_pixel, nThreshold_f, nThreshold, fullscale))
+       {
+         error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+         return;
        }
      }
      else {
        if(isFloat)
          nThreshold_f = 0.5f; 
-       if (isStacked)
-         nThreshold = 32768; // 16 bit stacked half
-       else
+       else 
          nThreshold = (1 << (bits_per_pixel - 1)); // bit-depth adaptive default half value
      }
 
@@ -245,6 +245,7 @@ public:
       signature.add( Parameter( false, "upper" ) );
       signature.add( Parameter( String("lower"), "mode" ) );
       signature.add( Parameter(false, "stacked"));
+      signature.add( Parameter( String("i8"), "paramscale")); // like in expressions + none
 
       return add_defaults( signature );
    }
