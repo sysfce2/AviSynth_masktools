@@ -135,33 +135,67 @@ public:
      int bits_per_pixel = bit_depths[C];
      bool isFloat = bits_per_pixel == 32;
 
-     if (!isFloat) {
-       // default value of 10 scaled by bit depth
-       int nLow0, nLow1;
-       int nHigh0, nHigh1;
-       int max_pixel_value = (1 << bits_per_pixel) - 1;
-       nLow0 = parameters["thY1"].is_defined() ? parameters["thY1"].toInt() : (10 << (bits_per_pixel - 8));
-       nLow1 = parameters["thC1"].is_defined() ? parameters["thC1"].toInt() : (10 << (bits_per_pixel - 8));
-       nHigh0 = parameters["thY2"].is_defined() ? parameters["thY2"].toInt() : (10 << (bits_per_pixel - 8));
-       nHigh1 = parameters["thC2"].is_defined() ? parameters["thC2"].toInt() : (10 << (bits_per_pixel - 8));
+     bool fullscale = planes_isRGB[C];
+     String scalemode = parameters["paramscale"].toString();
 
-       nLowThresholds[0] = min(max(nLow0, 0), max_pixel_value);
-       nLowThresholds[1] = nLowThresholds[2] = min(max(nLow1, 0), max_pixel_value);
-       nHighThresholds[0] = min(max(nHigh0, 0), max_pixel_value);
-       nHighThresholds[1] = nHighThresholds[2] = min(max(nHigh1, 0), max_pixel_value);
+     int thY1, thC1, thY2, thC2;
+     float thY1_f, thC1_f, thY2_f, thC2_f;
+
+     // defaults
+     thY1_f = thC1_f = thY2_f = thC2_f = 10.0f / 255;
+     thY1 = thC1 = thY2 = thC2 = 10 << (bits_per_pixel - 8);
+
+     const char *errortxt = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+
+     // Y threshold
+     if (parameters["thY1"].is_defined()) {
+       thY1_f = (float)parameters["thY1"].toFloat();
+       if (!ScaleParam(scalemode, thY1_f, bits_per_pixel, thY1_f, thY1, fullscale))
+       {
+         error = errortxt;
+         return;
+       }
+     }
+
+     if (parameters["thY2"].is_defined()) {
+       thY2_f = (float)parameters["thY2"].toFloat();
+       if (!ScaleParam(scalemode, thY2_f, bits_per_pixel, thY2_f, thY2, fullscale))
+       {
+         error = errortxt;
+         return;
+       }
+     }
+
+     // chroma threshold
+     if (parameters["thC1"].is_defined()) {
+       thC1_f = (float)parameters["thC1"].toFloat();
+       if (!ScaleParam(scalemode, thC1_f, bits_per_pixel, thC1_f, thC1, fullscale))
+       {
+         error = errortxt;
+         return;
+       }
+     }
+
+     if (parameters["thC2"].is_defined()) {
+       thC2_f = (float)parameters["thC2"].toFloat();
+       if (!ScaleParam(scalemode, thC2_f, bits_per_pixel, thC2_f, thC2, fullscale))
+       {
+         error = errortxt;
+         return;
+       }
+     }
+
+     if (isFloat) {
+       nLowThresholds_f[0] = thY1_f;
+       nLowThresholds_f[1] = nLowThresholds_f[2] = thC1_f;
+       nHighThresholds_f[0] = thY2_f;
+       nHighThresholds_f[1] = nHighThresholds_f[2] = thC2_f;
      }
      else {
-       float nLow0, nLow1;
-       float nHigh0, nHigh1;
-       nLow0 = parameters["thY1"].is_defined() ? (float)parameters["thY1"].toFloat() : (10.0f / 255);
-       nLow1 = parameters["thC1"].is_defined() ? (float)parameters["thC1"].toFloat() : (10.0f / 255);
-       nHigh0 = parameters["thY2"].is_defined() ? (float)parameters["thY2"].toFloat() : (10.0f / 255);
-       nHigh1 = parameters["thC2"].is_defined() ? (float)parameters["thC2"].toFloat() : (10.0f / 255);
-
-       nLowThresholds_f[0] = nLow0;
-       nLowThresholds_f[1] = nLowThresholds_f[2] = nLow1;
-       nHighThresholds_f[0] = nHigh0;
-       nHighThresholds_f[1] = nHighThresholds_f[2] = nHigh1;
+       nLowThresholds[0] = thY1;
+       nLowThresholds[1] = nLowThresholds[2] = thC1;
+       nHighThresholds[0] = thY2;
+       nHighThresholds[1] = nHighThresholds[2] = thC2;
      }
 
       /* add the processors */
@@ -577,6 +611,7 @@ public:
       signature.add(Parameter(TYPE_FLOAT, "thY2"));
       signature.add(Parameter(TYPE_FLOAT, "thC1"));
       signature.add(Parameter(TYPE_FLOAT, "thC2"));
+      signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
 
       return add_defaults( signature );
    }
