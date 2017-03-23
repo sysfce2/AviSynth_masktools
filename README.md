@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.4 (20170304)**
+**Masktools2 v2.2.5 (20170323)**
 
 mod by pinterf
 
@@ -14,7 +14,8 @@ Differences to Masktools 2.0b1
 - filters are auto registering their mt mode as MT_NICE_FILTER for Avisynth+
 - Avisynth+ high bit depth support (incl. planar RGB, but color spaces with alpha plane are not yet supported)
   All filters are now supporting 10, 12, 14, 16 bits and float
-  Note that parameters like threshold are not scaled automatically to the current bit depth
+  Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
+  Default range of such parameters can be overridden to 8-16 bits or float.
 - YV411 (8 bit 4:1:1) support
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
@@ -22,7 +23,6 @@ Differences to Masktools 2.0b1
 - some filters got AVX (float) and AVX2 (integer) support:
   mt_merge: 8-16 bit: AVX2, float:AVX
   mt_logic: 8-16 bit: AVX2, float:AVX
-  mt_edge: 10-16 bit and 32 bit float: SSE2/SSE4 optimization
   mt_edge: 32 bit float AVX
 - mt_polish to recognize new constants and scaling operator, and some other operators introduced in earlier versions.
   For a complete list, see v2.2.4 change log
@@ -48,18 +48,18 @@ Differences to Masktools 2.0b1
 - expression syntax supporting bit depth independent expressions
   - bit-depth aware scale operators
   
-      operator #B scales from 8 bit to current bit depth using bit-shifts
-                  Use this for YUV. "235 #B" -> always results in max luma
+      operator "@B" or "scaleb" scales from 8 bit to current bit depth using bit-shifts
+                  Use this for YUV. "235 @B" or "235 scaleb" -> always results in max luma
                   
-      operator #F scales from 8 bit to current bit depth using full range stretch
-                  "255 #F" results in maximum pixel value of current bit depth.
+      operator "@F" or "scalef" scales from 8 bit to current bit depth using full range stretch
+                  "255 @F" or "255 scalef" results in maximum pixel value of current bit depth.
                   Calculation: x/255*65535 for a 8->16 bit sample (rgb)
                   
   - hints for non-8 bit based constants: 
       Added configuration keywords i8, i10, i12, i14, i16 and f32 in order to tell the expression evaluator 
-      the bit depth of the values that are to scale by #B and #F operators.
+      the bit depth of the values that are to scale by @B/scaleb and @F/scalef operators.
             
-      By default #B and #F scales from 8 bit to the bit depth of the clip.
+      By default @B and @F scales from 8 bit to the bit depth of the clip.
       
       i8 .. i16 and f32 sets the default conversion base to 8..16 bits or float, respectively.
       
@@ -67,15 +67,16 @@ Differences to Masktools 2.0b1
       
       Examples 
 ```
-      8 bit video, no modifier: "x y - 256 #B *" evaluates as "x y - 256 *"
-      10 bit video, no modifier: "x y - 256 #B *" evaluates as "x y - 1024 *"
-      10 bit video: "i16 x y - 65536 #B *" evaluates as "x y - 1024 *"
-      8 bit video: "i10 x y - 512 #B *" evaluates as "x y - 128 *"                  
+      8 bit video, no modifier: "x y - 256 @B *" evaluates as "x y - 256 *"
+      10 bit video, no modifier: "x y - 256 @B *" evaluates as "x y - 1024 *"
+      10 bit video: "i16 x y - 65536 @B *" evaluates as "x y - 1024 *"
+      8 bit video: "i10 x y - 512 @B *" evaluates as "x y - 128 *"                  
 ```
 
   - new pre-defined, bit depth aware constants
   
-    - bitdepth: automatic silent parameter of the lut expression      
+    - bitdepth: automatic silent parameter of the lut expression (clip bit depth)
+    - sbitdepth: automatic silent parameter of the lut expression (bit depth of values to scale)
     - range_half --> autoscaled 128 or 0.5 for float
     - range_max --> 255/1023/4095/16383/65535 or 1.0 for float
     - range_size --> 256/1024...65536
@@ -90,8 +91,8 @@ Example #1 (bit depth dependent, all constants are treated as-is):
       
 Example #2 (new, with auto-scale operators )      
 ```
-      expr_luma =  "x 16 #B - 219 #B / 255 #F *"
-      expr_chroma =  "x 16 #B - 224 #B / 255 #F *"
+      expr_luma =  "x 16 @B - 219 @B / 255 @F *"
+      expr_chroma =  "x 16 @B - 224 @B / 255 @F *"
 ```
       
 Example #3 (new, with constants)
@@ -102,7 +103,7 @@ Example #3 (new, with constants)
   - new expression syntax: auto scale modifiers for float clips (test for real.finder):
     Keyword at the beginning of the expression:
     - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
-    - clamp_f_f32 or clamp_f: for clamping the result to 0..1
+    - clamp_f_f32 or clamp_f: for clamping the result to 0..1 (floats are not clamped by default!)
   
     Input values 'x', 'y', 'z' and 'a' are autoscaled by 255.0, 1023.0, ... 65535.0 before the expression evaluation,
     so the working range is similar to native 8, 10, ... 16 bits. The predefined constants 'range_max', etc. will behave for 8, 10,..16 bits accordingly.
@@ -128,6 +129,23 @@ Example #3 (new, with constants)
     
   realtime=true can be overridden, one can experiment and force realtime=false even for a 16 bit lutxy 
   (8GBytes lut table!, x64 only) or for 8 bit lutxzya (4GBytes lut table)
+   
+- parameter "paramscale" for filters working with threshold-like parameters (v2.2.5-)
+  Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion
+  paramscale can be "i8" (default), "i10", "i10", "i12", "i14", "i16", "f32" or "none" or ""
+  Using "paramscale" tells the filter that parameters are given at what bit depth range.
+  By default paramscale is "i8", so existing scripts with parameters in the 0..255 range are working at any bit depths
+```  
+  mt_binarize(threshold=80*256, paramscale="i16") # threshold is assumed in 16 bit range 
+  mt_binarize(threshold=80) # no param: threshold is assumed in 8 bit range
+  
+  thY1 = 0.1
+  thC1 = 0.1
+  thY2 = 0.1
+  thC2 = 0.1
+  paramscale="f32"
+  mt_edge(mode="sobel",u=3,v=3,thY1=thY1,thY2=thY2,thC1=thC1,thC2=thC2,paramscale=paramscale) # f32: parameters assumed as float (0..1.0)
+```  
    
 - Feature matrix   
 ```
@@ -176,6 +194,17 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.5 (20170323)
+- Change #F and #B operators to @B and @F (# is reserved for Avisynth in-string comment character)
+- Alias scaleb for @B
+- Alias scalef for @F
+- New: automatic scaling of parameters (threshold-like, sc_value) from the usual 8 bit range
+  Scripts need no extra measures to work for all bit depths with the same "command line"
+- New parameter "paramscale" for filters working with threshold-like parameters
+  Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion
+  paramscale can be "i8" (default), "i10", "i10", "i12", "i14", "i16", "f32" or "none" or ""
+  Using "paramscale" tells the filter that parameters are given at what bit depth range.
+  
 **v2.2.4 (20170304)
 - mt_polish to recognize:
   - new v2.2.x constants and variables
