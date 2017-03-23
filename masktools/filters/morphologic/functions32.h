@@ -17,7 +17,7 @@ enum Directions {
 };
 
 template<Border borderMode, Operator32 op>
-void process_line_morpho_32_c(Float *pDst, const Float *pSrcp, const Float *pSrc, const Float *pSrcn, Float maxDeviation, int width, int height, int srcPitch, int dstPitch) {
+void process_line_morpho_32_c(Float *pDst, const Float *pSrcp, const Float *pSrc, const Float *pSrcn, Float maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch) {
     UNUSED(dstPitch); UNUSED(srcPitch); UNUSED(height);
 
     const int leftOffset = borderMode == Border::Left ? 0 : 1;
@@ -40,7 +40,7 @@ void process_line_morpho_32_c(Float *pDst, const Float *pSrcp, const Float *pSrc
 
 template<class T>
 struct MorphologicProcessor {
-    typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, Float maxDeviation, int width, int height, int srcPitch, int dstPitch);
+    typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, Float maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch);
 
     template<ProcessLineC process_line_left, ProcessLineC process_line, ProcessLineC process_line_right>
     static void generic_32_c(T *pDst, ptrdiff_t nDstPitch, const T *pSrc, ptrdiff_t nSrcPitch, Float nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight)
