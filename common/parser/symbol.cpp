@@ -162,8 +162,8 @@ Symbol Symbol::Ceil           ("ceil", FUNCTION, 1, ceil);
 Symbol Symbol::Floor          ("floor", FUNCTION, 1, floor);
 Symbol Symbol::Trunc          ("trunc", FUNCTION, 1, trunc);
 // automatic bit-depth scaling helpers, since v2.2.1
-Symbol Symbol::ScaleByShift  ("@B", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByShift); // v 2.2.5: #B, #F -> @B, @F
-Symbol Symbol::ScaleByStretch("@F", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByStretch);
+Symbol Symbol::ScaleByShift   ("@B", "scaleb", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByShift); // v 2.2.5: #B, #F -> @B, @F
+Symbol Symbol::ScaleByStretch ("@F", "scalef", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, 1, upscaleByStretch); // with optinal scaleb and scalef aliases
 // admin config
 Symbol Symbol::SetScriptBitDepthI8("i8", 8.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetScriptBitDepthI10("i10", 10.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
@@ -309,15 +309,9 @@ double Context::rec_compute()
    case Symbol::VARIABLE_CMAX: return bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8));  // 240 scaled
 
    case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
-     switch (s.nParameter)
+     switch (s.nParameter) // only exists with one user parameters
      {
      case 1: return s.process(rec_compute(), bitdepth, sbitdepth); // automatic bit-depth parameters
-     case 2: // two original parameters + bitdepth ; none of this
-     {
-       double yy = rec_compute();
-       double xx = rec_compute();
-       return s.process(xx, yy, bitdepth);
-     }
      default:
        return s.process(-1.0f, -1.0f, -1.0f);
      }
