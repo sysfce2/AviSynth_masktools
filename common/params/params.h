@@ -65,19 +65,21 @@ class Parameter {
 
    Value       value;
    String      name;
+   bool        intAlternative; // compatibility: float parameter appears as int in the secondary signature
 
 public:
 
-   Parameter() : value(), name("") { }
-   Parameter(Type type) : value(type), name("") { }
-   Parameter(const Value &value) : value(value), name("") { }
-   Parameter(const Value &value, const String &name) : value(value), name(name) { }
+   Parameter() : value(), name(""), intAlternative(false) { }
+   Parameter(Type type) : value(type), name(""), intAlternative(false) { }
+   Parameter(const Value &value) : value(value), name(""), intAlternative(false) { }
+   Parameter(const Value &value, const String &name, bool intAlternative) : value(value), name(name), intAlternative(intAlternative) { }
 
    void set_defined(bool d) { value.set_defined( d ); }
    bool isNamed() const { return !name.empty(); }
    Type getType() const { return value.get_type(); }
    String getName() const { return name; }
    Value getValue() const { return value; }
+   bool getIntAlternative() const { return intAlternative; }
 };
 
 /* list of parameters */

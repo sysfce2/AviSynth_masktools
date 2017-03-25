@@ -61,7 +61,14 @@ public:
 
     static void create(IScriptEnvironment *env)
     {
-        env->AddFunction(T::filter_signature().getName().c_str(), SignatureToString(T::filter_signature()).c_str(), _create, NULL);
+      String signature1 = SignatureToString(T::filter_signature(), true); // integer
+      env->AddFunction(T::filter_signature().getName().c_str(), signature1.c_str(), _create, NULL);
+      // order is important! 
+      String signature2 = SignatureToString(T::filter_signature(), false); // float
+      if (signature1 != signature2)
+        env->AddFunction(T::filter_signature().getName().c_str(), signature2.c_str(), _create, NULL);
+      // compatibility: alternative parameter list, int and float
+      // or else Avisynth would find the function from another, earlier loaded masktools2 version
     }
 };
 
