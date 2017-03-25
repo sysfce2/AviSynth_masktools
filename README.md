@@ -131,7 +131,7 @@ Example #3 (new, with constants)
   (8GBytes lut table!, x64 only) or for 8 bit lutxzya (4GBytes lut table)
    
 - parameter "paramscale" for filters working with threshold-like parameters (v2.2.5-)
-  Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion
+  Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion, mt_logic, mt_clamp
   paramscale can be "i8" (default), "i10", "i10", "i12", "i14", "i16", "f32" or "none" or ""
   Using "paramscale" tells the filter that parameters are given at what bit depth range.
   By default paramscale is "i8", so existing scripts with parameters in the 0..255 range are working at any bit depths
@@ -201,9 +201,11 @@ Changelog
 - New: automatic scaling of parameters (threshold-like, sc_value) from the usual 8 bit range
   Scripts need no extra measures to work for all bit depths with the same "command line"
 - New parameter "paramscale" for filters working with threshold-like parameters
-  Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion
+  Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion, mt_logic, mt_clamp
   paramscale can be "i8" (default), "i10", "i10", "i12", "i14", "i16", "f32" or "none" or ""
   Using "paramscale" tells the filter that parameters are given at what bit depth range.
+- dual function signatures (float and int), for backward compatibility with integer-type parameter list, prevent usage of earlier plugin-loaded masktools version
+- keep old parameter ordering: parameters which are non-existant in 2.0b1 are inserted at the end of the parameter list, not before the common parameters Y, U, V
   
 **v2.2.4 (20170304)
 - mt_polish to recognize:
