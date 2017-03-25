@@ -157,6 +157,35 @@ public:
     if (isStacked)
       bits_per_pixel = 16;
 
+    bool fullscale = planes_isRGB[C];
+    String scalemode = parameters["paramscale"].toString();
+    const char *errortxt = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+    
+    int nTh1, nTh2;
+    float nTh1_f, nTh2_f;
+
+    // defaults
+    nTh1 = nTh2 = 0;
+    nTh1_f = nTh2_f = 0.0f;
+    // threshold 1
+    if (parameters["th1"].is_defined()) {
+      nTh1_f = (float)parameters["th1"].toFloat();
+      if (!ScaleParam(scalemode, nTh1_f, bits_per_pixel, nTh1_f, nTh1, fullscale, true)) // allow negatives
+      {
+        error = errortxt;
+        return;
+      }
+    }
+    // threshold 2
+    if (parameters["th2"].is_defined()) {
+      nTh2_f = (float)parameters["th2"].toFloat();
+      if (!ScaleParam(scalemode, nTh2_f, bits_per_pixel, nTh2_f, nTh2, fullscale, true)) // allow negatives
+      {
+        error = errortxt;
+        return;
+      }
+    }
+
     if (bits_per_pixel == 8) {
 #define SET_MODE(mode) \
    do { \
@@ -166,10 +195,7 @@ public:
       processors.push_back( Filtering::Processor<Processor>( mode##_avx2, Constraint( CPU_AVX2 , 1, 1, 1, 1 ), 3 ) ); \
       processors.push_back( Filtering::Processor<Processor>( mode##_aavx2, Constraint( CPU_AVX2 , 1, 1, 32, 32 ), 4 ) ); \
    } while(0)
-
-      int nTh1 = parameters["th1"].toInt();
-      int nTh2 = parameters["th2"].toInt();
-
+      
       if (parameters["mode"].toString() == "and")
         SET_MODE(and);
       else if (parameters["mode"].toString() == "or")
@@ -234,9 +260,6 @@ public:
           processors16.push_back( Filtering::Processor<Processor16>( mode##_native_sse2, Constraint( CPU_SSE2 , 1, 1, 1, 1 ), 1 ) ); \
         processors16.push_back( Filtering::Processor<Processor16>( mode##_native_avx2, Constraint( CPU_AVX2 , 1, 1, 1, 1 ), 1 ) ); \
     }
-
-      int nTh1 = parameters["th1"].toInt();
-      int nTh2 = parameters["th2"].toInt();
 
       // modes containing min, max, add require SSE4
 
@@ -372,9 +395,6 @@ public:
       processors32.push_back( Filtering::Processor<Processor32>( mode##_32_aavx, Constraint( CPU_AVX , 1, 1, 32, 32 ), 4 ) ); \
    } while(0)
 
-      float nTh1 = (float) parameters["th1"].toFloat();
-      float nTh2 = (float) parameters["th2"].toFloat();
-
       if (parameters["mode"].toString() == "and")
         SET_MODE(and);
       else if (parameters["mode"].toString() == "or")
@@ -385,13 +405,13 @@ public:
         SET_MODE(andn);
       else
       {
-        bool isDstSub = nTh1 < 0;
-        bool isDstAdd = nTh1 > 0;
-        bool isSrcSub = nTh2 < 0;
-        bool isSrcAdd = nTh2 > 0;
+        bool isDstSub = nTh1_f < 0;
+        bool isDstAdd = nTh1_f > 0;
+        bool isSrcSub = nTh2_f < 0;
+        bool isSrcAdd = nTh2_f > 0;
 
-        nThresholdDestination_f = abs<float>(nTh1);
-        nThresholdSource_f = abs<float>(nTh2);
+        nThresholdDestination_f = abs<float>(nTh1_f);
+        nThresholdSource_f = abs<float>(nTh2_f);
 
         if (parameters["mode"].toString() == "min")
         {
@@ -430,14 +450,18 @@ public:
   {
     Signature signature = "mt_logic";
 
-    signature.add(Parameter(TYPE_CLIP, ""));
-    signature.add(Parameter(TYPE_CLIP, ""));
-    signature.add(Parameter(String(""), "mode"));
-    signature.add(Parameter(0.0, "th1"));
-    signature.add(Parameter(0.0, "th2"));
-    signature.add(Parameter(false, "stacked"));
+    signature.add(Parameter(TYPE_CLIP, "", false));
+    signature.add(Parameter(TYPE_CLIP, "", false));
+    signature.add(Parameter(String(""), "mode", false));
+    signature.add(Parameter(0.0, "th1", true));
+    signature.add(Parameter(0.0, "th2", true));
 
-    return add_defaults(signature);
+    add_defaults(signature);
+
+    signature.add(Parameter(false, "stacked", false));
+    signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
+    return signature;
+
   }
 
 };
