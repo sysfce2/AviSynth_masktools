@@ -107,14 +107,11 @@ class Signature {
 
     Parameters              parameters;
     String                  name;
-    int bitdepthMin = 8;
-    int bitdepthMax = 8;
 
 public:
 
     Signature(const String &_name) : name(_name) { }
     void add(const Parameter &parameter) { parameters.push_back(parameter); }
-    void setValidBitdepth(int min, int max) { bitdepthMin = min, bitdepthMax = max; }
 
     String getName() const { return name; }
     Value operator[](const String &_name) const { return parameters[_name]; }
