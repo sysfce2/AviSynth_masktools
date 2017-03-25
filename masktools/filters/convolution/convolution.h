@@ -196,11 +196,11 @@ public:
    {
       Signature signature = "mt_convolution";
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(String("1 1 1"), "horizontal"));
-      signature.add(Parameter(String("1 1 1"), "vertical"));
-      signature.add(Parameter(true, "saturate"));
-      signature.add(Parameter(1.0f, "total"));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(String("1 1 1"), "horizontal", false));
+      signature.add(Parameter(String("1 1 1"), "vertical", false));
+      signature.add(Parameter(true, "saturate", false));
+      signature.add(Parameter(1.0f, "total", false));
 
       return add_defaults( signature );
    }

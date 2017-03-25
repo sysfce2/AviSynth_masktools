@@ -386,21 +386,23 @@ public:
    {
       Signature signature = "mt_luts";
 
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( String( "average" ), "mode" ) );
-      signature.add( Parameter( String( "" ), "pixels" ) );
-      signature.add( Parameter( String( "y" ), "expr" ) );
-      signature.add( Parameter( String( "y" ), "yExpr" ) );
-      signature.add( Parameter( String( "y" ), "uExpr" ) );
-      signature.add( Parameter( String( "y" ), "vExpr" ) );
-      signature.add( Parameter( false, "realtime"));
-      signature.add( Parameter( String("1"), "wexpr"));
-      signature.add( Parameter( String("1"), "ywExpr"));
-      signature.add( Parameter( String("1"), "uwExpr"));
-      signature.add( Parameter( String("1"), "vwExpr"));
+      signature.add( Parameter( TYPE_CLIP, "", false ) );
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( String( "average" ), "mode", false) );
+      signature.add( Parameter( String( "" ), "pixels", false) );
+      signature.add( Parameter( String( "y" ), "expr", false) );
+      signature.add( Parameter( String( "y" ), "yExpr", false) );
+      signature.add( Parameter( String( "y" ), "uExpr", false) );
+      signature.add( Parameter( String( "y" ), "vExpr", false) );
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(false, "realtime", false));
+      signature.add(Parameter(String("1"), "wexpr", false));
+      signature.add(Parameter(String("1"), "ywExpr", false));
+      signature.add(Parameter(String("1"), "uwExpr", false));
+      signature.add(Parameter(String("1"), "vwExpr", false));
+      return signature;
    }
 };
 

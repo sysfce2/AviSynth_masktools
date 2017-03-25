@@ -103,7 +103,7 @@ public:
      // Y threshold
     if (parameters["thY1"].is_defined()) {
       thY1_f = (float)parameters["thY1"].toFloat();
-      if (!ScaleParam(scalemode, thY1_f, bits_per_pixel, thY1_f, thY1, fullscale))
+      if (!ScaleParam(scalemode, thY1_f, bits_per_pixel, thY1_f, thY1, fullscale, false))
       {
         error = errortxt;
         return;
@@ -112,7 +112,7 @@ public:
 
     if (parameters["thY2"].is_defined()) {
       thY2_f = (float)parameters["thY2"].toFloat();
-      if (!ScaleParam(scalemode, thY2_f, bits_per_pixel, thY2_f, thY2, fullscale))
+      if (!ScaleParam(scalemode, thY2_f, bits_per_pixel, thY2_f, thY2, fullscale, false))
       {
         error = errortxt;
         return;
@@ -122,7 +122,7 @@ public:
    // chroma threshold
     if (parameters["thC1"].is_defined()) {
       thC1_f = (float)parameters["thC1"].toFloat();
-      if (!ScaleParam(scalemode, thC1_f, bits_per_pixel, thC1_f, thC1, fullscale))
+      if (!ScaleParam(scalemode, thC1_f, bits_per_pixel, thC1_f, thC1, fullscale, false))
       {
         error = errortxt;
         return;
@@ -131,7 +131,7 @@ public:
 
     if (parameters["thC2"].is_defined()) {
       thC2_f = (float)parameters["thC2"].toFloat();
-      if (!ScaleParam(scalemode, thC2_f, bits_per_pixel, thC2_f, thC2, fullscale))
+      if (!ScaleParam(scalemode, thC2_f, bits_per_pixel, thC2_f, thC2, fullscale, false))
       {
         error = errortxt;
         return;
@@ -141,7 +141,7 @@ public:
     // motion threshold
     if (parameters["thT"].is_defined()) {
       thT_f = (float)parameters["thT"].toFloat();
-      if (!ScaleParam(parameters["paramscale"].toString(), thT_f, bits_per_pixel, thT_f, thT, fullscale))
+      if (!ScaleParam(scalemode, thT_f, bits_per_pixel, thT_f, thT, fullscale, false))
       {
         error = errortxt;
         return;
@@ -151,7 +151,7 @@ public:
     // scvalue: value copied into the whole frame when scenechange is detected
     if (parameters["sc_value"].is_defined()) {
       scvalue_f = (float)parameters["sc_value"].toFloat();
-      if (!ScaleParam(parameters["paramscale"].toString(), thT_f, bits_per_pixel, scvalue_f, scvalue, fullscale))
+      if (!ScaleParam(scalemode, scvalue_f, bits_per_pixel, scvalue_f, scvalue, fullscale, false))
       {
         error = errortxt;
         return;
@@ -204,16 +204,18 @@ public:
    {
       Signature signature = "mt_motion";
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(10.0f, "thY1"));
-      signature.add(Parameter(10.0f, "thY2"));
-      signature.add(Parameter(10.0f, "thC1"));
-      signature.add(Parameter(10.0f, "thC2"));
-      signature.add(Parameter(10.0f, "thT"));
-      signature.add(Parameter(0.0f, "sc_value"));
-      signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(10.0f, "thY1", true));
+      signature.add(Parameter(10.0f, "thY2", true));
+      signature.add(Parameter(10.0f, "thC1", true));
+      signature.add(Parameter(10.0f, "thC2", true));
+      signature.add(Parameter(10.0f, "thT", true));
+      signature.add(Parameter(0.0f, "sc_value", true));
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
+      return signature;
    }
 
 };

@@ -262,16 +262,18 @@ public:
    {
       Signature signature = "mt_lutf";
 
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( String( "average" ), "mode" ) );
-      signature.add( Parameter( String( "y" ), "expr" ) );
-      signature.add( Parameter( String( "y" ), "yExpr" ) );
-      signature.add( Parameter( String( "y" ), "uExpr" ) );
-      signature.add( Parameter( String( "y" ), "vExpr" ) );
-      signature.add(Parameter(false, "realtime"));
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( String( "average" ), "mode", false) );
+      signature.add( Parameter( String( "y" ), "expr", false) );
+      signature.add( Parameter( String( "y" ), "yExpr", false) );
+      signature.add( Parameter( String( "y" ), "uExpr", false) );
+      signature.add( Parameter( String( "y" ), "vExpr", false) );
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(false, "realtime", false));
+      return signature;
    }
 };
 

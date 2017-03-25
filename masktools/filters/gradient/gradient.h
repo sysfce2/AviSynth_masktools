@@ -102,14 +102,14 @@ public:
    {
       Signature signature = "mt_gradient";
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(String("sad"), "distorsion"));
-      signature.add(Parameter(0, "size_x"));
-      signature.add(Parameter(0, "size_y"));
-      signature.add(Parameter(0.0f, "min"));
-      signature.add(Parameter(65535.0f, "max")); // bit depth adaptive 
-      signature.add(Parameter(1, "precision"));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(String("sad"), "distorsion", false));
+      signature.add(Parameter(0, "size_x", false));
+      signature.add(Parameter(0, "size_y", false));
+      signature.add(Parameter(0.0f, "min", true));
+      signature.add(Parameter(65535.0f, "max", true)); // bit depth adaptive 
+      signature.add(Parameter(1, "precision", false));
 
       return add_defaults( signature );
    }

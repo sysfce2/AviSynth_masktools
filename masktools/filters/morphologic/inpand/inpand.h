@@ -144,14 +144,16 @@ public:
   {
     Signature signature = "mt_inpand";
 
-    signature.add(Parameter(TYPE_CLIP, ""));
-    signature.add(Parameter(TYPE_FLOAT, "thY")); // overwritten to default 255..65535 in morphologic.h
-    signature.add(Parameter(TYPE_FLOAT, "thC"));
-    signature.add(Parameter(String("square"), "mode"));
-    signature.add(Parameter(false, "stacked"));
-    signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
+    signature.add(Parameter(TYPE_CLIP, "", false));
+    signature.add(Parameter(TYPE_FLOAT, "thY", true)); // overwritten to default 255..65535 in morphologic.h
+    signature.add(Parameter(TYPE_FLOAT, "thC", true));
+    signature.add(Parameter(String("square"), "mode", false));
 
-    return add_defaults(signature);
+    add_defaults(signature);
+
+    signature.add(Parameter(false, "stacked", false));
+    signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
+    return signature;
   }
 };
 

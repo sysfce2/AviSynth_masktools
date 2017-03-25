@@ -150,7 +150,7 @@ public:
      // Y threshold
      if (parameters["thY1"].is_defined()) {
        thY1_f = (float)parameters["thY1"].toFloat();
-       if (!ScaleParam(scalemode, thY1_f, bits_per_pixel, thY1_f, thY1, fullscale))
+       if (!ScaleParam(scalemode, thY1_f, bits_per_pixel, thY1_f, thY1, fullscale, false))
        {
          error = errortxt;
          return;
@@ -159,7 +159,7 @@ public:
 
      if (parameters["thY2"].is_defined()) {
        thY2_f = (float)parameters["thY2"].toFloat();
-       if (!ScaleParam(scalemode, thY2_f, bits_per_pixel, thY2_f, thY2, fullscale))
+       if (!ScaleParam(scalemode, thY2_f, bits_per_pixel, thY2_f, thY2, fullscale, false))
        {
          error = errortxt;
          return;
@@ -169,7 +169,7 @@ public:
      // chroma threshold
      if (parameters["thC1"].is_defined()) {
        thC1_f = (float)parameters["thC1"].toFloat();
-       if (!ScaleParam(scalemode, thC1_f, bits_per_pixel, thC1_f, thC1, fullscale))
+       if (!ScaleParam(scalemode, thC1_f, bits_per_pixel, thC1_f, thC1, fullscale, false))
        {
          error = errortxt;
          return;
@@ -178,7 +178,7 @@ public:
 
      if (parameters["thC2"].is_defined()) {
        thC2_f = (float)parameters["thC2"].toFloat();
-       if (!ScaleParam(scalemode, thC2_f, bits_per_pixel, thC2_f, thC2, fullscale))
+       if (!ScaleParam(scalemode, thC2_f, bits_per_pixel, thC2_f, thC2, fullscale, false))
        {
          error = errortxt;
          return;
@@ -605,15 +605,17 @@ public:
    {
       Signature signature = "mt_edge"; // common for any bit depths
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(String("sobel"), "mode"));
-      signature.add(Parameter(TYPE_FLOAT, "thY1")); // default 10 must be scaled + prepare float support
-      signature.add(Parameter(TYPE_FLOAT, "thY2"));
-      signature.add(Parameter(TYPE_FLOAT, "thC1"));
-      signature.add(Parameter(TYPE_FLOAT, "thC2"));
-      signature.add(Parameter(String("i8"), "paramscale")); // like in expressions + none
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(String("sobel"), "mode", false));
+      signature.add(Parameter(TYPE_FLOAT, "thY1", true)); // default 10 must be scaled + prepare float support
+      signature.add(Parameter(TYPE_FLOAT, "thY2", true));
+      signature.add(Parameter(TYPE_FLOAT, "thC1", true));
+      signature.add(Parameter(TYPE_FLOAT, "thC2", true));
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
+      return signature;
    }
 
 };

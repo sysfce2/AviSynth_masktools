@@ -74,7 +74,7 @@ public:
    {
       Signature signature = "mt_invert";
 
-      signature.add( Parameter( TYPE_CLIP, "" ) );
+      signature.add( Parameter( TYPE_CLIP, "", false) );
 
       return add_defaults( signature );
    }

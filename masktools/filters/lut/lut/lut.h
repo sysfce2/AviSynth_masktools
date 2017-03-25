@@ -189,15 +189,17 @@ public:
    {
       Signature signature = "mt_lut";
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(String("x"), "expr"));
-      signature.add(Parameter(String("x"), "yExpr"));
-      signature.add(Parameter(String("x"), "uExpr"));
-      signature.add(Parameter(String("x"), "vExpr"));
-      signature.add(Parameter(false, "stacked"));
-      signature.add(Parameter(false, "realtime"));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(String("x"), "expr", false));
+      signature.add(Parameter(String("x"), "yExpr", false));
+      signature.add(Parameter(String("x"), "uExpr", false));
+      signature.add(Parameter(String("x"), "vExpr", false));
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(false, "stacked", false));
+      signature.add(Parameter(false, "realtime", false));
+      return signature;
    }
 };
 

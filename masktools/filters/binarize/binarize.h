@@ -127,7 +127,7 @@ public:
        nThreshold = parameters["threshold"].toInt();
        String scalemode = parameters["paramscale"].toString();
        bool fullscale = planes_isRGB[C];
-       if (!ScaleParam(scalemode, nThreshold_f, bits_per_pixel, nThreshold_f, nThreshold, fullscale))
+       if (!ScaleParam(scalemode, nThreshold_f, bits_per_pixel, nThreshold_f, nThreshold, fullscale, false))
        {
          error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
          return;
@@ -240,14 +240,16 @@ public:
    {
       Signature signature = "mt_binarize";
 
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( 128.0f, "threshold" ) ); // bit depth dependent, see above.
-      signature.add( Parameter( false, "upper" ) );
-      signature.add( Parameter( String("lower"), "mode" ) );
-      signature.add( Parameter(false, "stacked"));
-      signature.add( Parameter( String("i8"), "paramscale")); // like in expressions + none
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( 128.0f, "threshold", true) ); // bit depth dependent, see above.
+      signature.add( Parameter( false, "upper", false));
+      signature.add( Parameter( String("lower"), "mode", false) );
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(false, "stacked", false));
+      signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
+      return signature;
    }
 };
 

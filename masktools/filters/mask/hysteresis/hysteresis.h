@@ -57,8 +57,8 @@ public:
     {
         Signature signature = "mt_hysteresis";
 
-        signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(TYPE_CLIP, ""));
+        signature.add(Parameter(TYPE_CLIP, "", false));
+        signature.add(Parameter(TYPE_CLIP, "", false));
 
         return add_defaults(signature);
     }

@@ -99,7 +99,7 @@ public:
       // Y threshold
       if (parameters["thY"].is_defined()) {
         thY_f = (float)parameters["thY"].toFloat();
-        if (!ScaleParam(scalemode, thY_f, bits_per_pixel, thY_f, thY, fullscale))
+        if (!ScaleParam(scalemode, thY_f, bits_per_pixel, thY_f, thY, fullscale, false))
         {
           error = errortxt;
           return;
@@ -109,7 +109,7 @@ public:
       // chroma threshold
       if (parameters["thC"].is_defined()) {
         thC_f = (float)parameters["thC"].toFloat();
-        if (!ScaleParam(scalemode, thC_f, bits_per_pixel, thC_f, thC, fullscale))
+        if (!ScaleParam(scalemode, thC_f, bits_per_pixel, thC_f, thC, fullscale, false))
         {
           error = errortxt;
           return;

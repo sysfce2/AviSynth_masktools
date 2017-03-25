@@ -186,17 +186,19 @@ public:
    {
       Signature signature = "mt_lutxyza";
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(String("x"), "expr"));
-      signature.add(Parameter(String("x"), "yExpr"));
-      signature.add(Parameter(String("x"), "uExpr"));
-      signature.add(Parameter(String("x"), "vExpr"));
-      signature.add(Parameter(true, "realtime")); // 4D lut: default realtime calc.
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(String("x"), "expr", false));
+      signature.add(Parameter(String("x"), "yExpr", false));
+      signature.add(Parameter(String("x"), "uExpr", false));
+      signature.add(Parameter(String("x"), "vExpr", false));
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(true, "realtime", false)); // 4D lut: default realtime calc.
+      return signature;
    }
 };
 

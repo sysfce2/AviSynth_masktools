@@ -345,13 +345,15 @@ public:
    {
       Signature signature = "mt_merge";
 
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( TYPE_CLIP, "" ) );
-      signature.add( Parameter( false, "luma" ) );
-      signature.add( Parameter(false, "stacked"));
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( TYPE_CLIP, "", false) );
+      signature.add( Parameter( false, "luma", false) );
 
-      return add_defaults( signature );
+      add_defaults( signature );
+
+      signature.add(Parameter(false, "stacked", false));
+      return signature;
    }
 };
 

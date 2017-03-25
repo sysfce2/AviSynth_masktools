@@ -163,10 +163,10 @@ public:
    {
       Signature signature = "mt_mappedblur";
 
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(TYPE_CLIP, ""));
-      signature.add(Parameter(String("1 1 1 1 1 1 1 1 1"), "kernel"));
-      signature.add(Parameter(String("replace"), "mode"));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(TYPE_CLIP, "", false));
+      signature.add(Parameter(String("1 1 1 1 1 1 1 1 1"), "kernel", false));
+      signature.add(Parameter(String("replace"), "mode", false));
 
       return add_defaults( signature );
    }
