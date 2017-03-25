@@ -73,12 +73,6 @@ protected:
 public:
     Clamp(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
     {
-        nUndershoot = parameters["undershoot"].toInt();
-        nOvershoot = parameters["overshoot"].toInt();
-
-        nUndershoot_f = (Float)parameters["undershoot"].toFloat();
-        nOvershoot_f = (Float)parameters["overshoot"].toFloat();
-
         bool isStacked = parameters["stacked"].toBool();
         bits_per_pixel = bit_depths[C];
 
@@ -88,6 +82,33 @@ public:
         }
         if (isStacked)
           bits_per_pixel = 16;
+
+        bool fullscale = planes_isRGB[C];
+        String scalemode = parameters["paramscale"].toString();
+
+        // defaults
+        nUndershoot_f = nOvershoot_f = 0.0f;
+        nUndershoot = nOvershoot = 0;
+
+        const char *errortxt = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+
+        if (parameters["undershoot"].is_defined()) {
+          nUndershoot_f = (float)parameters["undershoot"].toFloat();
+          if (!ScaleParam(scalemode, nUndershoot_f, bits_per_pixel, nUndershoot_f, nUndershoot, fullscale, false))
+          {
+            error = errortxt;
+            return;
+          }
+        }
+
+        if (parameters["overshoot"].is_defined()) {
+          nOvershoot_f = (float)parameters["overshoot"].toFloat();
+          if (!ScaleParam(scalemode, nOvershoot_f, bits_per_pixel, nOvershoot_f, nOvershoot, fullscale, false))
+          {
+            error = errortxt;
+            return;
+          }
+        }
 
         /* add the processors */
         if (isStacked) {
@@ -137,14 +158,17 @@ public:
     {
         Signature signature = "mt_clamp";
 
-        signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(TYPE_CLIP, ""));
-        signature.add(Parameter(0.0f, "overshoot"));
-        signature.add(Parameter(0.0f, "undershoot"));
-        signature.add(Parameter(false, "stacked"));
+        signature.add(Parameter(TYPE_CLIP, "", false));
+        signature.add(Parameter(TYPE_CLIP, "", false));
+        signature.add(Parameter(TYPE_CLIP, "", false));
+        signature.add(Parameter(0.0f, "overshoot", true));
+        signature.add(Parameter(0.0f, "undershoot", true));
 
-        return add_defaults(signature);
+        add_defaults(signature);
+
+        signature.add(Parameter(false, "stacked", false));
+        signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
+        return signature;
     }
 };
 
