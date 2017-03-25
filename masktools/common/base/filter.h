@@ -37,26 +37,26 @@ protected:
 
    static Signature &add_defaults(Signature &signature)
    {
-      signature.add( Parameter( 3.0f, "Y" ) );
-      signature.add( Parameter( 1.0f, "U" ) );
-      signature.add( Parameter( 1.0f, "V" ) );
-      signature.add( Parameter( Value( String( "" ) ), "chroma" ) );
-      signature.add( Parameter( 0, "offX" ) );
-      signature.add( Parameter( 0, "offY" ) );
-      signature.add( Parameter( -1, "w" ) );
-      signature.add( Parameter( -1, "h" ) );
-      signature.add( Parameter( true, "sse2" ) );
-      signature.add( Parameter( true, "sse3" ) );
-      signature.add( Parameter( true, "ssse3" ) );
-      signature.add( Parameter( true, "sse4" ) );
-      signature.add( Parameter( true, "avx"));
-      signature.add( Parameter( true, "avx2"));
+      signature.add( Parameter( 3.0f, "Y", true) );
+      signature.add( Parameter( 1.0f, "U", true) );
+      signature.add( Parameter( 1.0f, "V", true) );
+      signature.add( Parameter( Value( String( "" ) ), "chroma", false));
+      signature.add( Parameter( 0, "offX", false) );
+      signature.add( Parameter( 0, "offY", false) );
+      signature.add( Parameter( -1, "w", false) );
+      signature.add( Parameter( -1, "h", false) );
+      signature.add( Parameter( true, "sse2", false) );
+      signature.add( Parameter( true, "sse3", false) );
+      signature.add( Parameter( true, "ssse3", false) );
+      signature.add( Parameter( true, "sse4", false) );
+      signature.add( Parameter( true, "avx", false));
+      signature.add( Parameter( true, "avx2", false));
 
       return signature;
    }
 
    // general helper function
-   static bool ScaleParam(String scalemode, float input, int clip_bits_per_pixel, float &scaled_f, int &scaled_i, bool fullscale)
+   static bool ScaleParam(String scalemode, float input, int clip_bits_per_pixel, float &scaled_f, int &scaled_i, bool fullscale, bool allowNegative)
    {
      int param_bits_per_pixel;
      int max_pixel_value = (1 << clip_bits_per_pixel) - 1;
@@ -68,8 +68,12 @@ protected:
      else if (scalemode == "f32") param_bits_per_pixel = 32;
      else if ((scalemode == "none") || scalemode == "") {
        scaled_f = input;
-       if(clip_bits_per_pixel != 32)
-         scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+       if (clip_bits_per_pixel != 32) {
+         if(scaled_f >= 0 || !allowNegative)
+           scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+         else
+           scaled_i = -max(min(int(-scaled_f), max_pixel_value), 0);
+       }
        return true;
      }
      else {
@@ -79,8 +83,12 @@ protected:
      // identical bit-depth, return original
      if (param_bits_per_pixel == clip_bits_per_pixel) {
        scaled_f = input;
-       if (clip_bits_per_pixel != 32)
-         scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+       if (clip_bits_per_pixel != 32) {
+         if(scaled_f >= 0 || !allowNegative)
+           scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+         else
+           scaled_i = -max(min(int(-scaled_f), max_pixel_value), 0);
+       }
        return true;
      }
 
@@ -105,6 +113,8 @@ protected:
          scaled_f = input * ((1 << clip_bits_per_pixel) - 1);
        }
        else {
+         bool isNegativeInput = input < 0;
+         input = std::abs(input);
          float input_range_max = (float)((1 << param_bits_per_pixel) - 1);
          if (abs(input_range_max - input) < 0.000001) {
            scaled_f = (float)((1 << clip_bits_per_pixel) - 1); // keep max range
@@ -115,11 +125,17 @@ protected:
            else
              scaled_f = input * ((1 << (clip_bits_per_pixel - param_bits_per_pixel))); // scale up by diff bits
          }
+         if (isNegativeInput)
+           scaled_f = -scaled_f;
        }
      }
 
-     if (clip_bits_per_pixel != 32)
-       scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+     if (clip_bits_per_pixel != 32) {
+       if (scaled_f >= 0 || !allowNegative)
+         scaled_i = max(min(int(scaled_f), max_pixel_value), 0);
+       else
+         scaled_i = -max(min(int(-scaled_f), max_pixel_value), 0);
+     }
 
      return true;
    }
