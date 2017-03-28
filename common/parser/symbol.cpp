@@ -128,22 +128,22 @@ Symbol Symbol::PosShiftSB     ("<<s", OPERATOR, 2, posshiftSB);
 Symbol Symbol::NegShiftSB     (">>s", OPERATOR, 2, negshiftSB);
 Symbol Symbol::Pi             ("pi", 3.1415927, NUMBER  , 0, NULL);
 // Lut variables
-Symbol Symbol::X              ("x" , VARIABLE_X, 0, NULL);  
-Symbol Symbol::Y              ("y" , VARIABLE_Y, 0, NULL);
-Symbol Symbol::Z              ("z" , VARIABLE_Z, 0, NULL);
+Symbol Symbol::X              ("x" , VARIABLE, VARIABLE_X, NULL);  
+Symbol Symbol::Y              ("y" , VARIABLE, VARIABLE_Y, NULL);
+Symbol Symbol::Z              ("z" , VARIABLE, VARIABLE_Z, NULL);
 // preliminary lut variable: A(lpha)
-Symbol Symbol::A              ("a" , VARIABLE_A, 0, NULL);
+Symbol Symbol::A              ("a" , VARIABLE, VARIABLE_A, NULL);
 // global bitdepth parameter for autoscale, since v2.2.1
-Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE_BITDEPTH, 0, NULL); 
-Symbol Symbol::SCRIPT_BITDEPTH("sbitdepth", VARIABLE_SCRIPT_BITDEPTH, 0, NULL);
+Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE, VARIABLE_BITDEPTH, NULL);
+Symbol Symbol::SCRIPT_BITDEPTH("sbitdepth", VARIABLE, VARIABLE_SCRIPT_BITDEPTH, NULL);
 // bit-depth adaptive constants, since v2.2.1
-Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE_RANGE_HALF, 0, NULL); // 128  scaled
-Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE_RANGE_MAX, 0, NULL);   // 255, 4095, .. 65535
-Symbol Symbol::RANGE_SIZE     ("range_size", VARIABLE_RANGE_SIZE, 0, NULL); // 256, 1024, 4096, 16384, 65536
-Symbol Symbol::YMIN           ("ymin", VARIABLE_YMIN, 0, NULL); // 16 scaled
-Symbol Symbol::YMAX           ("ymax", VARIABLE_YMAX, 0, NULL); // 235 or scaled
-Symbol Symbol::CMIN           ("cmin", VARIABLE_CMIN, 0, NULL); // 16 scaled = LIMITED_YMIN
-Symbol Symbol::CMAX           ("cmax", VARIABLE_CMAX, 0, NULL); // 240 scaled
+Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE, VARIABLE_RANGE_HALF, NULL); // 128  scaled
+Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE, VARIABLE_RANGE_MAX, NULL);   // 255, 4095, .. 65535
+Symbol Symbol::RANGE_SIZE     ("range_size", VARIABLE, VARIABLE_RANGE_SIZE, NULL); // 256, 1024, 4096, 16384, 65536
+Symbol Symbol::YMIN           ("ymin", VARIABLE, VARIABLE_YMIN, NULL); // 16 scaled
+Symbol Symbol::YMAX           ("ymax", VARIABLE, VARIABLE_YMAX, NULL); // 235 or scaled
+Symbol Symbol::CMIN           ("cmin", VARIABLE, VARIABLE_CMIN, NULL); // 16 scaled = LIMITED_YMIN
+Symbol Symbol::CMAX           ("cmax", VARIABLE, VARIABLE_CMAX, NULL); // 240 scaled
 // Math
 Symbol Symbol::Cos            ("cos", FUNCTION, 1, cos);
 Symbol Symbol::Sin            ("sin", FUNCTION, 1, sin);
@@ -179,27 +179,38 @@ Symbol Symbol::SetFloatToClampUseI16Range("clamp_f_i16", -16.0, FUNCTION_CONFIG_
 Symbol Symbol::SetFloatToClampUseF32Range("clamp_f_f32", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetFloatToClampUseF32Range_2("clamp_f", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 
+Symbol Symbol::Dup("dup", DUP, 0, NULL);
+Symbol Symbol::Swap("swap", SWAP, 0, NULL);
+
 Symbol::Symbol() :
 type(UNDEFINED), value(""), value2("")
 {
 }
 
 Symbol::Symbol(String value, Type type, int nParameter, Process process) :
-type(type), value(value), value2(""), nParameter(nParameter), process(process)
+type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(""), nParameter(nParameter), process(process)
 {
    if ( type == NUMBER )
       dValue = atof(value.c_str());
 }
 
+Symbol::Symbol(String value, Type type, VarType vartype, Process process) :
+  type(type), vartype(vartype), value(value), value2(""), nParameter(0), process(process)
+{
+  if (type == NUMBER)
+    dValue = atof(value.c_str());
+}
+
+
 Symbol::Symbol(String value, String value2, Type type, int nParameter, Process process) :
-type(type), value(value), value2(value2), nParameter(nParameter), process(process)
+type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(value2), nParameter(nParameter), process(process)
 {
    if ( type == NUMBER )
       dValue = atof(value.c_str());
 }
 
 Symbol::Symbol(String value, double dValue, Type type, int nParameter, Process process) :
-type(type), value(value), value2(""), nParameter(nParameter), dValue(dValue), process(process)
+type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(""), nParameter(nParameter), dValue(dValue), process(process)
 {
 }
 
@@ -212,23 +223,7 @@ double Symbol::getValue(double x, double y, double z) const
 {
    switch ( type )
    {
-   case VARIABLE_X:
-   case VARIABLE_Y:
-   case VARIABLE_Z:
-   // since v2.2.1:
-   case VARIABLE_A: 
-   
-   case VARIABLE_BITDEPTH: // automatic silent parameter of the script 
-   case VARIABLE_SCRIPT_BITDEPTH: // v2.2
-     // embedded expr constants
-   case VARIABLE_RANGE_HALF:
-   case VARIABLE_RANGE_MAX:
-   case VARIABLE_RANGE_SIZE:
-   case VARIABLE_YMIN:
-   case VARIABLE_YMAX:
-   case VARIABLE_CMIN:
-   case VARIABLE_CMAX:
-
+   case VARIABLE:
    case NUMBER:
      return dValue;
    case FUNCTION_CONFIG_SCRIPT_BITDEPTH:
@@ -243,6 +238,10 @@ Context::Context(const std::deque<Symbol> &expression)
    nPos = -1;
    nSymbols = expression.size();
    pSymbols = new Symbol[nSymbols];
+   exprstack = new double[nSymbols];
+
+   nSymbols_control = expression.size();
+   pSymbols_control = new Symbol[nSymbols];
 
    auto it = expression.begin();
 
@@ -250,9 +249,11 @@ Context::Context(const std::deque<Symbol> &expression)
    int default_float_autoscale_bitdepth = 0; // no clamp and autoscale
 
    int symbolCount = 0;
+   int symbolCount_control = 0;
    for (int i = 0; i < nSymbols; i++, it++) {
      // control mnemonics are filtered here, they are not put in the expression
      if (it->type == Symbol::FUNCTION_CONFIG_SCRIPT_BITDEPTH) {
+       pSymbols_control[symbolCount_control++] = *it;
        if (it->dValue > 0) {
          // i8, i10, i12, i14, i16, f32
          default_sbitdepth = (int)it->dValue;
@@ -269,6 +270,8 @@ Context::Context(const std::deque<Symbol> &expression)
      }
    }
    nSymbols = symbolCount;
+   nSymbols_control = symbolCount_control;
+
    sbitdepth = default_sbitdepth;
 
    float_autoscale_bitdepth = default_float_autoscale_bitdepth;
@@ -284,58 +287,184 @@ Context::Context(const std::deque<Symbol> &expression)
 Context::~Context()
 {
    delete[] pSymbols;
+   delete[] exprstack;
+   delete[] pSymbols_control;
 }
 
 double Context::rec_compute()
 {
-   const Symbol &s = pSymbols[--nPos];
+  double last = 0;
+  Symbol &s = pSymbols[0];
 
-   switch ( s.type )
-   {
-   case Symbol::NUMBER: return s.dValue;
-   case Symbol::VARIABLE_X: return x;
-   case Symbol::VARIABLE_Y: return y;
-   case Symbol::VARIABLE_Z: return z;
-   case Symbol::VARIABLE_A: return a;
-   case Symbol::VARIABLE_BITDEPTH: return bitdepth; // bit-depth for autoscale
-   case Symbol::VARIABLE_SCRIPT_BITDEPTH: return sbitdepth; // source bit depth for autoscale
+  int p = 0;
 
-   case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
-   case Symbol::VARIABLE_RANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
-   case Symbol::VARIABLE_RANGE_SIZE: return bitdepth == 32 ? 1.0 : (1 << bitdepth); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
-   case Symbol::VARIABLE_YMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
-   case Symbol::VARIABLE_YMAX: return bitdepth == 32 ? 235.0 / 255 : (235 << (bitdepth - 8));  // 235 scaled
-   case Symbol::VARIABLE_CMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
-   case Symbol::VARIABLE_CMAX: return bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8));  // 240 scaled
+  switch (s.type)
+  {
+  case Symbol::NUMBER: { last = s.dValue; break; }
+  case Symbol::VARIABLE: {
+    switch (s.vartype) {
+    case Symbol::VARIABLE_X: { last = x; break; }
+    case Symbol::VARIABLE_Y: { last = y; break; }
+    case Symbol::VARIABLE_Z: { last = z; break; }
+    case Symbol::VARIABLE_A: { last = a; break; }
+    case Symbol::VARIABLE_BITDEPTH: { last = bitdepth; break; } // bit-depth for autoscale
+    case Symbol::VARIABLE_SCRIPT_BITDEPTH: { last = sbitdepth; break; } // source bit depth for autoscale
 
-   case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
-     switch (s.nParameter) // only exists with one user parameters
-     {
-     case 1: return s.process(rec_compute(), bitdepth, sbitdepth); // automatic bit-depth parameters
-     default:
-       return s.process(-1.0f, -1.0f, -1.0f);
-     }
-   
-   default:
-      switch ( s.nParameter )
-      {
-      case 2 :
-         {
-            double yy = rec_compute();
-            double xx = rec_compute();
-            return s.process(xx, yy, -1.0f);
-         }
-      case 1: return s.process(rec_compute(), -1.0f, -1.0f);
-      case 3:
-         {
-            double zz = rec_compute();
-            double yy = rec_compute();
-            double xx = rec_compute();
-            return s.getValue(xx, yy, zz);
-         }
-      default: return s.process(-1.0f, -1.0f, -1.0f);
+    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); break; } // or 0.0 for float in the future?
+    case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+    case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? 1.0 : (1 << bitdepth); break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
+    case Symbol::VARIABLE_YMIN: { last = bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8)); break;  }   // 16 scaled
+    case Symbol::VARIABLE_YMAX: { last = bitdepth == 32 ? 235.0 / 255 : (235 << (bitdepth - 8)); break; } // 235 scaled
+    case Symbol::VARIABLE_CMIN: { last = bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8)); break;  } // 16 scaled
+    case Symbol::VARIABLE_CMAX: { last = bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8)); break;  } // 240 scaled
+    default: assert(0);
+    }
+    break;
+  }
+  default: return 0; // assert
+  }
+
+  for (int i = 1; i < nPos; i++) {
+    s = pSymbols[i];
+
+    switch (s.type)
+    {
+    case Symbol::NUMBER: { exprstack[p++] = last; last=s.dValue; break; }
+    case Symbol::VARIABLE: {
+      switch (s.vartype) {
+      case Symbol::VARIABLE_X: { exprstack[p++] = last; last = x; break; }
+      case Symbol::VARIABLE_Y: { exprstack[p++] = last; last = y; break; }
+      case Symbol::VARIABLE_Z: { exprstack[p++] = last; last = z; break; }
+      case Symbol::VARIABLE_A: { exprstack[p++] = last; last = a; break; }
+      case Symbol::VARIABLE_BITDEPTH: { exprstack[p++] = last; last = bitdepth; break; } // bit-depth for autoscale
+      case Symbol::VARIABLE_SCRIPT_BITDEPTH: { exprstack[p++] = last; last = sbitdepth; break; } // source bit depth for autoscale
+
+      case Symbol::VARIABLE_RANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); break; } // or 0.0 for float in the future?
+      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+      case Symbol::VARIABLE_RANGE_SIZE: { exprstack[p++] = last; last = bitdepth == 32 ? 1.0 : (1 << bitdepth); break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
+      case Symbol::VARIABLE_YMIN: { exprstack[p++] = last; last = bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8)); break;  }   // 16 scaled
+      case Symbol::VARIABLE_YMAX: { exprstack[p++] = last; last = bitdepth == 32 ? 235.0 / 255 : (235 << (bitdepth - 8)); break; } // 235 scaled
+      case Symbol::VARIABLE_CMIN: { exprstack[p++] = last; last = bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8)); break;  } // 16 scaled
+      case Symbol::VARIABLE_CMAX: { exprstack[p++] = last; last = bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8)); break;  } // 240 scaled
+      default: assert(0);
       }
-   }
+      break;
+    }
+#if 1
+    case Symbol::DUP: { exprstack[p++] = last; break;  }
+
+    case Symbol::SWAP:
+    {
+      double p1 = exprstack[p-1];
+      exprstack[p-1] = last;
+      last = p1;
+      break;
+    }
+
+    case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
+      switch (s.nParameter) // only exists with one user parameters
+      {
+      case 1: {
+        last = s.process(last, bitdepth, sbitdepth);
+        break;
+      } // automatic bit-depth parameters
+      default: {
+        // n/a
+        last = s.process(-1.0f, -1.0f, -1.0f);
+        break;
+        //exprstack.push_back(s.process(-1.0f, -1.0f, -1.0f));
+      }
+      }
+      break;
+#endif      
+    default:
+      switch (s.nParameter)
+      {
+      case 2:
+      {
+        double xx = exprstack[--p];
+        last = s.process(xx, last, -1.0f); // two-operand function/operator
+        break;
+      }
+      case 1: {
+        last = s.process(last, -1.0, -1.0f); // one-operand function/operator
+        break;
+      }
+      case 3:
+      {
+        double yy = exprstack[--p];  // three-operand
+        double xx = exprstack[--p];
+        last = s.process(xx,yy,last);
+        break;
+      }
+      default: {
+        exprstack[p++] = last;
+        last = s.process(-1.0f, -1.0f, -1.0f); 
+        break; 
+      }
+      }
+    }
+  }
+
+  return last;
+}
+
+double Context::rec_compute_old()
+{
+  const Symbol &s = pSymbols[--nPos];
+
+  switch (s.type)
+  {
+  case Symbol::NUMBER: return s.dValue;
+  case Symbol::VARIABLE:
+    switch (s.vartype) {
+    case Symbol::VARIABLE_X: return x;
+    case Symbol::VARIABLE_Y: return y;
+    case Symbol::VARIABLE_Z: return z;
+    case Symbol::VARIABLE_A: return a;
+    case Symbol::VARIABLE_BITDEPTH: return bitdepth; // bit-depth for autoscale
+    case Symbol::VARIABLE_SCRIPT_BITDEPTH: return sbitdepth; // source bit depth for autoscale
+
+    case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
+    case Symbol::VARIABLE_RANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+    case Symbol::VARIABLE_RANGE_SIZE: return bitdepth == 32 ? 1.0 : (1 << bitdepth); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
+    case Symbol::VARIABLE_YMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
+    case Symbol::VARIABLE_YMAX: return bitdepth == 32 ? 235.0 / 255 : (235 << (bitdepth - 8));  // 235 scaled
+    case Symbol::VARIABLE_CMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
+    case Symbol::VARIABLE_CMAX: return bitdepth == 32 ? 240.0 / 255 : (240 << (bitdepth - 8));  // 240 scaled
+    default: 
+      assert(0);
+      return 0;
+    }
+    break;
+  case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
+    switch (s.nParameter) // only exists with one user parameters
+    {
+    case 1: return s.process(rec_compute_old(), bitdepth, sbitdepth); // automatic bit-depth parameters
+    default:
+      return s.process(-1.0f, -1.0f, -1.0f);
+    }
+
+  default:
+    switch (s.nParameter)
+    {
+    case 2:
+    {
+      double yy = rec_compute_old();
+      double xx = rec_compute_old();
+      return s.process(xx, yy, -1.0f);
+    }
+    case 1: return s.process(rec_compute_old(), -1.0f, -1.0f);
+    case 3:
+    {
+      double zz = rec_compute_old();
+      double yy = rec_compute_old();
+      double xx = rec_compute_old();
+      return s.getValue(xx, yy, zz);
+    }
+    default: return s.process(-1.0f, -1.0f, -1.0f);
+    }
+  }
 }
 
 double Context::compute(double _x, double _y, double _z, double _a, int _bitdepth)
@@ -349,7 +478,57 @@ double Context::compute(double _x, double _y, double _z, double _a, int _bitdept
    this->bitdepth = _bitdepth;
    // all other expr constants are calculated from bitdepth
 
-   return rec_compute();
+   return rec_compute(); // check x86 rec_compute_old with x,y,z,a is faster
+}
+
+double Context::compute_4(double _x, double _y, double _z, double _a, int _bitdepth)
+{
+  nPos = nSymbols;
+  this->x = _x;
+  this->y = _y;
+  this->z = _z;
+  this->a = _a;
+
+  this->bitdepth = _bitdepth;
+  // all other expr constants are calculated from bitdepth
+  
+  return rec_compute(); // on x86 rec_compute_old is MUCH faster
+}
+
+double Context::compute_3(double _x, double _y, double _z, int _bitdepth)
+{
+  nPos = nSymbols;
+  this->x = _x;
+  this->y = _y;
+  this->z = _z;
+
+  this->bitdepth = _bitdepth;
+  // all other expr constants are calculated from bitdepth
+
+  return rec_compute();
+}
+
+double Context::compute_2(double _x, double _y, int _bitdepth)
+{
+  nPos = nSymbols;
+  this->x = _x;
+  this->y = _y;
+
+  this->bitdepth = _bitdepth;
+  // all other expr constants are calculated from bitdepth
+
+  return rec_compute();
+}
+
+double Context::compute_1(double _x, int _bitdepth)
+{
+  nPos = nSymbols;
+  this->x = _x;
+
+  this->bitdepth = _bitdepth;
+  // all other expr constants are calculated from bitdepth
+
+  return rec_compute();
 }
 
 String Context::rec_infix()
@@ -358,19 +537,23 @@ String Context::rec_infix()
 
     switch ( s.type )
     {
-    case Symbol::VARIABLE_X: 
-    case Symbol::VARIABLE_Y: 
-    case Symbol::VARIABLE_Z: 
-    case Symbol::VARIABLE_A:
-    case Symbol::VARIABLE_BITDEPTH:
-    case Symbol::VARIABLE_SCRIPT_BITDEPTH:
-    case Symbol::VARIABLE_RANGE_HALF:
-    case Symbol::VARIABLE_RANGE_MAX:
-    case Symbol::VARIABLE_RANGE_SIZE:
-    case Symbol::VARIABLE_YMIN:
-    case Symbol::VARIABLE_YMAX:
-    case Symbol::VARIABLE_CMIN:
-    case Symbol::VARIABLE_CMAX:
+    case Symbol::VARIABLE:
+      switch (s.vartype) {
+      case Symbol::VARIABLE_X:
+      case Symbol::VARIABLE_Y:
+      case Symbol::VARIABLE_Z:
+      case Symbol::VARIABLE_A:
+      case Symbol::VARIABLE_BITDEPTH:
+      case Symbol::VARIABLE_SCRIPT_BITDEPTH:
+      case Symbol::VARIABLE_RANGE_HALF:
+      case Symbol::VARIABLE_RANGE_MAX:
+      case Symbol::VARIABLE_RANGE_SIZE:
+      case Symbol::VARIABLE_YMIN:
+      case Symbol::VARIABLE_YMAX:
+      case Symbol::VARIABLE_CMIN:
+      case Symbol::VARIABLE_CMAX:
+        return s.value;
+      }
     case Symbol::NUMBER: return s.value;
     case Symbol::FUNCTION:
         if (s.nParameter == 1) {
@@ -399,6 +582,14 @@ String Context::rec_infix()
       if (s.nParameter == 1) {
         return s.value + "(" + rec_infix() + ")";
       }
+    }
+
+    case Symbol::DUP: {
+      return ""; // cannot convert to infix
+    }
+
+    case Symbol::SWAP: {
+      return ""; // cannot convert to infix
     }
 
     default:
