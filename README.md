@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.5 (20170323)**
+**Masktools2 v2.2.5 (20170328)**
 
 mod by pinterf
 
@@ -146,6 +146,19 @@ Example #3 (new, with constants)
   paramscale="f32"
   mt_edge(mode="sobel",u=3,v=3,thY1=thY1,thY2=thY2,thC1=thC1,thC2=thC2,paramscale=paramscale) # f32: parameters assumed as float (0..1.0)
 ```  
+- new: "swap" keyword in expressions (v2.2.5-)
+  swaps the last two results during RPN evaluation. Not compatible with mt_infix()
+```  
+  expr="x 2 /"
+  expr="2 x swap /"
+```  
+- new: "dup" keyword in expressions (v2.2.5-)
+  duplicates the last result and put on the top of RPN evaluation stack. Not compatible with mt_infix()
+```  
+  expr="x 3 / x 3 / +"
+  expr="x 3 / dup +"
+```  
+  
    
 - Feature matrix   
 ```
@@ -194,7 +207,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.5 (20170323)
+**v2.2.5 (20170328)
 - Change #F and #B operators to @B and @F (# is reserved for Avisynth in-string comment character)
 - Alias scaleb for @B
 - Alias scalef for @F
@@ -206,6 +219,8 @@ Changelog
   Using "paramscale" tells the filter that parameters are given at what bit depth range.
 - dual function signatures (float and int), for backward compatibility with integer-type parameter list, prevent usage of earlier plugin-loaded masktools version
 - keep old parameter ordering: parameters which are non-existant in 2.0b1 are inserted at the end of the parameter list, not before the common parameters Y, U, V
+- new: "swap" keyword in expressions
+- new: "dup" keyword in expressions
   
 **v2.2.4 (20170304)
 - mt_polish to recognize:
