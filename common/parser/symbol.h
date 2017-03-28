@@ -3,6 +3,7 @@
 
 #include "../utils/utils.h"
 #include <deque>
+#include <stack>
 
 //because ICC is smart enough on its own and force inlining actually makes it slower
 #ifdef __INTEL_COMPILER
@@ -17,37 +18,44 @@ class Symbol {
 public:
    typedef enum {
       NUMBER,
+      VARIABLE,
+      FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM,
+      DUP,
+      SWAP,
+      FUNCTION_CONFIG_SCRIPT_BITDEPTH,
       OPERATOR,
       FUNCTION,
       TERNARY,
-      VARIABLE_X,
-      VARIABLE_Y,
-      VARIABLE_Z,
-      // 4th variable since v2.2.1
-      VARIABLE_A,
-
-      VARIABLE_BITDEPTH, // automatic silent parameter of the expression v2.2.1
-      VARIABLE_SCRIPT_BITDEPTH, // base bit depth of the values to scale v2.2.2, settable with i8..i16,f32 keywords
-
-      // special adaptive constants filled by bitdepth
-      VARIABLE_RANGE_HALF,
-      VARIABLE_RANGE_MAX,
-      VARIABLE_RANGE_SIZE,
-      VARIABLE_YMIN,
-      VARIABLE_YMAX,
-      VARIABLE_CMIN,
-      VARIABLE_CMAX,
-
-      FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM,
-      FUNCTION_CONFIG_SCRIPT_BITDEPTH,
-
       UNDEFINED
-
    } Type;
+
+   typedef enum {
+     VARIABLE_X,
+     VARIABLE_Y,
+     VARIABLE_Z,
+     // 4th variable since v2.2.1
+     VARIABLE_A,
+
+     VARIABLE_BITDEPTH, // automatic silent parameter of the expression v2.2.1
+     VARIABLE_SCRIPT_BITDEPTH, // base bit depth of the values to scale v2.2.2, settable with i8..i16,f32 keywords
+
+     // special adaptive constants filled by bitdepth
+     VARIABLE_RANGE_HALF,
+     VARIABLE_RANGE_MAX,
+     VARIABLE_RANGE_SIZE,
+     VARIABLE_YMIN,
+     VARIABLE_YMAX,
+     VARIABLE_CMIN,
+     VARIABLE_CMAX,
+
+     VARIABLE_UNDEFINED,
+   } VarType;
+
 
 public:
 
    Type type;
+   VarType vartype;
    String value;
    String value2;
    int nParameter;
@@ -62,6 +70,7 @@ public:
 
    Symbol();
    Symbol(String value, Type type, int nParameter, Process process);
+   Symbol(String value, Type type, VarType vartype, Process process);
    Symbol(String value, String value2, Type type, int nParameter, Process process);
    Symbol(String value, double dValue, Type type, int nParameter, Process process);
 
@@ -150,7 +159,9 @@ public:
    static Symbol SetFloatToClampUseI16Range;
    static Symbol SetFloatToClampUseF32Range;
    static Symbol SetFloatToClampUseF32Range_2;
-
+   // v.2.2.5 extensions
+   static Symbol Swap;
+   static Symbol Dup;
 };
 
 class Context {
@@ -159,10 +170,15 @@ class Context {
    int nSymbols;
    int nPos;
 
+   Symbol *pSymbols_control;
+   int nSymbols_control;
+
    double x, y, z, a;
    int bitdepth; // bit depth
    int sbitdepth; // source bit depth of values to scale
-   
+
+   double *exprstack;
+
    // helpers for float input autoscales
    // 0: none
    // 8, 10, 12, 14, 16: scale input 0..1 float to this range
@@ -172,6 +188,7 @@ class Context {
    double float_input_invscalefactor;
    
    double rec_compute();
+   double rec_compute_old();
    String rec_infix();
 
 public:
@@ -181,47 +198,67 @@ public:
    ~Context();
 
    bool check();
+   String infix();
+
+   double compute_1(double x, int bitdepth = 8);
+   double compute_2(double x, double y, int bitdepth = 8);
+   double compute_3(double x, double y, double z, int bitdepth = 8);
+   double compute_4(double x, double y, double z, double a, int bitdepth = 8);
    // v2.2.1: variable a
    double compute(double x, double y = -1.0f, double z = -1.0f, double a = -1.0f, int bitdepth = 8);
-   String infix();
-   Byte compute_byte(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 8) { return clip<Byte, double>( compute(_x, _y, _z, _a, _bitdepth) ); } // byte: default 8 bit
    
+   Byte compute_byte_x(int _x, int _bitdepth = 8) { return clip<Byte, double>(compute_1(_x, _bitdepth)); } // byte: default 8 bit
+   Byte compute_byte_xy(int _x, int _y, int _bitdepth = 8) { return clip<Byte, double>(compute_2(_x, _y, _bitdepth)); } // byte: default 8 bit
+   Byte compute_byte_xyz(int _x, int _y, int _z, int _bitdepth = 8) { return clip<Byte, double>(compute_3(_x, _y, _z, _bitdepth)); } // byte: default 8 bit
+   Byte compute_byte_xyza(int _x, int _y, int _z, int _a, int _bitdepth = 8) { return clip<Byte, double>( compute_4(_x, _y, _z, _a, _bitdepth) ); } // byte: default 8 bit
+   
+   Byte compute_byte_xy_dblinput(double _x, double _y, int _bitdepth = 8) { return clip<Byte, double>(compute_2(_x, _y, _bitdepth)); } // byte: default 8 bit
+
    template<int bits_per_pixel>
    Word compute_word_x(int _x) {
      if(bits_per_pixel == 16)
-       return clip<Word, double>(compute(_x, -1.0, -1.0, -1.0, bits_per_pixel));
+       return clip<Word, double>(compute_1(_x, bits_per_pixel));
      else
-       return min(clip<Word, double>(compute(_x, -1.0, -1.0, -1.0, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+       return min(clip<Word, double>(compute_1(_x, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
    }
 
    template<int bits_per_pixel>
    Word compute_word_xy(int _x, int _y) {
      if (bits_per_pixel == 16)
-       return clip<Word, double>(compute(_x, _y, -1.0, -1.0, bits_per_pixel));
+       return clip<Word, double>(compute_2(_x, _y, bits_per_pixel));
      else
-       return min(clip<Word, double>(compute(_x, _y, -1.0, -1.0, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+       return min(clip<Word, double>(compute_2(_x, _y, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+   }
+
+   template<int bits_per_pixel>
+   Word compute_word_xy_dblinput(double _x, double _y) {
+     return clip<Word, double>(compute_2(_x, _y, bits_per_pixel));
    }
 
    template<int bits_per_pixel>
    Word compute_word_xyz(int _x, int _y, int _z) {
      if (bits_per_pixel == 16)
-       return clip<Word, double>(compute(_x, _y, _z, -1.0, bits_per_pixel));
+       return clip<Word, double>(compute_3(_x, _y, _z, bits_per_pixel));
      else
-       return min(clip<Word, double>(compute(_x, _y, _z, -1.0, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+       return min(clip<Word, double>(compute_3(_x, _y, _z, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
    }
 
    template<int bits_per_pixel>
    Word compute_word_xyza(int _x, int _y, int _z, int _a) {
      if (bits_per_pixel == 16)
-       return clip<Word, double>(compute(_x, _y, _z, _a, bits_per_pixel));
+       return clip<Word, double>(compute_4(_x, _y, _z, _a, bits_per_pixel));
      else
-       return min(clip<Word, double>(compute(_x, _y, _z, _a, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
+       return min(clip<Word, double>(compute_4(_x, _y, _z, _a, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
    }
 
-   Word compute_word(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 16) { return clip<Word, double>(compute(_x, _y, _z, _a, _bitdepth)); } // word: default 16 bit
-   Word compute_word_safe(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 16)
-   { 
-     return min(clip<Word, double>( compute(_x, _y, _z, _a, _bitdepth) ), (Word)((1 << _bitdepth) - 1));
+   Word compute_word_xy_safe(int _x, int _y, int _bitdepth)
+   {
+     return min(clip<Word, double>(compute_2(_x, _y, _bitdepth)), (Word)((1 << _bitdepth) - 1));
+   } // clamp valid range for 10-14 bits
+
+   Word compute_word_xy_safe_dblinput(double _x, double _y, int _bitdepth)
+   {
+     return min(clip<Word, double>(compute_2(_x, _y, _bitdepth)), (Word)((1 << _bitdepth) - 1));
    } // clamp valid range for 10-14 bits
 
    Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 32) 
