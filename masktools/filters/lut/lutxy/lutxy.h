@@ -45,7 +45,7 @@ class Lutxy : public MaskTools::Filter
      case 8:
        for (int x = 0; x < 256; x++)
          for (int y = 0; y < 256; y++)
-           lut[(x << 8) + y] = ctx.compute_byte(x, y);
+           lut[(x << 8) + y] = ctx.compute_byte_xy(x, y);
        break;
      case 10:
        for (int x = 0; x < 1024; x++)

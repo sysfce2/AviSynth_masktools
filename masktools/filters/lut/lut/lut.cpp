@@ -18,7 +18,7 @@ void Filtering::MaskTools::Filters::Lut::Single::realtime8_c(Byte *dstp, ptrdiff
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      dstp[x] = ctx.compute_byte(dstp[x], 0.0f);
+      dstp[x] = ctx.compute_byte_x(dstp[x]);
     }
     dstp += dst_pitch;
   }

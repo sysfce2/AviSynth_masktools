@@ -39,7 +39,7 @@ void Filtering::MaskTools::Filters::Lut::Dual::realtime8_c(Byte *dstp, ptrdiff_t
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      dstp[x] = ctx.compute_byte(dstp[x], srcp[x]);
+      dstp[x] = ctx.compute_byte_xy(dstp[x], srcp[x]);
     }
     dstp += dst_pitch;
     srcp += nSrcPitch;

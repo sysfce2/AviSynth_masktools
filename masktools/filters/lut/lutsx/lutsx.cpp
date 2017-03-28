@@ -59,7 +59,7 @@ static void custom_realtime_8_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSr
         new_value1.add(pSrc1[x + (y - j) * nSrc1Pitch]);
         new_value2.add(pSrc2[x + (y - j) * nSrc2Pitch]);
       }
-      pDst[i] = ctx->compute_byte(pDst[i], new_value1.finalize(), new_value2.finalize(), -1.0, 8);
+      pDst[i] = ctx->compute_byte_xyz(pDst[i], new_value1.finalize(), new_value2.finalize(), 8);
     }
     pSrc1 += nSrc1Pitch;
     pSrc2 += nSrc2Pitch;

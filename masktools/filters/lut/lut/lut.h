@@ -137,7 +137,7 @@ public:
         switch(bits_per_pixel) {
         case 8: 
           for (int x = 0; x < 256; x++)
-            luts[i][x] = ctx.compute_byte(x, 0.0f);
+            luts[i][x] = ctx.compute_byte_x(x);
           break;
         case 10:
           for (int x = 0; x < 1024; x++)

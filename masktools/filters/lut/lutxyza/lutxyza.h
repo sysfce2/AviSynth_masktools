@@ -40,7 +40,7 @@ class Lutxyza : public MaskTools::Filter
            for ( int y = 0; y < 256; y++ ) {
                for ( int z = 0; z < 256; z++ ) {
                  for (int a = 0; a < 256; a++) {
-                   lut[((size_t)x << 24) + (y << 16) + (z << 8) + a] = ctx.compute_byte(x, y, z, a);
+                   lut[((size_t)x << 24) + (y << 16) + (z << 8) + a] = ctx.compute_byte_xyza(x, y, z, a);
                  }
                }
            }

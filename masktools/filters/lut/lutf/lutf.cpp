@@ -29,7 +29,7 @@ static void frame_c(Byte *dstp, ptrdiff_t dst_pitch, const Byte *srcp, ptrdiff_t
       // realtime, miniLut: 173 fps
       Byte miniLut[256];
       for(int i=0; i<256;i++)
-        miniLut[i] = ctx->compute_byte(X, i);
+        miniLut[i] = ctx->compute_byte_xy(X, i);
       for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
           dstp[i] = miniLut[srcp[i]];

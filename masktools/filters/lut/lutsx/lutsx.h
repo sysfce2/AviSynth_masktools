@@ -60,7 +60,7 @@ class Lutsx : public MaskTools::Filter
        for ( int x = 0; x < 256; x++ ) {
            for ( int y = 0; y < 256; y++ ) {
                for ( int z = 0; z < 256; z++ ) {
-                   lut[(z<<16)+(x<<8)+y] = ctx.compute_byte(x, y, z);  // ZXY order!
+                   lut[(z<<16)+(x<<8)+y] = ctx.compute_byte_xyz(x, y, z);  // ZXY order!
                }
            }
        }

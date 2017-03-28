@@ -24,7 +24,7 @@ void Filtering::MaskTools::Filters::Lut::Quad::realtime8_c(Byte *dstp, ptrdiff_t
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      dstp[x] = ctx.compute_byte(dstp[x], srcp[x], srcp2[x], srcp3[x]);
+      dstp[x] = ctx.compute_byte_xyza(dstp[x], srcp[x], srcp2[x], srcp3[x]);
     }
     dstp += dst_pitch;
     srcp += nSrcPitch;

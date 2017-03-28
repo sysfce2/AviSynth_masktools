@@ -34,7 +34,7 @@ class Lutxyz : public MaskTools::Filter
        for ( int x = 0; x < 256; x++ ) {
            for ( int y = 0; y < 256; y++ ) {
                for ( int z = 0; z < 256; z++ ) {
-                   lut[(x<<16)+(y<<8)+z] = ctx.compute_byte(x, y, z); 
+                   lut[(x<<16)+(y<<8)+z] = ctx.compute_byte_xyz(x, y, z); 
                }
            }
        }
