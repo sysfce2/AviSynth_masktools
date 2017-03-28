@@ -294,15 +294,16 @@ Context::~Context()
 double Context::rec_compute()
 {
   double last = 0;
-  Symbol &s = pSymbols[0];
+
+  Symbol &s_first = pSymbols[0];
 
   int p = 0;
 
-  switch (s.type)
+  switch (s_first.type)
   {
-  case Symbol::NUMBER: { last = s.dValue; break; }
+  case Symbol::NUMBER: { last = s_first.dValue; break; }
   case Symbol::VARIABLE: {
-    switch (s.vartype) {
+    switch (s_first.vartype) {
     case Symbol::VARIABLE_X: { last = x; break; }
     case Symbol::VARIABLE_Y: { last = y; break; }
     case Symbol::VARIABLE_Z: { last = z; break; }
@@ -325,7 +326,7 @@ double Context::rec_compute()
   }
 
   for (int i = 1; i < nPos; i++) {
-    s = pSymbols[i];
+    Symbol &s = pSymbols[i];
 
     switch (s.type)
     {
@@ -350,7 +351,6 @@ double Context::rec_compute()
       }
       break;
     }
-#if 1
     case Symbol::DUP: { exprstack[p++] = last; break;  }
 
     case Symbol::SWAP:
@@ -372,11 +372,10 @@ double Context::rec_compute()
         // n/a
         last = s.process(-1.0f, -1.0f, -1.0f);
         break;
-        //exprstack.push_back(s.process(-1.0f, -1.0f, -1.0f));
       }
       }
       break;
-#endif      
+
     default:
       switch (s.nParameter)
       {
