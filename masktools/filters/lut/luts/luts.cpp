@@ -68,7 +68,7 @@ static void custom_weight_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, p
         // different from non-weight version
         float weight;
         if (realtime) {
-          weight = ctx_w->compute_float(PixelX, PixelY); // yes, weights are float
+          weight = ctx_w->compute_float_xy_intinput<8>(PixelX, PixelY); // yes, weights are float
           new_value.add_w(ctx->compute_byte_xy(PixelX, PixelY), weight);
         }
         else {
@@ -172,7 +172,7 @@ static void custom16_weight_c(Byte *pDst8, ptrdiff_t nDstPitch, const Byte *pSrc
         // different from non-weight version
         float weight;
         if (realtime) {
-          weight = ctx_w->compute_float(PixelX, PixelY, -1, -1, bits_per_pixel);
+          weight = ctx_w->compute_float_xy_intinput<bits_per_pixel>(PixelX, PixelY);
         }
         else {
           weight = pLut_w[(PixelX << bits_per_pixel) + PixelY]; // byte xy but float content!
@@ -230,7 +230,7 @@ static void custom32_c(Byte *pDst8, ptrdiff_t nDstPitch, const Byte *pSrc8, ptrd
         float PixelY = pSrc[x + (y - j) * nSrcPitch];
 
         // float is always realtime
-        new_value.add(ctx->compute_float(PixelX, PixelY, -1, -1, 32));
+        new_value.add(ctx->compute_float_xy(PixelX, PixelY));
       }
       pDst[i] = new_value.finalize();
     }
@@ -271,10 +271,10 @@ static void custom32_weight_c(Byte *pDst8, ptrdiff_t nDstPitch, const Byte *pSrc
         float PixelY = pSrc[x + (y - j) * nSrcPitch];
 
         // different from non-weight version
-        float weight = ctx_w->compute_float(PixelX, PixelY, -1, -1, 32);
+        float weight = ctx_w->compute_float_xy(PixelX, PixelY);
 
         // float is always realtime
-        new_value.add_w(ctx->compute_float(PixelX, PixelY, -1, -1, 32), weight);
+        new_value.add_w(ctx->compute_float_xy(PixelX, PixelY), weight);
       }
       pDst[i] = new_value.finalize_w(); // different from non-weight version
     }

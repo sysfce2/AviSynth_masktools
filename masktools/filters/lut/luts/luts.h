@@ -109,7 +109,8 @@ class Luts : public MaskTools::Filter
    }
 
    // weight luts: float content
-   static Float *calculateLut_w(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
+   template<int bits_per_pixel>
+   static Float *calculateLut_w(const std::deque<Filtering::Parser::Symbol> &expr) {
      Parser::Context ctx(expr);
      const int size = 1 << bits_per_pixel;
 
@@ -118,7 +119,7 @@ class Luts : public MaskTools::Filter
 
      for (int x = 0; x < size; x++)
        for (int y = 0; y < size; y++)
-         lut[(x << bits_per_pixel) + y] = ctx.compute_float(x, y, - 1.0, -1.0, bits_per_pixel);
+         lut[(x << bits_per_pixel) + y] = ctx.compute_float_xy_intinput<bits_per_pixel>(x, y);
      return lut;
    }
 
@@ -211,7 +212,7 @@ public:
        realtime = true;
 
      if (bits_per_pixel == 16) {
-       if ((uint64_t)std::numeric_limits<size_t>::max() <= 0xFFFFFFFFull && bits_per_pixel == 16) {
+       if ((uint64_t)std::numeric_limits<size_t>::max() <= 0xFFFFFFFFull) {
          realtime = true; // not even possible a real 16 bit lutxy on 32 bit environment
        }
      }
@@ -303,12 +304,28 @@ public:
          // save memory, reuse luts, like in xyz
          if (customExpressionDefined_w) {
            luts_weight[i].used = true;
-           luts_weight[i].ptr = calculateLut_w(parser.getExpression(), bits_per_pixel);
+           switch (bits_per_pixel) {
+           case 8: luts_weight[i].ptr = calculateLut_w<8>(parser.getExpression()); break;
+           case 10: luts_weight[i].ptr = calculateLut_w<10>(parser.getExpression()); break;
+           case 12: luts_weight[i].ptr = calculateLut_w<12>(parser.getExpression()); break;
+           case 14: luts_weight[i].ptr = calculateLut_w<14>(parser.getExpression()); break;
+#if defined(_M_X64) || defined(__amd64__)
+           case 16: luts_weight[i].ptr = calculateLut_w<16>(parser.getExpression()); break;
+#endif
+           }
          }
          else {
            if (luts_weight[3].ptr == nullptr) {
              luts_weight[3].used = true;
-             luts_weight[3].ptr = calculateLut_w(parser.getExpression(), bits_per_pixel);
+             switch (bits_per_pixel) {
+             case 8: luts_weight[3].ptr = calculateLut_w<8>(parser.getExpression()); break;
+             case 10: luts_weight[3].ptr = calculateLut_w<10>(parser.getExpression()); break;
+             case 12: luts_weight[3].ptr = calculateLut_w<12>(parser.getExpression()); break;
+             case 14: luts_weight[3].ptr = calculateLut_w<14>(parser.getExpression()); break;
+#if defined(_M_X64) || defined(__amd64__)
+             case 16: luts_weight[3].ptr = calculateLut_w<16>(parser.getExpression()); break;
+#endif
+             }
            }
            luts_weight[i].ptr = luts_weight[3].ptr;
          }

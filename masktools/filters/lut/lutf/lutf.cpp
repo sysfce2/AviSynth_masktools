@@ -134,7 +134,7 @@ static void frame32_c(Float *dstp, ptrdiff_t dst_pitch, const Float *srcp, ptrdi
   // always full realtime
   for (int j = 0; j < height; j++) {
     for (int i = 0; i < width; i++) {
-      dstp[i] = ctx->compute_float(X, srcp[i], -1.0, -1.0, 32);
+      dstp[i] = ctx->compute_float_xy(X, srcp[i]);
     }
     srcp += src_pitch;
     dstp += dst_pitch;

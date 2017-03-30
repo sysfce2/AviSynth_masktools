@@ -83,9 +83,8 @@ public:
              for (int y = 0; y < h; y++)
                luts[i][x + y*w] = is_relative ?
                ctx.compute_byte_xy_dblinput(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
-                 y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
-                 bits_per_pixel // new: bit-depth goes to param B
-               ) : ctx.compute_byte_xy(x, y, bits_per_pixel);
+                 y * 1.0 / ((is_biased || h < 2) ? h : h - 1))
+               : ctx.compute_byte_xy(x, y);
            break;
          case 10:
          case 12:
@@ -115,12 +114,9 @@ public:
            for (int x = 0; x < w; x++)
              for (int y = 0; y < h; y++) {
                float val = is_relative ?
-                 ctx.compute_float(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
-                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
-                   -1, /* n/a */
-                   -1, /* n/a */
-                   bits_per_pixel // new: bit-depth goes to param B
-                 ) : ctx.compute_float(x, y, -1, -1, bits_per_pixel);
+                 ctx.compute_float_xy(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
+                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1)) 
+                 : ctx.compute_float_xy(x, y);
                reinterpret_cast<float *>(luts[i])[x + y*w] = val;
              }
            break;

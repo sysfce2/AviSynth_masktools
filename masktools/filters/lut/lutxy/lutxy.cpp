@@ -72,7 +72,7 @@ void Filtering::MaskTools::Filters::Lut::Dual::realtime32_c(Byte *dstp, ptrdiff_
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float(reinterpret_cast<Float *>(dstp)[x], reinterpret_cast<const Float *>(srcp)[x], -1.0 /*n/a*/, -1.0 /*n/a*/, 32);
+      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float_xy(reinterpret_cast<Float *>(dstp)[x], reinterpret_cast<const Float *>(srcp)[x]);
     }
     dstp += dst_pitch;
     srcp += nSrcPitch;

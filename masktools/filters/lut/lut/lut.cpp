@@ -47,7 +47,7 @@ void Filtering::MaskTools::Filters::Lut::Single::realtime32_c(Byte *dstp, ptrdif
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float(reinterpret_cast<Float *>(dstp)[x], 0.0f, -1.0 /*n/a*/, -1.0 /*n/a*/, 32);
+      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float_x(reinterpret_cast<Float *>(dstp)[x]);
     }
     dstp += dst_pitch;
   }
