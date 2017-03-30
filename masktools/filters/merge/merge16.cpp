@@ -125,13 +125,13 @@ MT_FORCEINLINE static Word get_value_stacked_c(const Byte *pMsb, const Byte *pLs
     return (Word(pMsb[x]) << 8) + pLsb[x];
 }
 
-MT_FORCEINLINE static Word get_mask_420_stacked_c(const Byte *pMsb, const Byte *pLsb, int pitch, int x) {
+MT_FORCEINLINE static Word get_mask_420_stacked_c(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x) {
     x = x*2;
     return ((int((get_value_stacked_c(pMsb, pLsb, x)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x) + 1) >> 1) +
         ((int(get_value_stacked_c(pMsb, pLsb, x+1)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x+1) + 1) >> 1) + 1) >> 1;
 }
 
-MT_FORCEINLINE static Word get_mask_422_stacked_c(const Byte *pMsb, const Byte *pLsb, int pitch, int x) {
+MT_FORCEINLINE static Word get_mask_422_stacked_c(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x) {
   x = x * 2;
   return int((get_value_stacked_c(pMsb, pLsb, x)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x) + 1) >> 1;
 }
@@ -180,7 +180,7 @@ void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptr
 }
 
 template <CpuFlags flags>
-MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const Byte *pLsb, int pitch, int x) {
+MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x) {
     x = x*2;
 
     auto row1_lo = read_word_stacked_simd(pMsb, pLsb, x);
@@ -260,7 +260,7 @@ void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, 
 
 /* Native */
 
-MT_FORCEINLINE static Word get_mask_420_c(const Byte *ptr, int pitch, int x) {
+MT_FORCEINLINE static Word get_mask_420_c(const Byte *ptr, ptrdiff_t pitch, int x) {
     x = x*2;
 
     return (((reinterpret_cast<const Word*>(ptr)[x] + reinterpret_cast<const Word*>(ptr+pitch)[x] + 1) >> 1) + 
@@ -309,7 +309,7 @@ void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t n
 
 
 template <CpuFlags flags>
-MT_FORCEINLINE static __m128i get_mask_420_simd(const Byte *ptr, int pitch, int x) {
+MT_FORCEINLINE static __m128i get_mask_420_simd(const Byte *ptr, ptrdiff_t pitch, int x) {
     x = x*2;
 
     auto row1_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+x));
