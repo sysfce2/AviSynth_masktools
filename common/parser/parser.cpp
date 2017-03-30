@@ -33,7 +33,7 @@ Parser::Symbol Parser::Parser::stringToSymbol(const String &value) const
 { 
     auto found = findSymbol(value);
     return found == nullptr
-        ? Symbol(value, Symbol::NUMBER, 0, NULL)
+        ? Symbol(value, Symbol::NUMBER)
         : *found;
 }
 

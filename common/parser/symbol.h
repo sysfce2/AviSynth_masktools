@@ -60,8 +60,16 @@ public:
    String value2;
    int nParameter;
    double dValue;
-   typedef double (*Process)(double x, double y, double z);
-   Process process;
+   typedef double (*Process0)();
+   typedef double (*Process1)(double x);
+   typedef double (*Process2)(double x, double y);
+   typedef double (*Process3)(double x, double y, double z);
+   typedef double (*ProcessScale)(double x, int y, int z);
+   Process0 process0;
+   Process1 process1;
+   Process2 process2;
+   Process3 process3;
+   ProcessScale processScale;
 
 private:
 
@@ -69,12 +77,24 @@ private:
 public:
 
    Symbol();
-   Symbol(String value, Type type, int nParameter, Process process);
-   Symbol(String value, Type type, VarType vartype, Process process);
-   Symbol(String value, String value2, Type type, int nParameter, Process process);
-   Symbol(String value, double dValue, Type type, int nParameter, Process process);
+   // dup, swap, direct numeric literals from parser
+   Symbol(String value, Type type);
+   // functions, operators, ternary
+   Symbol(String value, Type type, Process0 process);
+   Symbol(String value, Type type, Process1 process);
+   Symbol(String value, Type type, Process2 process);
+   Symbol(String value, Type type, Process3 process);
+   // same with secondary tokens
+   Symbol(String value, String value2, Type type, Process1 process);
+   Symbol(String value, String value2, Type type, Process2 process);
+   Symbol(String value, String value2, Type type, Process3 process);
+   Symbol(String value, String value2, Type type, ProcessScale process);
+   // variables
+   Symbol(String value, Type type, VarType vartype);
+   // numbers
+   Symbol(String value, double dValue, Type type, int nParameter, Process1 process);
 
-   void setValue(double dValue);
+   // void setValue(double dValue); dead code
    double getValue(double x, double y, double z) const;
 
    static Symbol Addition;
@@ -175,7 +195,26 @@ class Context {
 
    double x, y, z, a;
    int bitdepth; // bit depth
+
    int sbitdepth; // source bit depth of values to scale
+   double sbitdepth_f; // source bit depth of values to scale, avoid conversions
+
+   // predefined bit-depth dependent constant 8..16 -> 0..7
+   // calculated in advance for realtime speed gain
+   double a_range_half[8];
+   double a_range_max[8];
+   double a_range_size[8];
+   double a_ymin[8];
+   double a_ymax[8];
+   double a_cmin[8];
+   double a_cmax[8];
+   double range_half_f; // or 0.0 for float chroma in the future?
+   double range_max_f;
+   double range_size_f;
+   double ymin_f;
+   double ymax_f;
+   double cmin_f;
+   double cmax_f;
 
    double *exprstack;
 
@@ -207,15 +246,15 @@ public:
    // v2.2.1: variable a
    double compute(double x, double y = -1.0f, double z = -1.0f, double a = -1.0f, int bitdepth = 8);
    
-   Byte compute_byte_x(int _x, int _bitdepth = 8) { return clip<Byte, double>(compute_1(_x, _bitdepth)); } // byte: default 8 bit
-   Byte compute_byte_xy(int _x, int _y, int _bitdepth = 8) { return clip<Byte, double>(compute_2(_x, _y, _bitdepth)); } // byte: default 8 bit
-   Byte compute_byte_xyz(int _x, int _y, int _z, int _bitdepth = 8) { return clip<Byte, double>(compute_3(_x, _y, _z, _bitdepth)); } // byte: default 8 bit
-   Byte compute_byte_xyza(int _x, int _y, int _z, int _a, int _bitdepth = 8) { return clip<Byte, double>( compute_4(_x, _y, _z, _a, _bitdepth) ); } // byte: default 8 bit
+   MT_FORCEINLINE Byte compute_byte_x(int _x, int _bitdepth = 8) { return clip<Byte, double>(compute_1(_x, _bitdepth)); } // byte: default 8 bit
+   MT_FORCEINLINE Byte compute_byte_xy(int _x, int _y, int _bitdepth = 8) { return clip<Byte, double>(compute_2(_x, _y, _bitdepth)); } // byte: default 8 bit
+   MT_FORCEINLINE Byte compute_byte_xyz(int _x, int _y, int _z, int _bitdepth = 8) { return clip<Byte, double>(compute_3(_x, _y, _z, _bitdepth)); } // byte: default 8 bit
+   MT_FORCEINLINE Byte compute_byte_xyza(int _x, int _y, int _z, int _a, int _bitdepth = 8) { return clip<Byte, double>( compute_4(_x, _y, _z, _a, _bitdepth) ); } // byte: default 8 bit
    
    Byte compute_byte_xy_dblinput(double _x, double _y, int _bitdepth = 8) { return clip<Byte, double>(compute_2(_x, _y, _bitdepth)); } // byte: default 8 bit
 
    template<int bits_per_pixel>
-   Word compute_word_x(int _x) {
+   MT_FORCEINLINE Word compute_word_x(int _x) {
      if(bits_per_pixel == 16)
        return clip<Word, double>(compute_1(_x, bits_per_pixel));
      else
@@ -223,7 +262,7 @@ public:
    }
 
    template<int bits_per_pixel>
-   Word compute_word_xy(int _x, int _y) {
+   MT_FORCEINLINE Word compute_word_xy(int _x, int _y) {
      if (bits_per_pixel == 16)
        return clip<Word, double>(compute_2(_x, _y, bits_per_pixel));
      else
@@ -231,12 +270,12 @@ public:
    }
 
    template<int bits_per_pixel>
-   Word compute_word_xy_dblinput(double _x, double _y) {
+   MT_FORCEINLINE Word compute_word_xy_dblinput(double _x, double _y) {
      return clip<Word, double>(compute_2(_x, _y, bits_per_pixel));
    }
 
    template<int bits_per_pixel>
-   Word compute_word_xyz(int _x, int _y, int _z) {
+   MT_FORCEINLINE Word compute_word_xyz(int _x, int _y, int _z) {
      if (bits_per_pixel == 16)
        return clip<Word, double>(compute_3(_x, _y, _z, bits_per_pixel));
      else
@@ -244,24 +283,24 @@ public:
    }
 
    template<int bits_per_pixel>
-   Word compute_word_xyza(int _x, int _y, int _z, int _a) {
+   MT_FORCEINLINE Word compute_word_xyza(int _x, int _y, int _z, int _a) {
      if (bits_per_pixel == 16)
        return clip<Word, double>(compute_4(_x, _y, _z, _a, bits_per_pixel));
      else
        return min(clip<Word, double>(compute_4(_x, _y, _z, _a, bits_per_pixel)), (Word)((1 << bits_per_pixel) - 1));
    }
 
-   Word compute_word_xy_safe(int _x, int _y, int _bitdepth)
+   MT_FORCEINLINE Word compute_word_xy_safe(int _x, int _y, int _bitdepth)
    {
      return min(clip<Word, double>(compute_2(_x, _y, _bitdepth)), (Word)((1 << _bitdepth) - 1));
    } // clamp valid range for 10-14 bits
 
-   Word compute_word_xy_safe_dblinput(double _x, double _y, int _bitdepth)
+   MT_FORCEINLINE Word compute_word_xy_safe_dblinput(double _x, double _y, int _bitdepth)
    {
      return min(clip<Word, double>(compute_2(_x, _y, _bitdepth)), (Word)((1 << _bitdepth) - 1));
    } // clamp valid range for 10-14 bits
 
-   Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 32) 
+   MT_FORCEINLINE Float compute_float(double _x, double _y = -1.0f, double _z = -1.0f, double _a = -1.0f, int _bitdepth = 32)
    { 
      // todo: make it a bit faster if less real parameter is provided
      float result;
