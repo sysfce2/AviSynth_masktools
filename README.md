@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.5 (20170328)**
+**Masktools2 v2.2.5 (20170330)**
 
 mod by pinterf
 
@@ -207,7 +207,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.5 (20170328)
+**v2.2.5 (20170330)
 - Change #F and #B operators to @B and @F (# is reserved for Avisynth in-string comment character)
 - Alias scaleb for @B
 - Alias scalef for @F
@@ -221,6 +221,7 @@ Changelog
 - keep old parameter ordering: parameters which are non-existant in 2.0b1 are inserted at the end of the parameter list, not before the common parameters Y, U, V
 - new: "swap" keyword in expressions
 - new: "dup" keyword in expressions
+- a bit faster realtime lut calculation for 10+ bit depths
   
 **v2.2.4 (20170304)
 - mt_polish to recognize:
