@@ -98,7 +98,7 @@ MT_FORCEINLINE static __m256i merge_core_simd(const __m256i &dst, const __m256i 
 
 /* Native */
 
-MT_FORCEINLINE static Word get_mask_420_c(const Byte *ptr, int pitch, int x) {
+MT_FORCEINLINE static Word get_mask_420_c(const Byte *ptr, ptrdiff_t pitch, int x) {
     x = x*2;
 
     return (((reinterpret_cast<const Word*>(ptr)[x] + reinterpret_cast<const Word*>(ptr+pitch)[x] + 1) >> 1) + 
@@ -146,7 +146,7 @@ void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t n
 }
 
 
-MT_FORCEINLINE static __m256i get_mask_420_simd(const Byte *ptr, int pitch, int x) {
+MT_FORCEINLINE static __m256i get_mask_420_simd(const Byte *ptr, ptrdiff_t pitch, int x) {
     x = x*2;
 
     auto row1_lo = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(ptr+x));

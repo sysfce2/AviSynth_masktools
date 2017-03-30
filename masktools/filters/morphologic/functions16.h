@@ -18,7 +18,7 @@ enum Directions {
 
 //height should be already divised by 2
 template<Border borderMode, Operator16 op>
-void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
+void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, int maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch, int nOrigHeight) {
     UNUSED(height);
     Byte *pDstLsb = pDst + nOrigHeight * dstPitch / 2;
     const Byte *pSrcpLsb = pSrcp + nOrigHeight * srcPitch / 2;
@@ -44,7 +44,7 @@ void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pS
 }
 
 template<Border borderMode, Operator16 op>
-void process_line_morpho_native_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight) {
+void process_line_morpho_native_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch, int nOrigHeight) {
     UNUSED(dstPitch); UNUSED(srcPitch); UNUSED(height); UNUSED(nOrigHeight);
 
     const int leftOffset = borderMode == Border::Left ? 0 : 1;
@@ -67,7 +67,7 @@ void process_line_morpho_native_c(Word *pDst, const Word *pSrcp, const Word *pSr
 
 template<class T>
 struct MorphologicProcessor {
-    typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, int maxDeviation, int width, int height, int srcPitch, int dstPitch, int nOrigHeight);
+    typedef void (ProcessLineC)(T *pDst, const T *pSrcp, const T *pSrc, const T *pSrcn, int maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch, int nOrigHeight);
 
     template<ProcessLineC process_line_left, ProcessLineC process_line, ProcessLineC process_line_right>
     static void generic_16_c(T *pDst, ptrdiff_t nDstPitch, const T *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
