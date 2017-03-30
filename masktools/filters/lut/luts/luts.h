@@ -118,7 +118,7 @@ class Luts : public MaskTools::Filter
 
      for (int x = 0; x < size; x++)
        for (int y = 0; y < size; y++)
-         lut[(x << bits_per_pixel) + y] = ctx.compute_float(x, y - 1.0, -1.0, bits_per_pixel);
+         lut[(x << bits_per_pixel) + y] = ctx.compute_float(x, y, - 1.0, -1.0, bits_per_pixel);
      return lut;
    }
 
