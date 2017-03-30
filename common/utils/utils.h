@@ -131,6 +131,7 @@ static inline double fix(double a) { return _isnan(a) || !_finite(a) ? 0 : a; }
 /* abs */
 template<typename T> T abs(T x) { return x < 0 ? -x : x; }
 template<> static inline Byte abs<Byte>(Byte x) { return x; } // unsigned abs = nop
+template<> static inline Word abs<Word>(Word x) { return x; } // unsigned abs = nop
 
 /* max_value, for integer type */
 // for threshold and clip (clamp)
@@ -163,7 +164,7 @@ template<> static inline Byte convert<Byte, Double>(Double x) { return Byte(x + 
 template<> static inline Int64 convert<Int64, Double>(Double x) { return x >= 0 ? Int64(x + 0.5) : Int64(x - 0.5); }
 template<> static inline Uint64 convert<Uint64, Double>(Double x) { return Uint64(x + 0.5); }
 template<> static inline Short convert<Short, Double>(Double x) { return x >= 0 ? Short(x + 0.5) : Short(x - 0.5); }
-template<> static inline Word convert<Word, Double>(Double x) { return x >= 0 ? Word(x + 0.5) : Word(x - 0.5); }
+template<> static inline Word convert<Word, Double>(Double x) { return Word(x + 0.5); }
 template<> static inline int convert<int, Double>(Double x) { return x >= 0 ? int(x + 0.5) : int(x - 0.5); }
 
 template<> static inline Char convert<Char, Float>(Float x) { return x >= 0 ? Char(x + 0.5f) : Char(x - 0.5f); }
@@ -171,7 +172,7 @@ template<> static inline Byte convert<Byte, Float>(Float x) { return Byte(x + 0.
 template<> static inline Int64 convert<Int64, Float>(Float x) { return x >= 0 ? Int64(x + 0.5f) : Int64(x - 0.5f); }
 template<> static inline Uint64 convert<Uint64, Float>(Float x) { return Uint64(x + 0.5f); }
 template<> static inline Short convert<Short, Float>(Float x) { return x >= 0 ? Short(x + 0.5f) : Short(x - 0.5f); }
-template<> static inline Word convert<Word, Float>(Float x) { return x >= 0 ? Word(x + 0.5f) : Word(x - 0.5f); }
+template<> static inline Word convert<Word, Float>(Float x) { return Word(x + 0.5f); }
 template<> static inline int convert<int, Float>(Float x) { return x >= 0 ? int(x + 0.5f) : int(x - 0.5f); }
 
 /* rounded division */
