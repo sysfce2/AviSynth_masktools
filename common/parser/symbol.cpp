@@ -224,7 +224,7 @@ type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(value2), nParamete
 }
 
 Symbol::Symbol(String value, String value2, Type type, Process2 process) :
-  type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(value2), nParameter(1), process2(process)
+  type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(value2), nParameter(2), process2(process)
 {
 }
 
