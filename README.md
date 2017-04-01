@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.5 (20170330)**
+**Masktools2 v2.2.6 (20170401)**
 
 mod by pinterf
 
@@ -207,6 +207,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.6 (20170401)
+- fix: >>u operator AV error
+
 **v2.2.5 (20170330)
 - Change #F and #B operators to @B and @F (# is reserved for Avisynth in-string comment character)
 - Alias scaleb for @B
