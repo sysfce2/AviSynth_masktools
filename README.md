@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.6 (20170401)**
+**Masktools2 v2.2.7 (20170420)**
 
 mod by pinterf
 
@@ -8,6 +8,7 @@ Differences to Masktools 2.0b1
 
 - project moved to Visual Studio 2015 Update 3
   Requires VS2015 Update 3 redistributables
+- mt_merge at 8 bit clips: keep exact pixel values when mask is 0 or 255 (v2.2.7-)
 - Fix: mt_merge (and probably other multi-clip filters) may result in corrupted results 
   under specific circumstances, due to using video frame pointers which were already released from memory
 - no special function names for high bit depth filters
@@ -207,6 +208,11 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.7 (20170420)
+- fix: mt_edge 10,12,14 bits: clamp mask value from 65535 to 1023 (10 bits), 4095 (12 bits) and 16383 (14 bits)
+- fix: mt_merge 10-16 bits + non mod-16 width + luma=true + 4:2:2 colorspace, correct right side pixels
+- fix: mt_merge 8 bit clips: keep original pixels from clip1/2 when mask is exactly 0 or 255
+
 **v2.2.6 (20170401)
 - fix: >>u operator AV error
 
