@@ -8,8 +8,14 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
    {
       for (int y = 0; y < nHeight; ++y)
       {
-         for (int x = 0; x < nWidth; ++x)
-            pDst[x] = ((256 - int(pMask[x])) * pDst[x] + int(pMask[x]) * pSrc1[x] + 128) >> 8;
+         for (int x = 0; x < nWidth; ++x) {
+           const int nMask = pMask[x];
+           if (nMask == 255)
+             pDst[x] = pSrc1[x]; // max mask value (255): keep source
+           else if(nMask != 0)
+             pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+           // nMask == 0: keep pDst as is
+         }
          pDst += nDstPitch;
          pSrc1 += nSrc1Pitch;
          pMask += nSrc2Pitch;
@@ -25,7 +31,11 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          {
            // 420: both width and height is halved, averaging from 4 pixels of full size mask
             const int nMask = (((pMask[x * 2] + pMask[x * 2 + nSrc2Pitch] + 1) >> 1) + ((pMask[x * 2 + 1] + pMask[x * 2 + nSrc2Pitch + 1] + 1) >> 1) + 1) >> 1;
-            pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+            if (nMask == 255)
+              pDst[x] = pSrc1[x];
+            else if (nMask != 0)
+              pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+            // nMask == 0: keep pDst as is
          }
          pDst += nDstPitch;
          pSrc1 += nSrc1Pitch;
@@ -41,7 +51,11 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        for (int x = 0; x < nWidth; ++x)
        {
          const int nMask = (pMask[x * 2] + pMask[x * 2 + 1] + 1) >> 1; // 422: only width is halved, averaging from two pixels of full size mask
-         pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+         if (nMask == 255)
+           pDst[x] = pSrc1[x];
+         else if (nMask != 0)
+           pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+         // nMask == 0: keep pDst as is
        }
        pDst += nDstPitch;
        pSrc1 += nSrc1Pitch;
@@ -60,7 +74,11 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
            ((pMask[x * 4 + 0] + pMask[x * 4 + 1] + 1) >> 1) +
            ((pMask[x * 4 + 2] + pMask[x * 4 + 3] + 1) >> 1)
            + 1) >> 2; // 411: averaging from four pixels of full size mask
-         pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+         if (nMask == 255)
+           pDst[x] = pSrc1[x];
+         else if (nMask != 0)
+           pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+         // nMask == 0: keep pDst as is
        }
        pDst += nDstPitch;
        pSrc1 += nSrc1Pitch;
@@ -68,9 +86,10 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      }
    }
 
-   template <MemoryMode mem_mode>
+   // SSE2 or SSE4 because of blend
+   template <MemoryMode mem_mode, CpuFlags flags>
    MT_FORCEINLINE __m128i merge_sse2_core(Byte *pDst, const Byte *pSrc, const __m128i& mask_lo, const __m128i& mask_hi,
-      const __m128i& v128, const __m128i& zero) {
+      const __m128i& v128, const __m128i& zero, const __m128i& maxMaskFF) {
       auto dst = simd_load_si128<mem_mode>(pDst);
       auto dst_lo = _mm_unpacklo_epi8(dst, zero);
       auto dst_hi = _mm_unpackhi_epi8(dst, zero);
@@ -93,10 +112,22 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       auto result_hi = _mm_add_epi16(tmp1_hi, tmp2_hi);
       result_hi = _mm_srli_epi16(result_hi, 8);
 
-      return _mm_packus_epi16(result_lo, result_hi);
+      auto result = _mm_packus_epi16(result_lo, result_hi);
+
+      // 2.2.7:
+      // when mask is FF, keep src
+      // when mask is 00, keep dst
+      auto mask = _mm_packus_epi16(mask_lo, mask_hi);
+      auto mask_FF = _mm_cmpeq_epi8(mask, maxMaskFF); // mask == max ? FF : 00
+      auto mask_00 = _mm_cmpeq_epi8(mask, zero);
+
+      result = simd_blend_epi8<flags>(mask_FF, src, result); // ensure that max mask value returns src
+      result = simd_blend_epi8<flags>(mask_00, dst, result); // ensure that zero mask value returns dst
+
+      return result;
    }
 
-   template <MemoryMode mem_mode>
+   template <MemoryMode mem_mode, CpuFlags flags>
    void merge_sse2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
       const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
@@ -106,15 +137,18 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       auto pMask_s = pMask;
       auto v128 = _mm_set1_epi16(0x0080);
       auto zero = _mm_setzero_si128();
+      auto maxMaskFF = _mm_set1_epi8(0xFF);
       for (int j = 0; j < nHeight; ++j) {
          for (int i = 0; i < wMod16; i += 16) {
-            auto src2 = simd_load_si128<mem_mode>(pMask + i);
+            auto src2 = simd_load_si128<mem_mode>(pMask + i); // original mask
             auto mask_t1 = _mm_unpacklo_epi8(src2, zero);
             auto mask_t2 = _mm_unpackhi_epi8(src2, zero);
 
-            auto result = merge_sse2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero);
-            // remark: when mask is 255 then second clip's 255 becomes 254 and 0 becomes 1
-            // it 16 bit merge this problem is solved: special ensures that mask 255 returns second clip
+            auto result = merge_sse2_core<mem_mode, flags>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
+            // 2.2.7: applied logic: if mask == 255 -> src returned, mask == 0 -> dst is returned
+            // old behaviour:
+            // when mask is 255 then second clip's 255 becomes 254 and 0 becomes 1
+            // in 16 bit merge this problem is solved: special ensures that max mask returns second clip
             // mask 0 returns first clip
 
             simd_store_si128<mem_mode>(pDst + i, result);
@@ -129,7 +163,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       }
    }
 
-   template <MemoryMode mem_mode>
+   template <MemoryMode mem_mode, CpuFlags flags>
    void merge_luma_420_sse2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
@@ -140,6 +174,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto v255 = _mm_set1_epi16(0x00FF);
      auto v128 = _mm_set1_epi16(0x0080);
      auto zero = _mm_setzero_si128();
+     auto maxMaskFF = _mm_set1_epi8(0xFF);
      for (int j = 0; j < nHeight; ++j) {
        for (int i = 0; i < wMod16; i += 16) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 2 + 64, _MM_HINT_T0);
@@ -158,7 +193,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto mask_t1 = _mm_and_si128(avg_t1, v255);
          auto mask_t2 = _mm_and_si128(avg_t2, v255);
 
-         auto result = merge_sse2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero);
+         auto result = merge_sse2_core<mem_mode, flags>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
 
          simd_store_si128<mem_mode>(pDst + i, result);
        }
@@ -171,7 +206,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      }
    }
 
-   template <MemoryMode mem_mode>
+   template <MemoryMode mem_mode, CpuFlags flags>
    void merge_luma_422_sse2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
@@ -182,6 +217,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto v255 = _mm_set1_epi16(0x00FF);
      auto v128 = _mm_set1_epi16(0x0080);
      auto zero = _mm_setzero_si128();
+     auto maxMaskFF = _mm_set1_epi8(0xFF);
      for (int j = 0; j < nHeight; ++j) {
        for (int i = 0; i < wMod16; i += 16) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 2 + 64, _MM_HINT_T0);
@@ -195,7 +231,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto mask_t1 = _mm_and_si128(avg_t1, v255);
          auto mask_t2 = _mm_and_si128(avg_t2, v255);
 
-         auto result = merge_sse2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero);
+         auto result = merge_sse2_core<mem_mode, flags>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
 
          simd_store_si128<mem_mode>(pDst + i, result);
        }
@@ -208,7 +244,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      }
    }
 
-   template <MemoryMode mem_mode>
+   template <MemoryMode mem_mode, CpuFlags flags>
    void merge_luma_411_sse2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
@@ -219,6 +255,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto v255 = _mm_set1_epi16(0x00FF);
      auto v128 = _mm_set1_epi16(0x0080);
      auto zero = _mm_setzero_si128();
+     auto maxMaskFF = _mm_set1_epi8(0xFF);
      for (int j = 0; j < nHeight; ++j) {
        for (int i = 0; i < wMod16; i += 16) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 4 + 64, _MM_HINT_T0);
@@ -236,7 +273,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto mask_t1 = _mm_and_si128(avg_t1, v255);
          auto mask_t2 = _mm_and_si128(avg_t2, v255);
 
-         auto result = merge_sse2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero);
+         auto result = merge_sse2_core<mem_mode, flags>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
 
          simd_store_si128<mem_mode>(pDst + i, result);
        }
@@ -249,13 +286,22 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      }
    }
 
-   Processor *merge_sse2 = merge_sse2_t<MemoryMode::SSE2_UNALIGNED>;
-   Processor *merge_asse2 = merge_sse2_t<MemoryMode::SSE2_ALIGNED>;
-   Processor *merge_luma_420_sse2 = merge_luma_420_sse2_t<MemoryMode::SSE2_UNALIGNED>;
-   Processor *merge_luma_420_asse2 = merge_luma_420_sse2_t<MemoryMode::SSE2_ALIGNED>;
-   Processor *merge_luma_422_sse2 = merge_luma_422_sse2_t<MemoryMode::SSE2_UNALIGNED>;
-   Processor *merge_luma_422_asse2 = merge_luma_422_sse2_t<MemoryMode::SSE2_ALIGNED>;
-   Processor *merge_luma_411_sse2 = merge_luma_411_sse2_t<MemoryMode::SSE2_UNALIGNED>;
-   Processor *merge_luma_411_asse2 = merge_luma_411_sse2_t<MemoryMode::SSE2_ALIGNED>;
+   Processor *merge_sse2 = merge_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
+   Processor *merge_asse2 = merge_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
+   Processor *merge_luma_420_sse2 = merge_luma_420_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
+   Processor *merge_luma_420_asse2 = merge_luma_420_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
+   Processor *merge_luma_422_sse2 = merge_luma_422_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
+   Processor *merge_luma_422_asse2 = merge_luma_422_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
+   Processor *merge_luma_411_sse2 = merge_luma_411_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
+   Processor *merge_luma_411_asse2 = merge_luma_411_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
+
+   Processor *merge_sse4 = merge_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
+   Processor *merge_asse4 = merge_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_420_sse4 = merge_luma_420_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_420_asse4 = merge_luma_420_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_422_sse4 = merge_luma_422_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_422_asse4 = merge_luma_422_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_411_sse4 = merge_luma_411_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_411_asse4 = merge_luma_411_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
 
 } } } }

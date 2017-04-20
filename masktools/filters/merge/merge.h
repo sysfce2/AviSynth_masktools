@@ -27,6 +27,15 @@ extern Processor *merge_luma_422_asse2;
 extern Processor *merge_luma_411_sse2;
 extern Processor *merge_luma_411_asse2;
 
+extern Processor *merge_sse4;
+extern Processor *merge_asse4;
+extern Processor *merge_luma_420_sse4;
+extern Processor *merge_luma_420_asse4;
+extern Processor *merge_luma_422_sse4;
+extern Processor *merge_luma_422_asse4;
+extern Processor *merge_luma_411_sse4;
+extern Processor *merge_luma_411_asse4;
+
 extern Processor *merge_avx2;
 extern Processor *merge_luma_420_avx2;
 extern Processor *merge_luma_422_avx2;
@@ -254,7 +263,9 @@ public:
           processors.push_back(Filtering::Processor<Processor>(merge_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           processors.push_back(Filtering::Processor<Processor>(merge_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
           processors.push_back(Filtering::Processor<Processor>(merge_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-          processors.push_back(Filtering::Processor<Processor>(merge_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 3));
+          processors.push_back(Filtering::Processor<Processor>(merge_sse4, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+          processors.push_back(Filtering::Processor<Processor>(merge_asse4, Constraint(CPU_SSE4_1, 1, 1, 16, 16), 4));
+          processors.push_back(Filtering::Processor<Processor>(merge_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 5));
 
           /* add the chroma processors */
           // they are used only for 420 and 422
@@ -262,19 +273,25 @@ public:
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 3));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_sse4, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_asse4, Constraint(CPU_SSE4_1, 1, 1, 16, 16), 4));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 5));
           }
           else if (is422) { // 422
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 3));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_sse4, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_asse4, Constraint(CPU_SSE4_1, 1, 1, 16, 16), 4));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_422_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 5));
           }
           else {
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
             chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 3));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_sse4, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_asse4, Constraint(CPU_SSE4_1, 1, 1, 16, 16), 4));
+            chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_411_avx2, Constraint(CPU_AVX2, 1, 1, 1, 1), 5));
           }
         }
         break;
