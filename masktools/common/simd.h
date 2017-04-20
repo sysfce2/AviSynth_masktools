@@ -363,12 +363,15 @@ static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i
 }
 
 //  thresholds are decreased by half range in order to do signed comparison
-static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &vHalf) {
+template<int bits_per_pixel>
+static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &vHalf, const __m128i &maxMask) {
   auto sat = _mm_sub_epi16(value, vHalf);
   auto low = _mm_cmpgt_epi16(sat, lowThresh);
   auto high = _mm_cmpgt_epi16(sat, highThresh);
+  if (bits_per_pixel < 16)
+    high = _mm_and_si128(high, maxMask); // clamp FFFF to 03FF 0FFF or 3FFF at 10, 12 and 14 bits
   auto result = _mm_and_si128(value, low);
-  return _mm_or_si128(result, high);
+  return _mm_or_si128(result, high); 
 }
 
 template<CpuFlags flags>
