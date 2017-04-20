@@ -18,7 +18,10 @@ MT_FORCEINLINE static Word merge16_core_avx2_c(Word dst, Word src, Word mask) {
     } else if (mask == ((1 << bits_per_pixel) - 1)) {
         return src;
     } else {
-        return dst +(((src - dst) * (mask >> 1)) >> (bits_per_pixel - 1));
+      if (bits_per_pixel < 16)
+        return dst + (((src - dst) * mask) >> bits_per_pixel);
+      else
+        return dst + (((src - dst) * (mask >> 1)) >> (bits_per_pixel - 1)); // >> 1: avoid overflow
     }
 }
 
@@ -233,7 +236,7 @@ template void merge16_t_c<MASK420, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPit
 template void merge16_t_c<MASK422, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 template void merge16_t_simd<MASK444, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 template void merge16_t_simd<MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
-template void merge16_t_simd<MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
+template void merge16_t_simd<MASK422, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 
 MAKE_TEMPLATES(10)
 MAKE_TEMPLATES(12)
@@ -244,7 +247,7 @@ MAKE_TEMPLATES(16)
 #define MAKE_EXPORTS(bits_per_pixel) \
 Processor16 *merge16_##bits_per_pixel##_avx2 = merge16_t_simd< MASK444, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>; \
 Processor16 *merge16_luma_420_##bits_per_pixel##_avx2 = merge16_t_simd<MASK420, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
-Processor16 *merge16_luma_422_##bits_per_pixel##_avx2 = merge16_t_simd<MASK422, merge16_t_c<MASK420, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_422_##bits_per_pixel##_avx2 = merge16_t_simd<MASK422, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>; \
 
 MAKE_EXPORTS(10)
 MAKE_EXPORTS(12)
