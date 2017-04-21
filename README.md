@@ -1,6 +1,6 @@
 ### MaskTools 2 ###
 
-**Masktools2 v2.2.7 (20170420)**
+**Masktools2 v2.2.7 (20170421)**
 
 mod by pinterf
 
@@ -13,7 +13,7 @@ Differences to Masktools 2.0b1
   under specific circumstances, due to using video frame pointers which were already released from memory
 - no special function names for high bit depth filters
 - filters are auto registering their mt mode as MT_NICE_FILTER for Avisynth+
-- Avisynth+ high bit depth support (incl. planar RGB, but color spaces with alpha plane are not yet supported)
+- Avisynth+ high bit depth support (incl. planar RGB, color spaces with alpha plane are supported from v2.2.7)
   All filters are now supporting 10, 12, 14, 16 bits and float
   Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
   Default range of such parameters can be overridden to 8-16 bits or float.
@@ -208,10 +208,19 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.7 (20170420)
+**v2.2.7 (20170421)
 - fix: mt_edge 10,12,14 bits: clamp mask value from 65535 to 1023 (10 bits), 4095 (12 bits) and 16383 (14 bits)
 - fix: mt_merge 10-16 bits + non mod-16 width + luma=true + 4:2:2 colorspace, correct right side pixels
 - fix: mt_merge 8 bit clips: keep original pixels from clip1/2 when mask is exactly 0 or 255
+- YUVA, RGBAP support 8-32 bits
+  - "A" parameter like "Y", "U" and "V"
+  - "alpha" parameter like "chroma" - overrides default plane mode
+  - aExpr parameter for lut-type filters like uExpr, and vExpr
+  - awExpr parameter for mt_luts like uwExpr, and vwExpr
+  - dual signature filters (both integer and float) are provided in separate binaries
+    In some cases specifying two different parameter lists with the same variables can cause troubles.
+    (dual signature version can be used to override an earlierly loaded different masktools version
+    (e.g. a 2.5 plugin) by defining the filters with both integer parameters _AND_ the new float parameter lists)
 
 **v2.2.6 (20170401)
 - fix: >>u operator AV error
