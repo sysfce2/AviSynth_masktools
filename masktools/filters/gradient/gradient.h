@@ -22,8 +22,8 @@ class Gradient : public MaskTools::Filter
    ProcessorList<Processor> processors;
    ProcessorList<Processor16> processors16;
    ProcessorList<Processor32> processors32;
-   int nX[3];
-   int nY[3];
+   int nX[4];
+   int nY[4];
    int nMinimum;
    int nMaximum;
    float nMinimum_f;
@@ -34,7 +34,7 @@ class Gradient : public MaskTools::Filter
 
 protected:
 
-  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) override
   {
     UNUSED(n);
     if (bits_per_pixel == 8)

@@ -8,7 +8,7 @@ namespace Filtering {
 template<typename T>
 class Frame {
 
-   Plane<T> planes[3];
+   Plane<T> planes[4];
    Colorspace C;
 
 public:
@@ -20,10 +20,10 @@ public:
        planes[0] = plane;
    }
 
-   Frame(const Plane<T> planes[3], Colorspace C) : C(C)
+   Frame(const Plane<T> planes[4], Colorspace C) : C(C)
    {
-       assert(plane_counts[C] == 3);
-       for (int i = 0; i < 3; i++) {
+       assert(plane_counts[C] == 3 || plane_count[C] == 4);
+       for (int i = 0; i < plane_counts[C]; i++) {
            this->planes[i] = planes[i];
        }
    }
@@ -35,7 +35,16 @@ public:
        planes[1] = u;
        planes[2] = v;
    }
-   
+
+   Frame(const Plane<T> &y, const Plane<T> &u, const Plane<T> &v, const Plane<T> &a, Colorspace C) : C(C)
+   {
+     assert(plane_counts[C] == 4);
+     planes[0] = y;
+     planes[1] = u;
+     planes[2] = v;
+     planes[3] = a;
+   }
+
    Frame(T* pBuffer, int nWidth, int nHeight, Colorspace C, int nPaddingWidth = 0, int nPaddingHeight = 0) : C(C)
    {
       for ( int i = 0; i < plane_counts[C]; i++ )
@@ -71,10 +80,19 @@ public:
            y = (y / height_ratios[2][C]) * height_ratios[2][C];
            w -= x;
            h -= y;
-           return Frame<T>(planes[0].offset(x, y, w, h),
-                           planes[1].offset(x / width_ratios[1][C], y / height_ratios[1][C], w / width_ratios[1][C], h / height_ratios[1][C]),
-                           planes[2].offset(x / width_ratios[2][C], y / height_ratios[2][C], w / width_ratios[2][C], h / height_ratios[2][C]),
-                           C);
+           if (plane_counts[C] == 3) {
+             return Frame<T>(planes[0].offset(x, y, w, h),
+               planes[1].offset(x / width_ratios[1][C], y / height_ratios[1][C], w / width_ratios[1][C], h / height_ratios[1][C]),
+               planes[2].offset(x / width_ratios[2][C], y / height_ratios[2][C], w / width_ratios[2][C], h / height_ratios[2][C]),
+               C);
+           }
+           else {
+             return Frame<T>(planes[0].offset(x, y, w, h),
+               planes[1].offset(x / width_ratios[1][C], y / height_ratios[1][C], w / width_ratios[1][C], h / height_ratios[1][C]),
+               planes[2].offset(x / width_ratios[2][C], y / height_ratios[2][C], w / width_ratios[2][C], h / height_ratios[2][C]),
+               planes[3].offset(x, y, w, h), // alpha
+               C);
+           }
        } else {
            return Frame<T>(planes[0].offset(x, y, w, h));
        }
@@ -82,10 +100,17 @@ public:
 
    Frame<T> select(int paddx, int paddy) const
    {
+     if (plane_counts[C] == 4)
        return Frame<T>(planes[0].offset(paddx, paddy, width(0) - 2 * paddx, height(0) - 2 * paddy),
-                       planes[1].offset(paddx, paddy, width(1) - 2 * paddx, height(1) - 2 * paddy),
-                       planes[2].offset(paddx, paddy, width(2) - 2 * paddx, height(2) - 2 * paddy),
-                       C);
+         planes[1].offset(paddx, paddy, width(1) - 2 * paddx, height(1) - 2 * paddy),
+         planes[2].offset(paddx, paddy, width(2) - 2 * paddx, height(2) - 2 * paddy),
+         planes[3].offset(paddx, paddy, width(3) - 2 * paddx, height(3) - 2 * paddy),
+         C);
+     else
+       return Frame<T>(planes[0].offset(paddx, paddy, width(0) - 2 * paddx, height(0) - 2 * paddy),
+         planes[1].offset(paddx, paddy, width(1) - 2 * paddx, height(1) - 2 * paddy),
+         planes[2].offset(paddx, paddy, width(2) - 2 * paddx, height(2) - 2 * paddy),
+         C);
    }
 
    int width(int nPlane) const { assert( nPlane < plane_counts[C] ); return planes[nPlane].width(); }

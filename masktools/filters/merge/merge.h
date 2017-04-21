@@ -109,13 +109,13 @@ class Merge : public MaskTools::Filter
 
 protected:
 
-  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) override
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) override
   {
     UNUSED(n);
     int bits_per_pixel = bit_depths[C];
     if (parameters["stacked"].toBool())
       bits_per_pixel = 16;
-    if (use_luma && (nPlane > 0)) {
+    if (use_luma && ((nPlane == 1 || nPlane == 2))) {
       if (!(width_ratios[1][C] == 1 && height_ratios[1][C] == 1)) {
         // 420 or 422 or 411
         switch (bits_per_pixel) {
@@ -163,7 +163,7 @@ protected:
         }
       }
     }
-    else { // Y plane or luma==false
+    else { // Y or Alpha plane or luma==false
       switch (bits_per_pixel) {
       case 8:
         processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
@@ -210,7 +210,7 @@ public:
       // PF: for greyscale: graceful fallback to chromaless operation
       if (plane_counts[C] == 1) {
         use_luma = false;
-        operators[1] = operators[2] = NONE;
+        operators[1] = operators[2] = operators[3] = NONE;
       }
 
       // todo: allow 8 bit masks for 10+ bits

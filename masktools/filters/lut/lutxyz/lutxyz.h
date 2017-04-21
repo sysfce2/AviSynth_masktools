@@ -25,7 +25,7 @@ class Lutxyz : public MaskTools::Filter
         Byte *ptr;
     };
 
-   Lut luts[4];
+   Lut luts[4+1];
 
    static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr) {
        Parser::Context ctx(expr);
@@ -42,7 +42,7 @@ class Lutxyz : public MaskTools::Filter
    }
 
    // for realtime
-   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
 
    ProcessorCtx *processorCtx;
    ProcessorCtx *processorCtx16;
@@ -51,7 +51,7 @@ class Lutxyz : public MaskTools::Filter
    bool realtime;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n);
         UNUSED(constraints);
@@ -74,11 +74,11 @@ protected:
 public:
    Lutxyz(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 4; i++) {
         parsed_expressions[i] = nullptr;
       }
 
-      for (int i = 0; i < 4; ++i) {
+      for (int i = 0; i < 4+1; ++i) {
           luts[i].used = false;
           luts[i].ptr = nullptr;
       }
@@ -89,12 +89,12 @@ public:
       if (bits_per_pixel > 8)
         realtime = true;
 
-      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z);
 
       /* compute the luts */
-      for ( int i = 0; i < 3; i++ )
+      for ( int i = 0; i < 4; i++ )
       {
           if (operators[i] != PROCESS) {
               continue;
@@ -141,23 +141,23 @@ public:
               luts[i].ptr = calculateLut(parser.getExpression()); // 8 bit always
           }
           else {
-              if (luts[3].ptr == nullptr) {
-                  luts[3].used = true;
-                  luts[3].ptr = calculateLut(parser.getExpression());
+              if (luts[4].ptr == nullptr) {
+                  luts[4].used = true;
+                  luts[4].ptr = calculateLut(parser.getExpression());
               }
-              luts[i].ptr = luts[3].ptr;
+              luts[i].ptr = luts[4].ptr;
           }
       }
    }
 
    ~Lutxyz()
    {
-       for (int i = 0; i < 4; ++i) {
+       for (int i = 0; i < 4+1; ++i) {
            if (luts[i].used) {
                delete[] luts[i].ptr;
            }
        }
-       for (int i = 0; i < 3; i++) {
+       for (int i = 0; i < 4; i++) {
          delete parsed_expressions[i];
        }
    }
@@ -179,6 +179,7 @@ public:
       add_defaults( signature );
 
       signature.add(Parameter(false, "realtime", false));
+      signature.add(Parameter(String("x"), "aExpr", false));
       return signature;
    }
 };

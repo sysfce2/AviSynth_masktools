@@ -97,6 +97,40 @@ Colorspace AVSColorspaceToColorspace(int pixel_type)
    case VideoInfo::CS_RGBP16: return COLORSPACE_RGBP16;
    case VideoInfo::CS_RGBPS: return COLORSPACE_RGBPS;
 
+     // alpha support from v2.2.7
+   case VideoInfo::CS_YUVA420: return COLORSPACE_YUVA420P8;
+   case VideoInfo::CS_YUVA422: return COLORSPACE_YUVA422P8;
+   case VideoInfo::CS_YUVA444: return COLORSPACE_YUVA444P8;
+
+   case VideoInfo::CS_YUVA420P10: return COLORSPACE_YUVA420P10;
+   case VideoInfo::CS_YUVA422P10: return COLORSPACE_YUVA422P10;
+   case VideoInfo::CS_YUVA444P10: return COLORSPACE_YUVA444P10;
+
+   case VideoInfo::CS_YUVA420P12: return COLORSPACE_YUVA420P12;
+   case VideoInfo::CS_YUVA422P12: return COLORSPACE_YUVA422P12;
+   case VideoInfo::CS_YUVA444P12: return COLORSPACE_YUVA444P12;
+
+   case VideoInfo::CS_YUVA420P14: return COLORSPACE_YUVA420P14;
+   case VideoInfo::CS_YUVA422P14: return COLORSPACE_YUVA422P14;
+   case VideoInfo::CS_YUVA444P14: return COLORSPACE_YUVA444P14;
+
+   case VideoInfo::CS_YUVA420P16: return COLORSPACE_YUVA420P16;
+   case VideoInfo::CS_YUVA422P16: return COLORSPACE_YUVA422P16;
+   case VideoInfo::CS_YUVA444P16: return COLORSPACE_YUVA444P16;
+
+   case VideoInfo::CS_YUVA420PS: return COLORSPACE_YUVA420PS;
+   case VideoInfo::CS_YUVA422PS: return COLORSPACE_YUVA422PS;
+   case VideoInfo::CS_YUVA444PS: return COLORSPACE_YUVA444PS;
+
+   case VideoInfo::CS_RGBAP: return COLORSPACE_RGBAP8;
+   case VideoInfo::CS_RGBAP10: return COLORSPACE_RGBAP10;
+   case VideoInfo::CS_RGBAP12: return COLORSPACE_RGBAP12;
+   case VideoInfo::CS_RGBAP14: return COLORSPACE_RGBAP14;
+   case VideoInfo::CS_RGBAP16: return COLORSPACE_RGBAP16;
+   case VideoInfo::CS_RGBAPS: return COLORSPACE_RGBAPS;
+
+
+
 #else if defined(FILTER_AVS_25)
    case VideoInfo::CS_YUY2: return COLORSPACE_YV16;
 #endif
@@ -131,7 +165,7 @@ public:
 
     template<typename T> Frame<T> ConvertTo(const PVideoFrame& frame)
     {
-        Plane<T> planes[3];
+        Plane<T> planes[4];
 #if defined(FILTER_AVS_25)
         if ( C == COLORSPACE_YV16 )
         {

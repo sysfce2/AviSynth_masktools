@@ -25,7 +25,7 @@ class Lutxyza : public MaskTools::Filter
         Byte *ptr;
     };
 
-   Lut luts[4];
+   Lut luts[4+1];
 
    static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
        Parser::Context ctx(expr);
@@ -49,7 +49,7 @@ class Lutxyza : public MaskTools::Filter
    }
 
    // for realtime
-   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
 
    Processor *processor;
    ProcessorCtx *processorCtx;
@@ -85,11 +85,11 @@ protected:
 public:
    Lutxyza(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 4; i++) {
         parsed_expressions[i] = nullptr;
       }
 
-      for (int i = 0; i < 4; ++i) {
+      for (int i = 0; i < 4+1; ++i) {
         luts[i].used = false;
         luts[i].ptr = nullptr;
       }
@@ -104,12 +104,12 @@ public:
         realtime = true; // 4D lut is not possible on 32 bit environment
       }
 
-      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z).addSymbol(Parser::Symbol::A);
 
       /* compute the luts */
-      for ( int i = 0; i < 3; i++ )
+      for ( int i = 0; i < 4; i++ )
       {
           if (operators[i] != PROCESS) {
               continue;
@@ -159,23 +159,23 @@ public:
               luts[i].ptr = calculateLut(parser.getExpression(), 8);
           }
           else {
-              if (luts[3].ptr == nullptr) {
-                  luts[3].used = true;
-                  luts[3].ptr = calculateLut(parser.getExpression(), 8);
+              if (luts[4].ptr == nullptr) {
+                  luts[4].used = true;
+                  luts[4].ptr = calculateLut(parser.getExpression(), 8);
               }
-              luts[i].ptr = luts[3].ptr;
+              luts[i].ptr = luts[4].ptr;
           }
       }
    }
 
    ~Lutxyza()
    {
-       for (int i = 0; i < 4; ++i) {
+       for (int i = 0; i < 4+1; ++i) {
            if (luts[i].used) {
                delete[] luts[i].ptr;
            }
        }
-       for (int i = 0; i < 3; i++) {
+       for (int i = 0; i < 4; i++) {
          delete parsed_expressions[i];
        }
    }
@@ -198,6 +198,7 @@ public:
       add_defaults( signature );
 
       signature.add(Parameter(true, "realtime", false)); // 4D lut: default realtime calc.
+      signature.add(Parameter(String("x"), "aExpr", false));
       return signature;
    }
 };

@@ -21,7 +21,7 @@ extern ProcessorCtx *processors_realtime_32_array[NUM_MODES][NUM_MODES];
 
 class Lutsx : public MaskTools::Filter
 {
-   std::pair<bool, Byte*> luts[4];
+   std::pair<bool, Byte*> luts[4+1];
 
    int *pCoordinates;
    int nCoordinates;
@@ -31,7 +31,7 @@ class Lutsx : public MaskTools::Filter
    ProcessorList<ProcessorCtx> processorsCtx;
 
    // for realtime
-   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
 
    int bits_per_pixel;
    bool realtime;
@@ -68,7 +68,7 @@ class Lutsx : public MaskTools::Filter
    }
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n);
         if (realtime) {
@@ -90,7 +90,7 @@ protected:
 public:
    Lutsx(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
-     for (int i = 0; i < 3; i++) {
+     for (int i = 0; i < 4; i++) {
        parsed_expressions[i] = nullptr;
      }
 
@@ -100,9 +100,9 @@ public:
      if (bits_per_pixel > 8)
        realtime = true;
 
-      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
 
-      for (int i = 0; i < 4; ++i) {
+      for (int i = 0; i < 4+1; ++i) {
           luts[i].first = false;
           luts[i].second = nullptr;
       }
@@ -110,7 +110,7 @@ public:
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z);
 
       /* compute the luts */
-      for ( int i = 0; i < 3; i++ )
+      for ( int i = 0; i < 4; i++ )
       {
           if (operators[i] != PROCESS) {
               continue;
@@ -148,11 +148,11 @@ public:
               luts[i].second = calculateLut(parser.getExpression());
           }
           else {
-              if (luts[3].second == nullptr) {
-                  luts[3].first = true;
-                  luts[3].second = calculateLut(parser.getExpression());
+              if (luts[4].second == nullptr) {
+                  luts[4].first = true;
+                  luts[4].second = calculateLut(parser.getExpression());
               }
-              luts[i].second = luts[3].second;
+              luts[i].second = luts[4].second;
           }
       }
 
@@ -179,12 +179,12 @@ public:
 
    ~Lutsx()
    {
-       for (int i = 0; i < 4; ++i) {
+       for (int i = 0; i < 4+1; ++i) {
            if (luts[i].first) {
                delete[] luts[i].second;
            }
        }
-       for (int i = 0; i < 3; i++) {
+       for (int i = 0; i < 4; i++) {
          delete parsed_expressions[i];
        }
    }
@@ -209,6 +209,7 @@ public:
       add_defaults( signature );
 
       signature.add(Parameter(false, "realtime", false));
+      signature.add(Parameter(String("y"), "aExpr", false));
       return signature;
    }
 };

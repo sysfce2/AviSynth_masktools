@@ -26,13 +26,13 @@ protected:
 
     String error;
     CpuFlags flags;
-    Operator operators[3];
+    Operator operators[4];
 
     bool inPlace_;
     int nXOffset, nYOffset, nXOffsetUV, nYOffsetUV;
     int nCoreWidth, nCoreHeight, nCoreWidthUV, nCoreHeightUV;
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[3], const Constraint constraints[3]) = 0;
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) = 0;
    virtual InputConfiguration &input_configuration() const = 0;
 
    static Signature &add_defaults(Signature &signature)
@@ -51,6 +51,8 @@ protected:
       signature.add( Parameter( true, "sse4", false) );
       signature.add( Parameter( true, "avx", false));
       signature.add( Parameter( true, "avx2", false));
+      signature.add( Parameter( 1.0f, "A", true)); // put it at the end, don't change original parameter order
+      signature.add(Parameter(Value(String("")), "alpha", false)); // same function as "chroma", for alpha plane
 
       return signature;
    }
@@ -169,6 +171,7 @@ public:
         operators[0] = Operator((float)parameters["Y"].toFloat()); // prepare, float for memset
         operators[1] = Operator((float)parameters["U"].toFloat());
         operators[2] = Operator((float)parameters["V"].toFloat());
+        operators[3] = Operator((float)parameters["A"].toFloat()); // new from 2.2.7: alpha
 
         if (nXOffset < 0 || nXOffset > nWidth) nXOffset = 0;
         if (nYOffset < 0 || nYOffset > nHeight) nYOffset = 0;
@@ -194,8 +197,27 @@ public:
                 operators[1] = operators[2] = Operator(MEMSET, std::stof(chroma.c_str())); // atoi(chroma.c_str())
         }
 
+        if (parameters["alpha"].is_defined())
+        {
+          /* overrides alpha channel operators according to the "alpha" string v2.2.7- */
+          String alpha = parameters["alpha"].toString();
+
+          if (alpha == "process")
+            operators[3] = PROCESS;
+          else if (alpha == "copy")
+            operators[3] = COPY;
+          else if (alpha == "copy first")
+            operators[3] = COPY;
+          else if (alpha == "copy second")
+            operators[3] = COPY_SECOND;
+          else if (alpha == "copy third")
+            operators[3] = COPY_THIRD;
+          else
+            operators[3] = Operator(MEMSET, std::stof(alpha.c_str())); // atoi(chroma.c_str())
+        }
+
         /* checks the operators */
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
             if (operators[i] == COPY_THIRD && childs.size() < 3)
                 operators[i] = COPY_SECOND;
@@ -206,7 +228,7 @@ public:
         if (is_in_place())
         {
             /* in place filters copy differently */
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 4; i++)
             {
                 switch (operators[i].getMode())
                 {
@@ -218,7 +240,7 @@ public:
         }
 
         /* effective modes */
-        print(LOG_DEBUG, "modes : %i %i %i\n", operators[0].getMode(), operators[1].getMode(), operators[2].getMode());
+        print(LOG_DEBUG, "modes : %i %i %i %i\n", operators[0].getMode(), operators[1].getMode(), operators[2].getMode(), operators[3].getMode());
 
         /* cpu flags */
         if (!parameters["sse2"].toBool()) flags &= ~CPU_SSE2;
@@ -248,10 +270,10 @@ public:
 
         /* check the colorspace */
         if (C == COLORSPACE_NONE)
-            error = "masktools: unsupported colorspace, use Y8, YV12, YV16, YV24, YV411, greyscale, YUVxxxP10-16/S, Planar RGB";
+            error = "masktools: unsupported colorspace, use Y8, YV12, YV16, YV24, YV411, greyscale, YUV(A)xxxP10-16/S, Planar RGB(A)";
     }
 
-    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[3], const Frame<const byte> frames[3])
+    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4])
     {
         bool isStacked = parameters["stacked"].is_defined() && parameters["stacked"].toBool();
 
@@ -352,8 +374,8 @@ public:
     {
         Frame<Byte> output = output_frame.offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
 
-        Frame<const Byte> frames[3];
-        Constraint constraints[3];
+        Frame<const Byte> frames[4];
+        Constraint constraints[4];
 
         // PF 170211: Issue: volatile pointers
         // old: get_const_frame requested PVideoFrame frame = clip->GetFrame to a local variable, 

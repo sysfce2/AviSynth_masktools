@@ -24,11 +24,11 @@ ProcessorCtx realtime32_c;
 
 class Lut : public MaskTools::Filter
 {
-   Byte luts[3][256];
-   Word *luts16[3]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
+   Byte luts[4][256];
+   Word *luts16[4]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
 
    // for realtime
-   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
 
    Processor *processor;
    Processor16 *processor16;
@@ -40,7 +40,7 @@ class Lut : public MaskTools::Filter
    bool realtime;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n);
         UNUSED(constraints);
@@ -59,12 +59,12 @@ protected:
 public:
    Lut(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
-     for (int i = 0; i < 3; i++) {
+     for (int i = 0; i < 4; i++) {
         luts16[i] = nullptr;
         parsed_expressions[i] = nullptr;
       }
 
-      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X);
 
@@ -92,7 +92,7 @@ public:
       }
 
       /* compute the luts16 */
-      for (int i = 0; i < 3; i++)
+      for (int i = 0; i < 4; i++)
       {
         if (operators[i] != PROCESS) {
           continue;
@@ -177,7 +177,7 @@ public:
 
    ~Lut()
    {
-     for (int i = 0; i < 3; i++) {
+     for (int i = 0; i < 4; i++) {
        _aligned_free(luts16[i]);
        delete parsed_expressions[i];
      }
@@ -194,6 +194,7 @@ public:
       signature.add(Parameter(String("x"), "yExpr", false));
       signature.add(Parameter(String("x"), "uExpr", false));
       signature.add(Parameter(String("x"), "vExpr", false));
+      signature.add(Parameter(String("x"), "aExpr", false));
 
       add_defaults( signature );
 

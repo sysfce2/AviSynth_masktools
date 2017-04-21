@@ -94,11 +94,11 @@ extern Processor32 *morpho_32_avx;
 
 class EdgeMask : public MaskTools::Filter
 {
-   int nLowThresholds[3];
-   int nHighThresholds[3];
+   int nLowThresholds[4];
+   int nHighThresholds[4];
 
-   float nLowThresholds_f[3];
-   float nHighThresholds_f[3];
+   float nLowThresholds_f[4];
+   float nHighThresholds_f[4];
 
    Short matrix[10];
    Float matrix_f[10];
@@ -109,7 +109,7 @@ class EdgeMask : public MaskTools::Filter
 
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n);
         if (bit_depths[C] == 8) {
@@ -190,12 +190,16 @@ public:
        nLowThresholds_f[1] = nLowThresholds_f[2] = thC1_f;
        nHighThresholds_f[0] = thY2_f;
        nHighThresholds_f[1] = nHighThresholds_f[2] = thC2_f;
+       nLowThresholds_f[3] = thY1_f; // no separate parameter for alpha
+       nHighThresholds_f[3] = thY2_f;
      }
      else {
        nLowThresholds[0] = thY1;
        nLowThresholds[1] = nLowThresholds[2] = thC1;
        nHighThresholds[0] = thY2;
        nHighThresholds[1] = nHighThresholds[2] = thC2;
+       nLowThresholds[3] = thY1; // no separate parameter for alpha
+       nHighThresholds[3] = thY2;
      }
 
       /* add the processors */

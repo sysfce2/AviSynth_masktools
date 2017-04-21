@@ -12,12 +12,12 @@ Processor lut_c;
 
 class Lutspa : public MaskTools::Filter
 {
-   Byte *luts[3];
+   Byte *luts[4];
    int bits_per_pixel;
    int pixelsize;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n); UNUSED(frames); UNUSED(constraints);
         Functions::copy_plane(dst.data(), dst.pitch(), luts[nPlane], dst.width() * pixelsize, dst.width() * pixelsize, dst.height());
@@ -30,7 +30,7 @@ public:
       bits_per_pixel = bit_depths[C];
       pixelsize = bits_per_pixel == 8 ? 1 : (bits_per_pixel <= 16) ? 2 : 4;
 
-      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
+      static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
       bool is_relative = parameters["relative"].toBool();
       bool is_biased = parameters["biased"].toBool();
       
@@ -47,7 +47,7 @@ public:
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
 
       /* compute the luts */
-      for ( int i = 0; i < 3; i++ )
+      for ( int i = 0; i < 4; i++ )
       {
           luts[i] = nullptr;
 
@@ -126,13 +126,13 @@ public:
 
    ~Lutspa()
    {
-       for (int i = 0; i < 3; i++) {
+       for (int i = 0; i < 4; i++) {
            _aligned_free(luts[i]);
        }
    }
 
    InputConfiguration &input_configuration() const { 
-       for (int i = 0; i < 3; i++) {
+       for (int i = 0; i < 4; i++) {
            if (operators[i] == COPY) {
                return OneFrame();
            }
@@ -154,6 +154,8 @@ public:
       signature.add(Parameter(String("x"), "vExpr", false));
 
       return add_defaults( signature );
+
+      signature.add(Parameter(String("x"), "aExpr", false));
    }
 };
 

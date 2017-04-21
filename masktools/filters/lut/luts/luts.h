@@ -46,8 +46,8 @@ class Luts : public MaskTools::Filter
    ProcessorList<Processor> processors_weight;
 
    // for realtime
-   std::deque<Filtering::Parser::Symbol> *parsed_expressions[3];
-   std::deque<Filtering::Parser::Symbol> *parsed_expressions_w[3];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
+   std::deque<Filtering::Parser::Symbol> *parsed_expressions_w[4];
 
    int bits_per_pixel;
    bool realtime;
@@ -67,7 +67,7 @@ class Luts : public MaskTools::Filter
      Float *ptr;
    };
 
-   Lut_w luts_weight[4];
+   Lut_w luts_weight[4+1]; // max planes + 1
 
    static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
      Parser::Context ctx(expr);
@@ -139,7 +139,7 @@ class Luts : public MaskTools::Filter
    }
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n);
         if (realtime) {
@@ -176,20 +176,20 @@ protected:
 public:
    Luts(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
-     for (int i = 0; i < 3; i++) {
+     for (int i = 0; i < 4; i++) {
        parsed_expressions[i] = nullptr;
        parsed_expressions_w[i] = nullptr;
      }
 
-     for (int i = 0; i < 4; ++i) {
+     for (int i = 0; i < 4+1; ++i) {
        luts[i].used = false;
        luts[i].ptr = nullptr;
        luts_weight[i].used = false;
        luts_weight[i].ptr = nullptr;
      }
 
-     static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr" };
-     static const char *expr_strs_w[] = { "ywExpr", "uwExpr", "vwExpr" };
+     static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
+     static const char *expr_strs_w[] = { "ywExpr", "uwExpr", "vwExpr", "awExpr" };
 
      Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
 
@@ -220,7 +220,7 @@ public:
      bool hasWeights = false;
 
      /* compute the luts */
-     for (int i = 0; i < 3; i++)
+     for (int i = 0; i < 4; i++)
      {
        if (operators[i] != PROCESS) {
          continue;
@@ -262,11 +262,11 @@ public:
            luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
          }
          else {
-           if (luts[3].ptr == nullptr) {
-             luts[3].used = true;
-             luts[3].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+           if (luts[4].ptr == nullptr) { // 0..3 planes, 4:extra
+             luts[4].used = true;
+             luts[4].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
            }
-           luts[i].ptr = luts[3].ptr;
+           luts[i].ptr = luts[4].ptr;
          }
        }
 
@@ -315,19 +315,19 @@ public:
            }
          }
          else {
-           if (luts_weight[3].ptr == nullptr) {
-             luts_weight[3].used = true;
+           if (luts_weight[4].ptr == nullptr) {
+             luts_weight[4].used = true;
              switch (bits_per_pixel) {
-             case 8: luts_weight[3].ptr = calculateLut_w<8>(parser.getExpression()); break;
-             case 10: luts_weight[3].ptr = calculateLut_w<10>(parser.getExpression()); break;
-             case 12: luts_weight[3].ptr = calculateLut_w<12>(parser.getExpression()); break;
-             case 14: luts_weight[3].ptr = calculateLut_w<14>(parser.getExpression()); break;
+             case 8: luts_weight[4].ptr = calculateLut_w<8>(parser.getExpression()); break;
+             case 10: luts_weight[4].ptr = calculateLut_w<10>(parser.getExpression()); break;
+             case 12: luts_weight[4].ptr = calculateLut_w<12>(parser.getExpression()); break;
+             case 14: luts_weight[4].ptr = calculateLut_w<14>(parser.getExpression()); break;
 #if defined(_M_X64) || defined(__amd64__)
-             case 16: luts_weight[3].ptr = calculateLut_w<16>(parser.getExpression()); break;
+             case 16: luts_weight[4].ptr = calculateLut_w<16>(parser.getExpression()); break;
 #endif
              }
            }
-           luts_weight[i].ptr = luts_weight[3].ptr;
+           luts_weight[i].ptr = luts_weight[4].ptr;
          }
        }
      }
@@ -383,7 +383,7 @@ public:
    {
      if (pCoordinates) delete[] pCoordinates;
      
-     for (int i = 0; i < 4; ++i) {
+     for (int i = 0; i < 4+1; ++i) {
        if (luts[i].used) {
          delete[] luts[i].ptr;
        }
@@ -391,7 +391,7 @@ public:
          delete[] luts_weight[i].ptr;
        }
      }
-     for (int i = 0; i < 3; i++) {
+     for (int i = 0; i < 4; i++) {
        delete parsed_expressions[i];
        delete parsed_expressions_w[i];
      }
@@ -419,6 +419,8 @@ public:
       signature.add(Parameter(String("1"), "ywExpr", false));
       signature.add(Parameter(String("1"), "uwExpr", false));
       signature.add(Parameter(String("1"), "vwExpr", false));
+      signature.add(Parameter(String("y"), "aExpr", false));
+      signature.add(Parameter(String("1"), "awExpr", false));
       return signature;
    }
 };

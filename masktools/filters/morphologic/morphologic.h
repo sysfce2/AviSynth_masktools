@@ -13,8 +13,8 @@ typedef void (Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, 
 
 class MorphologicFilter : public MaskTools::Filter
 {
-    int nMaxDeviations[3];
-    float nMaxDeviations_f[3];
+    int nMaxDeviations[4];
+    float nMaxDeviations_f[4];
     int *coordinates_list;
     int coordinates_count;
 
@@ -30,7 +30,7 @@ protected:
     ProcessorList<Processor16> processors16;
     ProcessorList<Processor32> processors32;
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
       UNUSED(n);
       if (bits_per_pixel == 8) {
@@ -119,10 +119,12 @@ public:
       if (isFloat) {
         nMaxDeviations_f[0] = thY_f;
         nMaxDeviations_f[1] = nMaxDeviations_f[2] = thC_f;
+        nMaxDeviations_f[3] = thY_f; // no separate parameter for alpha
       }
       else {
         nMaxDeviations[0] = thY;
         nMaxDeviations[1] = nMaxDeviations[2] = thC;
+        nMaxDeviations[3] = thY; // no separate parameter for alpha
       }
 
     }

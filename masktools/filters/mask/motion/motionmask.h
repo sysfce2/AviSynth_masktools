@@ -23,12 +23,12 @@ extern Processor32 *mask32_asse2;
 
 class MotionMask : public MaskTools::Filter
 {
-   int nLowThresholds[3];
-   int nHighThresholds[3];
+   int nLowThresholds[4];
+   int nHighThresholds[4];
    int nMotionThreshold;
 
-   float nLowThresholds_f[3];
-   float nHighThresholds_f[3];
+   float nLowThresholds_f[4];
+   float nHighThresholds_f[4];
    float nMotionThreshold_f;
 
    ProcessorList<Processor> processors;
@@ -44,7 +44,7 @@ class MotionMask : public MaskTools::Filter
 
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
     {
         UNUSED(n);
         if (bits_per_pixel == 8) {
@@ -165,6 +165,8 @@ public:
       nHighThresholds_f[1] = nHighThresholds_f[2] = thC2_f;
       nMotionThreshold_f = thT_f;
       nSceneChangeValue_f = scvalue_f;
+      nLowThresholds_f[3] = thY1_f; // no separate param for alpha
+      nHighThresholds_f[3] = thY2_f;
     }
     else {
       nLowThresholds[0] = thY1;
@@ -173,6 +175,8 @@ public:
       nHighThresholds[1] = nHighThresholds[2] = thC2;
       nMotionThreshold = thT;
       nSceneChangeValue = scvalue;
+      nLowThresholds[3] = thY1; // no separate param for alpha
+      nHighThresholds[3] = thY2;
     }
 
     /* add the processors */
