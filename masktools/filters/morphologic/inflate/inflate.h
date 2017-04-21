@@ -53,7 +53,6 @@ public:
     add_defaults(signature);
 
     signature.add(Parameter(false, "stacked", false));
-    signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
     return signature;
   }
 };

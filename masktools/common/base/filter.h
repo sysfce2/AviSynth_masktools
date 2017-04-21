@@ -53,6 +53,7 @@ protected:
       signature.add( Parameter( true, "avx2", false));
       signature.add( Parameter( 1.0f, "A", true)); // put it at the end, don't change original parameter order
       signature.add(Parameter(Value(String("")), "alpha", false)); // same function as "chroma", for alpha plane
+      signature.add(Parameter(String("i8"), "paramscale", false)); // like in expressions + none
 
       return signature;
    }
@@ -172,6 +173,21 @@ public:
         operators[1] = Operator((float)parameters["U"].toFloat());
         operators[2] = Operator((float)parameters["V"].toFloat());
         operators[3] = Operator((float)parameters["A"].toFloat()); // new from 2.2.7: alpha
+
+        for (int i = 0; i < 4; i++) {
+          if (operators[i].getMode() != MEMSET) continue;
+          float op_f = operators[i].value_f();
+          int op;
+          String scalemode = parameters["paramscale"].toString();
+          bool fullscale = planes_isRGB[C];
+          int bits_per_pixel = bit_depths[C];
+          if (!ScaleParam(scalemode, op_f, bits_per_pixel, op_f, op, fullscale, false))
+          {
+            error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+            return;
+          }
+          operators[i] = -op_f;
+        }
 
         if (nXOffset < 0 || nXOffset > nWidth) nXOffset = 0;
         if (nYOffset < 0 || nYOffset > nHeight) nYOffset = 0;
