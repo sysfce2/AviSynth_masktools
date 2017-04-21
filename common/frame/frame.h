@@ -22,7 +22,7 @@ public:
 
    Frame(const Plane<T> planes[4], Colorspace C) : C(C)
    {
-       assert(plane_counts[C] == 3 || plane_count[C] == 4);
+       assert(plane_counts[C] == 3 || plane_counts[C] == 4);
        for (int i = 0; i < plane_counts[C]; i++) {
            this->planes[i] = planes[i];
        }
