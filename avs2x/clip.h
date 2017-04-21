@@ -139,8 +139,8 @@ Colorspace AVSColorspaceToColorspace(int pixel_type)
    }
 }
 
-static const int PlaneOrder[] = { PLANAR_Y, PLANAR_U, PLANAR_V };
-static const int PlaneOrderRGB[] = { PLANAR_G, PLANAR_B, PLANAR_R };
+static const int PlaneOrder[] = { PLANAR_Y, PLANAR_U, PLANAR_V, PLANAR_A };
+static const int PlaneOrderRGB[] = { PLANAR_G, PLANAR_B, PLANAR_R, PLANAR_A };
 
 /* clip class, adapted to avs25 */
 class Clip : public Filtering::Clip {
