@@ -209,6 +209,8 @@ public:
                 operators[1] = operators[2] = COPY_SECOND;
             else if (chroma == "copy third")
                 operators[1] = operators[2] = COPY_THIRD;
+            else if (chroma == "copy fourth")
+                operators[1] = operators[2] = COPY_FOURTH;
             else
                 operators[1] = operators[2] = Operator(MEMSET, std::stof(chroma.c_str())); // atoi(chroma.c_str())
         }
@@ -228,6 +230,8 @@ public:
             operators[3] = COPY_SECOND;
           else if (alpha == "copy third")
             operators[3] = COPY_THIRD;
+          else if (alpha == "copy fourth")
+            operators[3] = COPY_FOURTH;
           else
             operators[3] = Operator(MEMSET, std::stof(alpha.c_str())); // atoi(chroma.c_str())
         }
@@ -235,6 +239,8 @@ public:
         /* checks the operators */
         for (int i = 0; i < 4; i++)
         {
+            if (operators[i] == COPY_FOURTH && childs.size() < 4)
+                operators[i] = COPY_THIRD;
             if (operators[i] == COPY_THIRD && childs.size() < 3)
                 operators[i] = COPY_SECOND;
             if (operators[i] == COPY_SECOND && childs.size() < 2)
@@ -251,6 +257,7 @@ public:
                 case COPY: operators[i] = NONE; break;
                 case COPY_SECOND: operators[i] = COPY; break;
                 case COPY_THIRD: operators[i] = COPY_SECOND; break;
+                case COPY_FOURTH: operators[i] = COPY_THIRD; break;
                 }
             }
         }
@@ -346,6 +353,23 @@ public:
                 output_plane.width()*output_plane.pixelsize(), output_plane.height());
             }
             break;
+        case COPY_FOURTH:
+          if (isStacked) {
+            // msb
+            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              frames[3].plane(nPlane).data(), frames[3].plane(nPlane).pitch(),
+              output_plane.width(), output_plane.height() / 2);
+            // lsb
+            Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+              frames[3].plane(nPlane).data() + frames[3].plane(nPlane).pitch() * frames[3].plane(nPlane).origheight() / 2, frames[3].plane(nPlane).pitch(),
+              output_plane.width(), output_plane.height() / 2);
+          }
+          else {
+            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              frames[3].plane(nPlane).data(), frames[3].plane(nPlane).pitch(),
+              output_plane.width()*output_plane.pixelsize(), output_plane.height());
+          }
+          break;
         case MEMSET:
             switch (output_plane.pixelsize()) {
             case 1:

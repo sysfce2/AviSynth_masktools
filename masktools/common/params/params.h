@@ -12,6 +12,7 @@ typedef enum {
    PROCESS,
    COPY_SECOND,
    COPY_THIRD,
+   COPY_FOURTH,
 
 } Mode;
 
@@ -32,6 +33,7 @@ public:
       int _nValue = (int)_nValue_f;
       switch ( _nValue )
       {
+      case 6 : mode = COPY_FOURTH; break;
       case 5 : mode = COPY_THIRD; break;
       case 4 : mode = COPY_SECOND; break;
       case 3 : mode = PROCESS; break;
