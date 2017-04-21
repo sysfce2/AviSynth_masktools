@@ -1,4 +1,4 @@
-### MaskTools 2 ###
+﻿### MaskTools 2 ###
 
 **Masktools2 v2.2.7 (20170421)**
 
@@ -16,7 +16,12 @@ Differences to Masktools 2.0b1
 - Avisynth+ high bit depth support (incl. planar RGB, color spaces with alpha plane are supported from v2.2.7)
   All filters are now supporting 10, 12, 14, 16 bits and float
   Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
+  Y,U,V,A negative (memset) values are scaled automatically to the current bit depth (v2.2.7-) from a default 8-bit value.
   Default range of such parameters can be overridden to 8-16 bits or float.
+  Disable parameter scaling with scaleparams="none"
+- New plane mode: 6 (copy from fourth clip) for "Y", "U", "V" and "A"
+  New "chroma" and "alpha" plane mode override: "copy fourth"
+  Use for mt_lutxyza which has four clips
 - YV411 (8 bit 4:1:1) support
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
@@ -213,7 +218,7 @@ Changelog
 - fix: mt_merge 10-16 bits + non mod-16 width + luma=true + 4:2:2 colorspace, correct right side pixels
 - fix: mt_merge 8 bit clips: keep original pixels from clip1/2 when mask is exactly 0 or 255
 - YUVA, RGBAP support 8-32 bits
-  - "A" parameter like "Y", "U" and "V"
+  - "A" parameter like "Y", "U" and "V". Default value for "A" is 1 (do nothing, same as for "U" and "V")
   - "alpha" parameter like "chroma" - overrides default plane mode
   - aExpr parameter for lut-type filters like uExpr, and vExpr
   - awExpr parameter for mt_luts like uwExpr, and vwExpr
@@ -221,6 +226,11 @@ Changelog
     In some cases specifying two different parameter lists with the same variables can cause troubles.
     (dual signature version can be used to override an earlierly loaded different masktools version
     (e.g. a 2.5 plugin) by defining the filters with both integer parameters _AND_ the new float parameter lists)
+- Make "scaleparams" to work consistent with all filters and parameters:
+  parameters "Y","U","V" and "A" negative (memset) values are scaled automatically to the current bit depth from a default 8-bit value.
+- New plane mode: 6 (copy from fourth clip) for "Y", "U", "V" and "A"
+  New "chroma" and "alpha" plane mode override: "copy fourth"
+  Use for mt_lutxyza which has four clips
 
 **v2.2.6 (20170401)
 - fix: >>u operator AV error
