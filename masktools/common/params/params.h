@@ -44,7 +44,6 @@ public:
         this->nValue_f = -_nValue_f; // negate!
         this->nValue = int(this->nValue_f);
         // todo: problematic when float clip chroma is negative, shift by -0.5 later?
-        // anyway, masktools has no float support yet
         break;
       }
    }
