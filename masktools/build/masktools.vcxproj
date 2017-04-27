@@ -430,7 +430,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MT_DUAL_SIGNATURES;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -648,7 +648,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalIncludeDirectories>C:\Soft\Boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
