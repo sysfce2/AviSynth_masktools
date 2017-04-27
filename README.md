@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.7 (20170421)**
+**Masktools2 v2.2.8 (20170427)**
 
 mod by pinterf
 
@@ -16,7 +16,7 @@ Differences to Masktools 2.0b1
 - Avisynth+ high bit depth support (incl. planar RGB, color spaces with alpha plane are supported from v2.2.7)
   All filters are now supporting 10, 12, 14, 16 bits and float
   Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
-  Y,U,V,A negative (memset) values are scaled automatically to the current bit depth (v2.2.7-) from a default 8-bit value.
+  Y,U,V,A (and parameters chroma/alpha) negative (memset) values are scaled automatically to the current bit depth (v2.2.7-, chroma/alpha v.2.2.8) from a default 8-bit value.
   Default range of such parameters can be overridden to 8-16 bits or float.
   Disable parameter scaling with scaleparams="none"
 - New plane mode: 6 (copy from fourth clip) for "Y", "U", "V" and "A"
@@ -213,6 +213,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.8 (20170427)
+- Fix: "chroma" and "alpha" parameter should be scaled like "Y","U","V" and "A" when providing negative (memset) values
+
 **v2.2.7 (20170421)
 - fix: mt_edge 10,12,14 bits: clamp mask value from 65535 to 1023 (10 bits), 4095 (12 bits) and 16383 (14 bits)
 - fix: mt_merge 10-16 bits + non mod-16 width + luma=true + 4:2:2 colorspace, correct right side pixels
