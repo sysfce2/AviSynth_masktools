@@ -174,21 +174,6 @@ public:
         operators[2] = Operator((float)parameters["V"].toFloat());
         operators[3] = Operator((float)parameters["A"].toFloat()); // new from 2.2.7: alpha
 
-        for (int i = 0; i < 4; i++) {
-          if (operators[i].getMode() != MEMSET) continue;
-          float op_f = operators[i].value_f();
-          int op;
-          String scalemode = parameters["paramscale"].toString();
-          bool fullscale = planes_isRGB[C];
-          int bits_per_pixel = bit_depths[C];
-          if (!ScaleParam(scalemode, op_f, bits_per_pixel, op_f, op, fullscale, false))
-          {
-            error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
-            return;
-          }
-          operators[i] = -op_f;
-        }
-
         if (nXOffset < 0 || nXOffset > nWidth) nXOffset = 0;
         if (nYOffset < 0 || nYOffset > nHeight) nYOffset = 0;
         if (nXOffset + nCoreWidth  > nWidth  || nCoreWidth  < 0) nCoreWidth = nWidth - nXOffset;
@@ -234,6 +219,21 @@ public:
             operators[3] = COPY_FOURTH;
           else
             operators[3] = Operator(MEMSET, std::stof(alpha.c_str())); // atoi(chroma.c_str())
+        }
+
+        for (int i = 0; i < 4; i++) {
+          if (operators[i].getMode() != MEMSET) continue;
+          float op_f = operators[i].value_f();
+          int op;
+          String scalemode = parameters["paramscale"].toString();
+          bool fullscale = planes_isRGB[C];
+          int bits_per_pixel = bit_depths[C];
+          if (!ScaleParam(scalemode, op_f, bits_per_pixel, op_f, op, fullscale, false))
+          {
+            error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
+            return;
+          }
+          operators[i] = -op_f;
         }
 
         /* checks the operators */
