@@ -196,8 +196,22 @@ public:
                 operators[1] = operators[2] = COPY_THIRD;
             else if (chroma == "copy fourth")
                 operators[1] = operators[2] = COPY_FOURTH;
-            else
-                operators[1] = operators[2] = Operator(MEMSET, std::stof(chroma.c_str())); // atoi(chroma.c_str())
+            else if (chroma == "none") // 2.2.9
+                operators[1] = operators[2] = NONE;
+            else if (chroma == "ignore") // 2.2.9
+                operators[1] = operators[2] = NONE;
+            else {
+              try {
+                size_t i(0);
+                float f = std::stof(chroma.c_str(), &i);
+                operators[1] = operators[2] = Operator(MEMSET, f); // atoi(chroma.c_str())
+              }
+              catch (...)
+              {
+                error = "invalid parameter value for chroma";
+                return;
+              }
+            }
         }
 
         if (parameters["alpha"].is_defined())
@@ -217,8 +231,22 @@ public:
             operators[3] = COPY_THIRD;
           else if (alpha == "copy fourth")
             operators[3] = COPY_FOURTH;
-          else
-            operators[3] = Operator(MEMSET, std::stof(alpha.c_str())); // atoi(chroma.c_str())
+          else if (alpha == "none") // 2.2.9
+            operators[3] = NONE;
+          else if (alpha == "ignore") // 2.2.9
+            operators[3] = NONE;
+          else {
+            try {
+              size_t i(0);
+              float f = std::stof(alpha.c_str(), &i);
+              operators[3] = Operator(MEMSET, f); // atoi(chroma.c_str())
+            }
+            catch (...)
+            {
+              error = "invalid parameter value for alpha";
+              return;
+            }
+          }
         }
 
         for (int i = 0; i < 4; i++) {
