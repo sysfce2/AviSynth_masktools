@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.8 (20170427)**
+**Masktools2 v2.2.9 (20170608)**
 
 mod by pinterf
 
@@ -8,6 +8,7 @@ Differences to Masktools 2.0b1
 
 - project moved to Visual Studio 2015 Update 3
   Requires VS2015 Update 3 redistributables
+- add back "none" and "ignore" for values to "chroma" parameter (2.2.9-)
 - mt_merge at 8 bit clips: keep exact pixel values when mask is 0 or 255 (v2.2.7-)
 - Fix: mt_merge (and probably other multi-clip filters) may result in corrupted results 
   under specific circumstances, due to using video frame pointers which were already released from memory
@@ -213,6 +214,10 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.9 (20170608)
+- Add "none" and "ignore" to valid values for "chroma" and "alpha" parameters.
+- Report error for invalid "chroma" or "alpha" parameter values instead of exception
+
 **v2.2.8 (20170427)
 - Fix: "chroma" and "alpha" parameter should be scaled like "Y","U","V" and "A" when providing negative (memset) values
 
