@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.9 (20170608)**
+**Masktools2 v2.2.10 (20170612)**
 
 mod by pinterf
 
@@ -214,6 +214,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.10 (20170612)
+- Fix: luts internal buffer overflow (crash)
+
 **v2.2.9 (20170608)
 - Add "none" and "ignore" to valid values for "chroma" and "alpha" parameters.
 - Report error for invalid "chroma" or "alpha" parameter values instead of exception
