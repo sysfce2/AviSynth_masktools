@@ -216,6 +216,8 @@ https://github.com/tp7/masktools/
 Changelog
 **v2.2.10 (20170612)
 - Fix: luts internal buffer overflow (crash)
+- Speed: mt_inpand/mt_expand: 10-16 bits SSE4 (10-15x speed)
+- Speed: mt_inflate/mt_deflate 10-16 bits SSE4 (4x speed)
 
 **v2.2.9 (20170608)
 - Add "none" and "ignore" to valid values for "chroma" and "alpha" parameters.
