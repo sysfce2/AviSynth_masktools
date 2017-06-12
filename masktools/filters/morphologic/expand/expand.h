@@ -37,6 +37,15 @@ extern Processor16 *expand_vertical_native_c;
 extern Processor16 *expand_both_native_c;
 extern Processor16 *expand_custom_native_c;
 
+extern Processor16 *expand_square_sse4_16;
+extern Processor16 *expand_square_asse4_16;
+extern Processor16 *expand_horizontal_sse4_16;
+extern Processor16 *expand_horizontal_asse4_16;
+extern Processor16 *expand_vertical_sse4_16;
+extern Processor16 *expand_vertical_asse4_16;
+extern Processor16 *expand_both_sse4_16;
+extern Processor16 *expand_both_asse4_16;
+
 /* 32 bit */
 extern Processor32 *expand32_square_c;
 extern Processor32 *expand32_horizontal_c;
@@ -67,6 +76,8 @@ public:
       }
       else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(expand_square_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_square_sse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_square_asse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
       }
       else {
         processors32.push_back(Filtering::Processor<Processor32>(expand32_square_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
@@ -84,6 +95,8 @@ public:
       }
       else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(expand_horizontal_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_horizontal_sse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_horizontal_asse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
       }
       else {
         processors32.push_back(Filtering::Processor<Processor32>(expand32_horizontal_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
@@ -101,6 +114,8 @@ public:
       }
       else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(expand_vertical_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_vertical_sse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_vertical_asse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
       }
       else {
         processors32.push_back(Filtering::Processor<Processor32>(expand32_vertical_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
@@ -118,6 +133,8 @@ public:
       }
       else if (_bits_per_pixel <= 16) {
         processors16.push_back(Filtering::Processor<Processor16>(expand_both_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_both_sse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+        processors16.push_back(Filtering::Processor<Processor16>(expand_both_asse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
       }
       else {
         processors32.push_back(Filtering::Processor<Processor32>(expand32_both_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
