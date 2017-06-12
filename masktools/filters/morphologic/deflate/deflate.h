@@ -13,6 +13,10 @@ extern Processor *deflate_asse2;
 extern StackedProcessor *deflate_stacked_c;
 extern Processor16 *deflate_native_c;
 
+extern Processor16 *deflate_sse4_16;
+extern Processor16 *deflate_asse4_16;
+
+/* 32 bit */
 extern Processor32 *deflate32_c;
 
 class Deflate : public Morphologic::MorphologicFilter
@@ -35,6 +39,8 @@ public:
     }
     else if (_bits_per_pixel <= 16) {
       processors16.push_back(Filtering::Processor<Processor16>(deflate_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(deflate_sse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
+      processors16.push_back(Filtering::Processor<Processor16>(deflate_asse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
     }
     else {
       processors32.push_back(Filtering::Processor<Processor32>(deflate32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
