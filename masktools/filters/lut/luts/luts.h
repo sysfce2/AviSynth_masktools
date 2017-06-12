@@ -60,7 +60,7 @@ class Luts : public MaskTools::Filter
      Byte *ptr;
    };
 
-   Lut luts[4];
+   Lut luts[4+1];
 
    struct Lut_w {
      bool used;
