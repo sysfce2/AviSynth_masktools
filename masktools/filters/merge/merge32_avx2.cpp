@@ -3,7 +3,7 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge {
 
-   static void merge32_avx_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+   static void merge32_avx2_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
       const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
       for (int y = 0; y < nHeight; ++y)
@@ -17,7 +17,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       }
    }
 
-   static void merge32_luma_420_avx_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+   static void merge32_luma_420_avx2_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
       const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
       for (int y = 0; y < nHeight; ++y)
@@ -35,7 +35,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       }
    }
 
-   static void merge32_luma_422_avx_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+   static void merge32_luma_422_avx2_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
      for (int y = 0; y < nHeight; ++y)
@@ -52,7 +52,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
    }
 
    template <MemoryMode mem_mode>
-   MT_FORCEINLINE __m256 merge32_avx_core(Byte *pDst, const Byte *pSrc, const __m256& mask) {
+   MT_FORCEINLINE __m256 merge32_avx2_core(Byte *pDst, const Byte *pSrc, const __m256& mask) {
       // ( 1- mask) * dst + mask * src = 
       // dst - dst * mask + src * mask = 
       // dst + mask * (src - dst)
@@ -64,7 +64,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
    }
 
    template <MemoryMode mem_mode>
-   void merge32_avx_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+   void merge32_avx2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
       const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
       nWidth *= sizeof(Float);
@@ -76,7 +76,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       for (int j = 0; j < nHeight; ++j) {
          for (int i = 0; i < wMod32; i += 32) {
             auto mask = simd256_load_ps<mem_mode>(pMask + i);
-            auto result = merge32_avx_core<mem_mode>(pDst + i, pSrc1 + i, mask);
+            auto result = merge32_avx2_core<mem_mode>(pDst + i, pSrc1 + i, mask);
             simd256_store_ps<mem_mode>(pDst + i, result);
          }
          pDst += nDstPitch;
@@ -85,13 +85,13 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       }
 
       if (nWidth > wMod32) {
-         merge32_avx_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
+         merge32_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
       }
       _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
-   void merge32_luma_420_avx_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+   void merge32_luma_420_avx2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
      nWidth *= sizeof(Float);
@@ -122,7 +122,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          // make average
          auto mask = _mm256_mul_ps(avg, vOneFourth);
          
-         auto result = merge32_avx_core<mem_mode>(pDst + i, pSrc1 + i, mask);
+         auto result = merge32_avx2_core<mem_mode>(pDst + i, pSrc1 + i, mask);
 
          simd256_store_ps<mem_mode>(pDst + i, result);
        }
@@ -131,13 +131,13 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        pMask += nSrc2Pitch * 2;
      }
      if (nWidth > wMod32) {
-       merge32_luma_420_avx_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
+       merge32_luma_420_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
      }
      _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
-   void merge32_luma_422_avx_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+   void merge32_luma_422_avx2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
      nWidth *= sizeof(Float);
@@ -159,7 +159,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          avg = _mm256_castpd_ps(_mm256_permute4x64_pd(_mm256_castps_pd(avg), (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6)));
          // make average
          auto mask = _mm256_mul_ps(avg, vHalf);
-         auto result = merge32_avx_core<mem_mode>(pDst + i, pSrc1 + i, mask);
+         auto result = merge32_avx2_core<mem_mode>(pDst + i, pSrc1 + i, mask);
 
          simd256_store_ps<mem_mode>(pDst + i, result);
        }
@@ -168,14 +168,14 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        pMask += nSrc2Pitch;
      }
      if (nWidth > wMod32) {
-       merge32_luma_422_avx_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
+       merge32_luma_422_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
      }
      _mm256_zeroupper();
    }
 
 
-   Processor32 *merge32_avx = merge32_avx_t<MemoryMode::SSE2_UNALIGNED>;
-   Processor32 *merge32_luma_420_avx = merge32_luma_420_avx_t<MemoryMode::SSE2_UNALIGNED>;
-   Processor32 *merge32_luma_422_avx = merge32_luma_422_avx_t<MemoryMode::SSE2_UNALIGNED>;
+   Processor32 *merge32_avx2 = merge32_avx2_t<MemoryMode::SSE2_UNALIGNED>;
+   Processor32 *merge32_luma_420_avx2 = merge32_luma_420_avx2_t<MemoryMode::SSE2_UNALIGNED>;
+   Processor32 *merge32_luma_422_avx2 = merge32_luma_422_avx2_t<MemoryMode::SSE2_UNALIGNED>;
 
 } } } }

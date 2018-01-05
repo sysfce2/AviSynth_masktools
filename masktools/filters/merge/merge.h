@@ -92,9 +92,9 @@ extern Processor32 *merge32_luma_420_sse2;
 extern Processor32 *merge32_luma_420_asse2;
 extern Processor32 *merge32_luma_422_sse2;
 extern Processor32 *merge32_luma_422_asse2;
-extern Processor32 *merge32_avx;
-extern Processor32 *merge32_luma_420_avx;
-extern Processor32 *merge32_luma_422_avx;
+extern Processor32 *merge32_avx2;
+extern Processor32 *merge32_luma_420_avx2;
+extern Processor32 *merge32_luma_422_avx2;
 
 class Merge : public MaskTools::Filter
 {
@@ -336,7 +336,7 @@ public:
         processors32.push_back(Filtering::Processor<Processor32>(merge32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
         processors32.push_back(Filtering::Processor<Processor32>(merge32_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
         processors32.push_back(Filtering::Processor<Processor32>(merge32_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-        processors32.push_back(Filtering::Processor<Processor32>(merge32_avx, Constraint(CPU_AVX, 1, 1, 1, 1), 3));
+        processors32.push_back(Filtering::Processor<Processor32>(merge32_avx2, Constraint(CPU_AVX, 1, 1, 1, 1), 3));
 
         /* add the chroma processors */
         // they are used only for 420 and 422
@@ -344,13 +344,13 @@ public:
           chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
           chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_avx, Constraint(CPU_AVX, 1, 1, 1, 1), 3));
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_avx2, Constraint(CPU_AVX, 1, 1, 1, 1), 3));
         }
         else if (is422) { // 422
           chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
           chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
           chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
-          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_avx, Constraint(CPU_AVX, 1, 1, 1, 1), 3));
+          chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_422_avx2, Constraint(CPU_AVX, 1, 1, 1, 1), 3));
         }
         break;
       }
