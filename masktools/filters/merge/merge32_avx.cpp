@@ -110,11 +110,18 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto src2_row1_t2 = simd256_load_ps<mem_mode>(pMask + i * 2 + 32);
          auto src2_row2_t1 = simd256_load_ps<mem_mode>(pMask + nSrc2Pitch + i * 2);
          auto src2_row2_t2 = simd256_load_ps<mem_mode>(pMask + nSrc2Pitch + i * 2 + 32);
-         auto tmp1 = _mm256_add_ps(src2_row1_t1, src2_row2_t1);
-         auto tmp2 = _mm256_add_ps(src2_row1_t2, src2_row2_t2);
-         auto sum = _mm256_add_ps(tmp1, tmp2);
-         auto mask = _mm256_mul_ps(sum, vOneFourth);
 
+         // sum vertically
+         auto avg_lo = _mm256_add_ps(src2_row1_t1, src2_row2_t1);
+         auto avg_hi = _mm256_add_ps(src2_row1_t2, src2_row2_t2);
+
+         // sum horizontally, 128bit lanes
+         auto avg = _mm256_hadd_ps(avg_lo, avg_hi);
+         // adjust across lanes
+         avg = _mm256_castpd_ps(_mm256_permute4x64_pd(_mm256_castps_pd(avg), (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6)));
+         // make average
+         auto mask = _mm256_mul_ps(avg, vOneFourth);
+         
          auto result = merge32_avx_core<mem_mode>(pDst + i, pSrc1 + i, mask);
 
          simd256_store_ps<mem_mode>(pDst + i, result);
@@ -146,8 +153,12 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          // preparing mask
          auto mask_row_t1 = simd256_load_ps<mem_mode>(pMask + i * 2);
          auto mask_row_t2 = simd256_load_ps<mem_mode>(pMask + i * 2 + 32);
-         auto sum = _mm256_add_ps(mask_row_t1, mask_row_t2);
-         auto mask = _mm256_mul_ps(sum, vHalf);
+         // sum horizontally, 128bit lanes
+         auto avg = _mm256_hadd_ps(mask_row_t1, mask_row_t2);
+         // adjust across lanes
+         avg = _mm256_castpd_ps(_mm256_permute4x64_pd(_mm256_castps_pd(avg), (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6)));
+         // make average
+         auto mask = _mm256_mul_ps(avg, vHalf);
          auto result = merge32_avx_core<mem_mode>(pDst + i, pSrc1 + i, mask);
 
          simd256_store_ps<mem_mode>(pDst + i, result);
