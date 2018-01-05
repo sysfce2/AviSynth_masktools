@@ -540,6 +540,36 @@ static MT_FORCEINLINE void write_word_stacked_simd(Byte *pMsb, Byte *pLsb, int x
     _mm_storel_epi64(reinterpret_cast<__m128i*>(pLsb+x), result_lsb);
 }
 
+// simulate real 256 bit byte-shift (not 2x128 lanes)
+template<BYTE shiftcount>
+MT_FORCEINLINE __m256i _MM256_SLLI_SI256(__m256i a)
+{
+  if (shiftcount == 0)
+    return a;
+  if (shiftcount < 16)
+    return _mm256_alignr_epi8(a, _mm256_permute2x128_si256(a, a, _MM_SHUFFLE(0, 0, 2, 0)), 16 - shiftcount);
+  if (shiftcount == 16)
+    return _mm256_permute2x128_si256(a, a, _MM_SHUFFLE(0, 0, 2, 0));
+  if (shiftcount < 32)
+    return _mm256_slli_si256(_mm256_permute2x128_si256(a, a, _MM_SHUFFLE(0, 0, 2, 0)), shiftcount - 16);
+  return _mm256_setzero_si256();
+}
+
+// simulate real 256 bit byte-shift (not 2x128 lanes)
+template<BYTE shiftcount>
+MT_FORCEINLINE __m256i _MM256_SRLI_SI256(__m256i a)
+{
+  if (shiftcount == 0)
+    return a;
+  if (shiftcount < 16)
+    return _mm256_alignr_epi8(_mm256_permute2x128_si256(a, a, _MM_SHUFFLE(2, 0, 0, 1)), a, shiftcount);
+  if (shiftcount == 16)
+    return _mm256_permute2x128_si256(a, a, _MM_SHUFFLE(2, 0, 0, 1));
+  if (shiftcount < 32)
+    return _mm256_srli_si256(_mm256_permute2x128_si256(a, a, _MM_SHUFFLE(2, 0, 0, 1)), shiftcount - 16);
+  return _mm256_setzero_si256();
+}
+
 }
 
 #endif __Mt_SIMD_H__
