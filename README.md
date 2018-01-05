@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.10 (20170612)**
+**Masktools2 v2.2.11 (20180105)**
 
 mod by pinterf
 
@@ -214,6 +214,10 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.11 (20180105)
+- Fix: mt_merge luma=true: broken output when: 8-16 bits AVX2, 32 bit float: SSE2, AVX
+- move project to VS2017, vs141_xp toolset
+
 **v2.2.10 (20170612)
 - Fix: luts internal buffer overflow (crash)
 - Speed: mt_inpand/mt_expand: 10-16 bits SSE4 (10-15x speed)
