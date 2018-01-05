@@ -26,7 +26,7 @@ MT_FORCEINLINE static Word merge16_core_c(Word dst, Word src, Word mask) {
 }
 
 template <CpuFlags flags>
-MT_FORCEINLINE static __m128i get_single_mask_value(const __m128i &row1_lo, const __m128i &row1_hi, const __m128i &row2_lo, const __m128i &row2_hi) {
+MT_FORCEINLINE static __m128i get_single_mask_value_420(const __m128i &row1_lo, const __m128i &row1_hi, const __m128i &row2_lo, const __m128i &row2_hi) {
     auto avg_lo = _mm_avg_epu16(row1_lo, row2_lo);
     auto avg_hi = _mm_avg_epu16(row1_hi, row2_hi);
 
@@ -191,7 +191,7 @@ MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const 
     auto row2_lo = read_word_stacked_simd(pMsb+pitch, pLsb+pitch, x);
     auto row2_hi = read_word_stacked_simd(pMsb+pitch, pLsb+pitch, x+8);
 
-    return get_single_mask_value<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
+    return get_single_mask_value_420<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
 }
 
 template <CpuFlags flags>
@@ -320,7 +320,7 @@ MT_FORCEINLINE static __m128i get_mask_420_simd(const Byte *ptr, ptrdiff_t pitch
     auto row2_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+pitch+x));
     auto row2_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr+pitch+x+16));
 
-    return get_single_mask_value<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
+    return get_single_mask_value_420<flags>(row1_lo, row1_hi, row2_lo, row2_hi);
 }
 
 template <CpuFlags flags>
