@@ -25,33 +25,33 @@ MT_FORCEINLINE static Word merge16_core_avx2_c(Word dst, Word src, Word mask) {
     }
 }
 
-MT_FORCEINLINE static __m256i get_single_mask_value(const __m256i &row1_lo, const __m256i &row1_hi, const __m256i &row2_lo, const __m256i &row2_hi) {
+MT_FORCEINLINE static __m256i get_single_mask_value_420(const __m256i &row1_lo, const __m256i &row1_hi, const __m256i &row2_lo, const __m256i &row2_hi) {
     auto avg_lo = _mm256_avg_epu16(row1_lo, row2_lo);
     auto avg_hi = _mm256_avg_epu16(row1_hi, row2_hi);
 
-    auto avg_lo_sh = _mm256_srli_si256(avg_lo, 2);
+    auto avg_lo_sh = _mm256_srli_si256(avg_lo, 2);  // srli with 2x128 lane is OK here
     auto avg_hi_sh = _mm256_srli_si256(avg_hi, 2);
+    
+    auto mask = _mm256_set1_epi32(0x0000FFFF);
 
-    avg_lo = _mm256_avg_epu16(avg_lo, avg_lo_sh);
-    avg_hi = _mm256_avg_epu16(avg_hi, avg_hi_sh);
-
-    avg_lo = _mm256_shuffle_epi8(avg_lo, _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0)); // 2x the same
-    avg_hi = _mm256_shuffle_epi8(avg_hi, _mm256_set_epi8(13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0 ,0 ,0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-
-    return simd256_blend_epi8(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0), avg_hi, avg_lo);
+    avg_lo = _mm256_and_si256(_mm256_avg_epu16(avg_lo, avg_lo_sh), mask); // upper 16 bit of each 32 bits are crap, mask it
+    avg_hi = _mm256_and_si256(_mm256_avg_epu16(avg_hi, avg_hi_sh), mask);
+    
+    auto avg = _mm256_packus_epi32(avg_lo, avg_hi); // avg_lo_lo128->64, avg_hi_lo128->64, avg_lo_hi128->64, avg_hi_hi128->64
+    return _mm256_permute4x64_epi64(avg, (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6));
 }
 
 MT_FORCEINLINE static __m256i get_single_mask_value_422(const __m256i &row1_lo, const __m256i &row1_hi) {
-  auto row1_lo_sh = _mm256_srli_si256(row1_lo, 2);
+  auto row1_lo_sh = _mm256_srli_si256(row1_lo, 2);  // srli with 2x128 lane is OK here
   auto row1_hi_sh = _mm256_srli_si256(row1_hi, 2);
 
-  auto avg_lo = _mm256_avg_epu16(row1_lo, row1_lo_sh);
-  auto avg_hi = _mm256_avg_epu16(row1_hi, row1_hi_sh);
+  auto mask = _mm256_set1_epi32(0x0000FFFF);
 
-  avg_lo = _mm256_shuffle_epi8(avg_lo, _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0)); // 2x the same
-  avg_hi = _mm256_shuffle_epi8(avg_hi, _mm256_set_epi8(13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  auto avg_lo = _mm256_and_si256(_mm256_avg_epu16(row1_lo, row1_lo_sh), mask);
+  auto avg_hi = _mm256_and_si256(_mm256_avg_epu16(row1_hi, row1_hi_sh), mask);
 
-  return simd256_blend_epi8(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0), avg_hi, avg_lo);
+  auto avg = _mm256_packus_epi32(avg_lo, avg_hi); // avg_lo_lo128->64, avg_hi_lo128->64, avg_lo_hi128->64, avg_hi_hi128->64
+  return _mm256_permute4x64_epi64(avg, (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6));
 }
 
 template<int bits_per_pixel>
@@ -157,7 +157,7 @@ MT_FORCEINLINE static __m256i get_mask_420_simd(const Byte *ptr, ptrdiff_t pitch
     auto row2_lo = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(ptr+pitch+x));
     auto row2_hi = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(ptr+pitch+x+32));
 
-    return get_single_mask_value(row1_lo, row1_hi, row2_lo, row2_hi);
+    return get_single_mask_value_420(row1_lo, row1_hi, row2_lo, row2_hi);
 }
 
 MT_FORCEINLINE static __m256i get_mask_422_simd(const Byte *ptr, int x) {
@@ -184,7 +184,7 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
 
     auto zero = _mm256_setzero_si256();
 #pragma warning(disable: 4309)
-    auto max_pixel_value = _mm256_set1_epi16(max); // for checking max
+    auto max_pixel_value = _mm256_set1_epi16((short)max); // for checking max
 #pragma warning(default: 4309)
 
     for ( int j = 0; j < nHeight; ++j ) {

@@ -159,7 +159,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       }
       _mm256_zeroupper();
    }
-
+   
    template <MemoryMode mem_mode>
    void merge_luma_420_avx2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
@@ -183,13 +183,15 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto src2_row2_t2 = simd256_load_si256<mem_mode>(pMask + nSrc2Pitch + i * 2 + 32);
          auto avg_t1 = _mm256_avg_epu8(src2_row1_t1, src2_row2_t1);
          auto avg_t2 = _mm256_avg_epu8(src2_row1_t2, src2_row2_t2);
-         auto shifted_t1 = _mm256_srli_si256(avg_t1, 1);
-         auto shifted_t2 = _mm256_srli_si256(avg_t2, 1);
+         auto shifted_t1 = _mm256_srli_si256(avg_t1,1); // srli with 2x128 lane is OK here
+         auto shifted_t2 = _mm256_srli_si256(avg_t2,1);
          avg_t1 = _mm256_avg_epu8(avg_t1, shifted_t1);
          avg_t2 = _mm256_avg_epu8(avg_t2, shifted_t2);
-         auto mask_t1 = _mm256_and_si256(avg_t1, v255);
-         auto mask_t2 = _mm256_and_si256(avg_t2, v255);
-
+         // adjust 128bit lanes to match 128bit lane-aware unpacks inside _core
+         auto mask_t1 = _mm256_permute2x128_si256(avg_t1, avg_t2, (0 << 0) + (2 << 4)); // 0: src1lo 1:src1hi 2:src2lo 3:src2hi
+         auto mask_t2 = _mm256_permute2x128_si256(avg_t1, avg_t2, (1 << 0) + (3 << 4));
+         mask_t1 = _mm256_and_si256(mask_t1, v255);
+         mask_t2 = _mm256_and_si256(mask_t2, v255);
          auto result = merge_avx2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
 
          simd256_store_si256<mem_mode>(pDst + i, result);
@@ -222,12 +224,15 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          // preparing mask
          auto src2_row1_t1 = simd256_load_si256<mem_mode>(pMask + i * 2);
          auto src2_row1_t2 = simd256_load_si256<mem_mode>(pMask + i * 2 + 32);
-         auto shifted_t1 = _mm256_srli_si256(src2_row1_t1, 1);
+         auto shifted_t1 = _mm256_srli_si256(src2_row1_t1, 1); // srli with 2x128 lane is OK here
          auto shifted_t2 = _mm256_srli_si256(src2_row1_t2, 1);
          auto avg_t1 = _mm256_avg_epu8(src2_row1_t1, shifted_t1);
          auto avg_t2 = _mm256_avg_epu8(src2_row1_t2, shifted_t2);
-         auto mask_t1 = _mm256_and_si256(avg_t1, v255);
-         auto mask_t2 = _mm256_and_si256(avg_t2, v255);
+         // adjust 128bit lanes to match 128bit lane-aware unpacks inside _core
+         auto mask_t1 = _mm256_permute2x128_si256(avg_t1, avg_t2, (0 << 0) + (2 << 4)); // 0: src1lo 1:src1hi 2:src2lo 3:src2hi
+         auto mask_t2 = _mm256_permute2x128_si256(avg_t1, avg_t2, (1 << 0) + (3 << 4)); // 0: src1lo 1:src1hi 2:src2lo 3:src2hi
+         mask_t1 = _mm256_and_si256(mask_t1, v255);
+         mask_t2 = _mm256_and_si256(mask_t2, v255);
 
          auto result = merge_avx2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
 
@@ -265,13 +270,15 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto src2_row2_t2 = simd256_load_si256<mem_mode>(pMask + i * 4 + 3*32);
          auto avg_t1 = _mm256_avg_epu8(src2_row1_t1, src2_row2_t1);
          auto avg_t2 = _mm256_avg_epu8(src2_row1_t2, src2_row2_t2);
-         auto shifted_t1 = _mm256_srli_si256(avg_t1, 1);
-         auto shifted_t2 = _mm256_srli_si256(avg_t2, 1);
+         auto shifted_t1 = _mm256_srli_si256(src2_row1_t1, 1); // srli with 2x128 lane is OK here
+         auto shifted_t2 = _mm256_srli_si256(src2_row1_t2, 1);
          avg_t1 = _mm256_avg_epu8(avg_t1, shifted_t1);
          avg_t2 = _mm256_avg_epu8(avg_t2, shifted_t2);
-         auto mask_t1 = _mm256_and_si256(avg_t1, v255);
-         auto mask_t2 = _mm256_and_si256(avg_t2, v255);
-         
+         auto mask_t1 = _mm256_permute2x128_si256(avg_t1, avg_t2, (0 << 0) + (2 << 4)); // 0: src1lo 1:src1hi 2:src2lo 3:src2hi
+         auto mask_t2 = _mm256_permute2x128_si256(avg_t1, avg_t2, (1 << 0) + (3 << 4)); // 0: src1lo 1:src1hi 2:src2lo 3:src2hi
+         mask_t1 = _mm256_and_si256(mask_t1, v255);
+         mask_t2 = _mm256_and_si256(mask_t2, v255);
+
          auto result = merge_avx2_core<mem_mode>(pDst + i, pSrc1 + i, mask_t1, mask_t2, v128, zero, maxMaskFF);
 
          simd256_store_si256<mem_mode>(pDst + i, result);
