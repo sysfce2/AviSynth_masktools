@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.11 (20180105)**
+**Masktools2 v2.2.12 (20180107)**
 
 mod by pinterf
 
@@ -214,6 +214,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.12 (20180107)
+- Fix: mt_merge 10-16 bits: right side artifacts when clip is non-mod 8 (non-AVX2) or mod16 (AVX2) widths
+
 **v2.2.11 (20180105)
 - Fix: mt_merge luma=true: broken output when: 8-16 bits AVX2, 32 bit float: SSE2, AVX
 - move project to VS2017, vs141_xp toolset
