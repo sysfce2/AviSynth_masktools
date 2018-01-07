@@ -26,31 +26,39 @@ MT_FORCEINLINE static Word merge16_core_avx2_c(Word dst, Word src, Word mask) {
 }
 
 MT_FORCEINLINE static __m256i get_single_mask_value_420(const __m256i &row1_lo, const __m256i &row1_hi, const __m256i &row2_lo, const __m256i &row2_hi) {
-    auto avg_lo = _mm256_avg_epu16(row1_lo, row2_lo);
-    auto avg_hi = _mm256_avg_epu16(row1_hi, row2_hi);
+  auto avg_lo = _mm256_avg_epu16(row1_lo, row2_lo);
+  auto avg_hi = _mm256_avg_epu16(row1_hi, row2_hi);
 
-    auto avg_lo_sh = _mm256_srli_si256(avg_lo, 2);  // srli with 2x128 lane is OK here
-    auto avg_hi_sh = _mm256_srli_si256(avg_hi, 2);
-    
-    auto mask = _mm256_set1_epi32(0x0000FFFF);
+  auto avg_lo_sh = _mm256_srli_si256(avg_lo, 2);  // shift one pixel, srli with 2x128 lane is OK here
+  auto avg_hi_sh = _mm256_srli_si256(avg_hi, 2);
 
-    avg_lo = _mm256_and_si256(_mm256_avg_epu16(avg_lo, avg_lo_sh), mask); // upper 16 bit of each 32 bits are crap, mask it
-    avg_hi = _mm256_and_si256(_mm256_avg_epu16(avg_hi, avg_hi_sh), mask);
-    
-    auto avg = _mm256_packus_epi32(avg_lo, avg_hi); // avg_lo_lo128->64, avg_hi_lo128->64, avg_lo_hi128->64, avg_hi_hi128->64
-    return _mm256_permute4x64_epi64(avg, (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6));
+  avg_lo = _mm256_avg_epu16(avg_lo, avg_lo_sh); // upper 16 bit of each 32 bits are crap, mask it
+  avg_lo = _mm256_shuffle_epi8(avg_lo, _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0));
+
+  avg_hi = _mm256_avg_epu16(avg_hi, avg_hi_sh);
+  avg_hi = _mm256_shuffle_epi8(avg_hi, _mm256_set_epi8(13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+  
+  auto avg = simd256_blend_epi8(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0), avg_hi, avg_lo);
+
+  // avg_lo_lo128->64, avg_hi_lo128->64, avg_lo_hi128->64, avg_hi_hi128->64
+
+  return _mm256_permute4x64_epi64(avg, (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6));
 }
 
 MT_FORCEINLINE static __m256i get_single_mask_value_422(const __m256i &row1_lo, const __m256i &row1_hi) {
-  auto row1_lo_sh = _mm256_srli_si256(row1_lo, 2);  // srli with 2x128 lane is OK here
+  auto row1_lo_sh = _mm256_srli_si256(row1_lo, 2);  // shift one pixel, srli with 2x128 lane is OK here
   auto row1_hi_sh = _mm256_srli_si256(row1_hi, 2);
 
-  auto mask = _mm256_set1_epi32(0x0000FFFF);
+  auto avg_lo = _mm256_avg_epu16(row1_lo, row1_lo_sh); // upper 16 bit of each 32 bits are crap, mask it
+  avg_lo = _mm256_shuffle_epi8(avg_lo, _mm256_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0));
 
-  auto avg_lo = _mm256_and_si256(_mm256_avg_epu16(row1_lo, row1_lo_sh), mask);
-  auto avg_hi = _mm256_and_si256(_mm256_avg_epu16(row1_hi, row1_hi_sh), mask);
+  auto avg_hi = _mm256_avg_epu16(row1_hi, row1_hi_sh);
+  avg_hi = _mm256_shuffle_epi8(avg_hi, _mm256_set_epi8(13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 12, 9, 8, 5, 4, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 
-  auto avg = _mm256_packus_epi32(avg_lo, avg_hi); // avg_lo_lo128->64, avg_hi_lo128->64, avg_lo_hi128->64, avg_hi_hi128->64
+  auto avg = simd256_blend_epi8(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0), avg_hi, avg_lo);
+
+  // avg_lo_lo128->64, avg_hi_lo128->64, avg_lo_hi128->64, avg_hi_hi128->64
+
   return _mm256_permute4x64_epi64(avg, (0 << 0) + (2 << 2) + (1 << 4) + (3 << 6));
 }
 
@@ -62,39 +70,48 @@ MT_FORCEINLINE static __m256i merge_core_simd(const __m256i &dst, const __m256i 
   auto src_lo = _mm256_unpacklo_epi16(src, zero);
   auto src_hi = _mm256_unpackhi_epi16(src, zero);
 
+  auto diff_lo = _mm256_sub_epi32(src_lo, dst_lo); // diff = src-dst
+  auto diff_hi = _mm256_sub_epi32(src_hi, dst_hi);
+
   auto mask_lo = _mm256_unpacklo_epi16(mask, zero);
   auto mask_hi = _mm256_unpackhi_epi16(mask, zero);
 
   // return dst +(((src - dst) * (mask >> 1)) >> (bits_per_pixel - 1));
 
-  auto diff_lo = _mm256_sub_epi32(src_lo, dst_lo); // diff = src-dst
-  auto diff_hi = _mm256_sub_epi32(src_hi, dst_hi);
+  __m256i lerp_lo, lerp_hi;
+  __m256i result_lo, result_hi;
 
-  auto smask_lo = _mm256_srai_epi32(mask_lo, 1); // smask = (src-dst)>>1
-  auto smask_hi = _mm256_srai_epi32(mask_hi, 1);
+  if (bits_per_pixel == 16) {
+    auto smask_lo = _mm256_srai_epi32(mask_lo, 1); // smask = mask>>1 to avoid int mul overflow
+    auto smask_hi = _mm256_srai_epi32(mask_hi, 1);
 
-  auto lerp_lo = simd256_mullo_epi32(diff_lo, smask_lo);
-  auto lerp_hi = simd256_mullo_epi32(diff_hi, smask_hi);
+    lerp_lo = simd256_mullo_epi32(diff_lo, smask_lo);
+    lerp_lo = _mm256_srai_epi32(lerp_lo, bits_per_pixel - 1); // for n bit, shr (n-1), scale back
 
-  lerp_lo = _mm256_srai_epi32(lerp_lo, bits_per_pixel - 1); // for 16 bit, shr 15, scale back
-  lerp_hi = _mm256_srai_epi32(lerp_hi, bits_per_pixel - 1);
+    lerp_hi = simd256_mullo_epi32(diff_hi, smask_hi);
+    lerp_hi = _mm256_srai_epi32(lerp_hi, bits_per_pixel - 1);
 
-  auto result_lo = _mm256_add_epi32(dst_lo, lerp_lo);
-  auto result_hi = _mm256_add_epi32(dst_hi, lerp_hi);
+    result_lo = _mm256_add_epi32(dst_lo, lerp_lo);
+    result_hi = _mm256_add_epi32(dst_hi, lerp_hi);
+  }
+  else {
+    lerp_lo = simd256_mullo_epi32(diff_lo, mask_lo);
+    lerp_lo = _mm256_srai_epi32(lerp_lo, bits_per_pixel);
+    result_lo = _mm256_add_epi32(dst_lo, lerp_lo);
+
+    lerp_hi = simd256_mullo_epi32(diff_hi, mask_hi);
+    lerp_hi = _mm256_srai_epi32(lerp_hi, bits_per_pixel);
+    result_hi = _mm256_add_epi32(dst_hi, lerp_hi);
+  }
 
   auto result = _mm256_packus_epi32(result_lo, result_hi);
   if (bits_per_pixel < 16) // otherwise no clamp needed
-    result = _mm256_min_epi16(result, max_pixel_value); 
+    result = _mm256_min_epu16(result, max_pixel_value); 
 
-  __m256i mask_FFFF;
-  if (bits_per_pixel < 16) // paranoia 
-    mask_FFFF = _MM256_CMPLE_EPU16(max_pixel_value, mask); // mask >= max_value ? FFFF : 0000 -> max_value <= mask 
-  else
-    mask_FFFF = _mm256_cmpeq_epi16(mask, max_pixel_value); // mask == max ? FFFF : 0000
+  auto mask_FFFF = _mm256_cmpeq_epi16(mask, max_pixel_value); // mask == max ? FFFF : 0000
   auto mask_zero = _mm256_cmpeq_epi16(mask, zero);
-
-  result = simd256_blend_epi8(mask_FFFF, src, result); // ensure that max mask value returns src
   result = simd256_blend_epi8(mask_zero, dst, result); // ensure that zero mask value returns dst
+  result = simd256_blend_epi8(mask_FFFF, src, result); // ensure that max mask value returns src
 
   return result;
 }
@@ -194,19 +211,14 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
             __m256i mask;
 
             if (mode == MASK420) {
-                mask = get_mask_420_simd(pMask, nMaskPitch, i);
+              mask = get_mask_420_simd(pMask, nMaskPitch, i); 
             } else if (mode == MASK422) {
-                mask = get_mask_422_simd(pMask, i);
-              }
-              else {
-                mask = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(pMask+i));
+              mask = get_mask_422_simd(pMask, i);
+            } else {
+              mask = simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m256i*>(pMask + i));
             }
 
-            __m256i result;
-            if(bits_per_pixel<16)
-              result = merge_core_simd<bits_per_pixel>(dst, src, mask, max_pixel_value, zero);
-            else
-              result = merge_core_simd<bits_per_pixel>(dst, src, mask, max_pixel_value, zero);
+            __m256i result = merge_core_simd<bits_per_pixel>(dst, src, mask, max_pixel_value, zero);
 
             simd256_store_si256<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m256i*>(pDst+i), result);
         }
@@ -222,7 +234,8 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
     }
 
     if (nWidth > wMod32) {
-        merge_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32, nMaskPitch, (nWidth-wMod32) / sizeof(uint16_t), nHeight, nOrigHeight);
+      const int maskShift = (mode == MASK420 || mode == MASK422) ? wMod32 * 2 : wMod32;
+      merge_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth - wMod32) / sizeof(uint16_t), nHeight, nOrigHeight);
     }
     _mm256_zeroupper();
 }

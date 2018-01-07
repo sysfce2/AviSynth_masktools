@@ -88,35 +88,43 @@ MT_FORCEINLINE static __m128i merge_core_simd(const __m128i &dst, const __m128i 
   auto mask_lo = _mm_unpacklo_epi16(mask, zero);
   auto mask_hi = _mm_unpackhi_epi16(mask, zero);
 
-  // return dst +(((src - dst) * (mask >> 1)) >> (bits_per_pixel - 1));
+  // 16 bits: return dst +(((src - dst) * (mask >> 1)) >> (bits_per_pixel - 1));
+  // 10-14 bits: return dst +(((src - dst) * (mask)) >> (bits_per_pixel));
 
   auto diff_lo = _mm_sub_epi32(src_lo, dst_lo); // diff = src-dst
   auto diff_hi = _mm_sub_epi32(src_hi, dst_hi);
 
-  auto smask_lo = _mm_srai_epi32(mask_lo, 1); // smask = (src-dst)>>1
-  auto smask_hi = _mm_srai_epi32(mask_hi, 1);
+  __m128i lerp_lo, lerp_hi;
 
-  auto lerp_lo = simd_mullo_epi32<flags>(diff_lo, smask_lo);
-  auto lerp_hi = simd_mullo_epi32<flags>(diff_hi, smask_hi);
+  if (bits_per_pixel == 16) {
+    auto smask_lo = _mm_srai_epi32(mask_lo, 1); // smask = mask>>1
+    auto smask_hi = _mm_srai_epi32(mask_hi, 1);
 
-  lerp_lo = _mm_srai_epi32(lerp_lo, bits_per_pixel - 1); // for 16 bit, shr 15, scale back
-  lerp_hi = _mm_srai_epi32(lerp_hi, bits_per_pixel - 1);
+    lerp_lo = simd_mullo_epi32<flags>(diff_lo, smask_lo);
+    lerp_hi = simd_mullo_epi32<flags>(diff_hi, smask_hi);
+
+    lerp_lo = _mm_srai_epi32(lerp_lo, bits_per_pixel - 1); // for n bit, shr (n-1), scale back
+    lerp_hi = _mm_srai_epi32(lerp_hi, bits_per_pixel - 1);
+  }
+  else {
+    lerp_lo = simd_mullo_epi32<flags>(diff_lo, mask_lo);
+    lerp_hi = simd_mullo_epi32<flags>(diff_hi, mask_hi);
+
+    lerp_lo = _mm_srai_epi32(lerp_lo, bits_per_pixel);
+    lerp_hi = _mm_srai_epi32(lerp_hi, bits_per_pixel);
+  }
 
   auto result_lo = _mm_add_epi32(dst_lo, lerp_lo);
   auto result_hi = _mm_add_epi32(dst_hi, lerp_hi);
 
-  auto result = simd_packus_epi32<flags>(result_lo, result_hi); // _mm_packus_epu32: SSE4!
+  auto result = simd_packus_epi32<flags>(result_lo, result_hi);
   if (bits_per_pixel < 16) // otherwise no clamp needed
-    result = _mm_min_epi16(result, max_pixel_value); // SSE2 epi16 is enough
+    result = simd_min_epu16<flags>(result, max_pixel_value);
 
-  __m128i mask_FFFF;
-  if (bits_per_pixel < 16) // paranoia 
-    mask_FFFF = _MM_CMPLE_EPU16(max_pixel_value, mask); // mask >= max_value ? FFFF : 0000 -> max_value <= mask 
-  else
-    mask_FFFF = _mm_cmpeq_epi16(mask, max_pixel_value); // mask == max ? FFFF : 0000
-  auto mask_zero = _mm_cmpeq_epi16(mask, zero);
-
+  auto mask_FFFF = _mm_cmpeq_epi16(mask, max_pixel_value); // mask == max ? FFFF : 0000
   result = simd_blend_epi8<flags>(mask_FFFF, src, result); // ensure that max mask value returns src
+
+  auto mask_zero = _mm_cmpeq_epi16(mask, zero);
   result = simd_blend_epi8<flags>(mask_zero, dst, result); // ensure that zero mask value returns dst
 
   return result;
@@ -358,19 +366,14 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
             __m128i mask;
 
             if (mode == MASK420) {
-                mask = get_mask_420_simd<flags>(pMask, nMaskPitch, i);
+              mask = get_mask_420_simd<flags>(pMask, nMaskPitch, i);
             } else if (mode == MASK422) {
-                mask = get_mask_422_simd<flags>(pMask, i);
-              }
-              else {
-                mask = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask+i));
+              mask = get_mask_422_simd<flags>(pMask, i);
+            } else {
+              mask = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + i));
             }
 
-            __m128i result;
-            if(bits_per_pixel<16)
-              result = merge_core_simd<flags, bits_per_pixel>(dst, src, mask, max_pixel_value, zero);
-            else
-              result = merge_core_simd<flags, bits_per_pixel>(dst, src, mask, max_pixel_value, zero);
+            __m128i result = merge_core_simd<flags, bits_per_pixel>(dst, src, mask, max_pixel_value, zero);
 
             simd_store_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<__m128i*>(pDst+i), result);
         }
@@ -386,7 +389,8 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
     }
 
     if (nWidth > wMod16) {
-        merge_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16, nMaskPitch, (nWidth-wMod16) / sizeof(uint16_t), nHeight, nOrigHeight);
+        const int maskShift = (mode == MASK420 || mode == MASK422) ? wMod16 * 2 : wMod16;
+        merge_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth-wMod16) / sizeof(uint16_t), nHeight, nOrigHeight);
     }
 }
 
