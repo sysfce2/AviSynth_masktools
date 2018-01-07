@@ -83,7 +83,9 @@ void clamp16_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pUpLimit,
     auto undershoot_v = _mm_set1_epi16(Word(nUndershoot));
     auto ff = _mm_set1_epi16(0x00FF);
     auto zero = _mm_setzero_si128();
-    auto max_pixel_value = _mm_set1_epi16(0xFFFF); // n/a for 16 bits
+#pragma warning(disable: 4310)
+    auto max_pixel_value = _mm_set1_epi16((short)0xFFFF); // n/a for 16 bits
+#pragma warning(default: 4310)
 
     for ( int j = 0; j < nHeight / 2; ++j ) {
         for ( int i = 0; i < wMod8; i+=8 ) {

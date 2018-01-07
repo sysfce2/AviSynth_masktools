@@ -97,8 +97,10 @@ static inline __m128i binarize_upper_sse2_op(__m128i x, __m128i t, __m128i, __m1
 
 template<int bits_per_pixel>
 static __forceinline __m128i binarize_lower_sse2_op(__m128i x, __m128i, __m128i halfrange, __m128i &max) {
-    auto r = _mm_add_epi16(x,  _mm_set1_epi16(0x8000)); // 0x8000 for (at 8 bit version:0x80) and 16bit branch signed cmp
-    if (bits_per_pixel == 16) {
+#pragma warning(disable: 4309)
+  auto r = _mm_add_epi16(x,  _mm_set1_epi16(0x8000)); // 0x8000 for (at 8 bit version:0x80) and 16bit branch signed cmp
+#pragma warning(default: 4309)
+  if (bits_per_pixel == 16) {
       return _mm_cmpgt_epi16(r, halfrange);
     } 
     else {

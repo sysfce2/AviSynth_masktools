@@ -453,7 +453,7 @@ void generic_custom_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc,
             {
                 if ( pCoordinates[k] + i >= 0 && pCoordinates[k] + i < nWidth &&
                     pCoordinates[k+1] + j >= 0 && pCoordinates[k+1] + j < nHeight ) {
-                        new_value.add(read_word_stacked(pSrc, pSrcLsb, i + pCoordinates[k] + pCoordinates[k+1] * nSrcPitch));
+                  new_value.add(read_word_stacked(pSrc, pSrcLsb, i + pCoordinates[k] + pCoordinates[k+1] * static_cast<int>(nSrcPitch)));
                 }
             }
             write_word_stacked(pDst, pDstLsb, i, new_value.finalize());

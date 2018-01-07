@@ -76,7 +76,9 @@ void generic16_sse2(Word *pDst0, ptrdiff_t nDstPitch, const Word *pSrc0, ptrdiff
     const Byte *pSrcp = pSrc - nSrcPitch;
     const Byte *pSrcn = pSrc + nSrcPitch;
 
+#pragma warning(disable: 4309)
     auto vHalf = _mm_set1_epi16(1 << (bits_per_pixel - 1));
+#pragma warning(default: 4309)
     auto low_thr_v = _mm_set1_epi16(Word(nLowThreshold)); // for faster sse2 signed comparison
     low_thr_v = _mm_sub_epi16(low_thr_v, vHalf);
     auto high_thr_v = _mm_set1_epi16(Word(nHighThreshold));

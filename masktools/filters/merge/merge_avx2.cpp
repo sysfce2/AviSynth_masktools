@@ -135,7 +135,9 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       auto pMask_s = pMask;
       auto v128 = _mm256_set1_epi16(0x0080);
       auto zero = _mm256_setzero_si256();
+#pragma warning(disable: 4309)
       auto maxMaskFF = _mm256_set1_epi8(0xFF);
+#pragma warning(default: 4309)
       for (int j = 0; j < nHeight; ++j) {
          for (int i = 0; i < wMod32; i += 32) {
             auto src2 = simd256_load_si256<mem_mode>(pMask + i);
@@ -169,9 +171,11 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto pSrc1_s = pSrc1;
      auto pMask_s = pMask;
      auto v255 = _mm256_set1_epi16(0x00FF);
+#pragma warning(disable: 4309)
      auto v128 = _mm256_set1_epi16(0x0080);
-     auto zero = _mm256_setzero_si256();
      auto maxMaskFF = _mm256_set1_epi8(0xFF);
+#pragma warning(default: 4309)
+     auto zero = _mm256_setzero_si256();
      for (int j = 0; j < nHeight; ++j) {
        for (int i = 0; i < wMod32; i += 32) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 2 + 2*64, _MM_HINT_T0);
@@ -218,7 +222,9 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto v255 = _mm256_set1_epi16(0x00FF);
      auto v128 = _mm256_set1_epi16(0x0080);
      auto zero = _mm256_setzero_si256();
+#pragma warning(disable: 4309)
      auto maxMaskFF = _mm256_set1_epi8(0xFF);
+#pragma warning(default: 4309)
      for (int j = 0; j < nHeight; ++j) {
        for (int i = 0; i < wMod32; i += 32) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 2 + 2*64, _MM_HINT_T0);
@@ -261,7 +267,9 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto v255 = _mm256_set1_epi16(0x00FF);
      auto v128 = _mm256_set1_epi16(0x0080);
      auto zero = _mm256_setzero_si256();
+#pragma warning(disable: 4309)
      auto maxMaskFF = _mm256_set1_epi8(0xFF);
+#pragma warning(default: 4309)
      for (int j = 0; j < nHeight; ++j) {
        for (int i = 0; i < wMod32; i += 32) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 4 + 2*64, _MM_HINT_T0);

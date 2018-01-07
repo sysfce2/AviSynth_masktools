@@ -200,9 +200,9 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
     int max = (1 << bits_per_pixel) - 1;
 
     auto zero = _mm256_setzero_si256();
-#pragma warning(disable: 4309)
+#pragma warning(disable: 4310)
     auto max_pixel_value = _mm256_set1_epi16((short)max); // for checking max
-#pragma warning(default: 4309)
+#pragma warning(default: 4310)
 
     for ( int j = 0; j < nHeight; ++j ) {
         for ( int i = 0; i < wMod32; i+=32 ) {

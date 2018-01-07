@@ -109,7 +109,9 @@ void adddiff16_native_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, pt
     auto pSrc2 = pSrc;
     auto halfrange = _mm_set1_epi16(1 << (bits_per_pixel - 1));
     int _max_pixel_value = (1 << bits_per_pixel) - 1;
+#pragma warning(disable: 4244)
     auto max_pixel_value = _mm_set1_epi16(_max_pixel_value);
+#pragma warning(default: 4244)
 
     for (int j = 0; j < nHeight; ++j) {
         for (int i = 0; i < wMod16; i+=16) {

@@ -48,7 +48,9 @@ static void logic16_native_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc
 template<int bits_per_pixel>
 static MT_FORCEINLINE __m256i add16_avx2(__m256i a, __m256i b) 
 { 
-  return bits_per_pixel==16 ? _mm256_adds_epu16(a, b) : _mm256_min_epu16(_mm256_adds_epu16(a, b),_mm256_set1_epi16((short)((1 << bits_per_pixel) - 1))); 
+#pragma warning(disable: 4310)
+  return bits_per_pixel==16 ? _mm256_adds_epu16(a, b) : _mm256_min_epu16(_mm256_adds_epu16(a, b),_mm256_set1_epi16((short)((1 << bits_per_pixel) - 1)));
+#pragma warning(default: 4310)
 }
 static MT_FORCEINLINE __m256i sub16_avx2(__m256i a, __m256i b) { return _mm256_subs_epu16(a, b); }
 static MT_FORCEINLINE __m256i nop16_avx2(__m256i a, __m256i) { return a; }

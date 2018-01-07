@@ -355,9 +355,9 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
     int max = (1 << bits_per_pixel) - 1;
 
     auto zero = _mm_setzero_si128();
-#pragma warning(disable: 4309)
+#pragma warning(disable: 4244)
     auto max_pixel_value = _mm_set1_epi16(max); // for checking max
-#pragma warning(default: 4309)
+#pragma warning(default: 4244)
 
     for ( int j = 0; j < nHeight; ++j ) {
         for ( int i = 0; i < wMod16; i+=16 ) {
