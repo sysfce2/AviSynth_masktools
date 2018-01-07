@@ -125,6 +125,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        pMask += nSrc2Pitch * 2;
      }
      if (nWidth > wMod16) {
+       // pMask offset: mask is not subsampled -> width*2
        merge32_luma_420_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16 * 2, nSrc2Pitch, (nWidth - wMod16) / sizeof(Float), nHeight);
      }
    }
@@ -159,6 +160,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        pMask += nSrc2Pitch;
      }
      if (nWidth > wMod16) {
+       // pMask offset: mask is not subsampled -> width*2
        merge32_luma_422_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16 * 2, nSrc2Pitch, (nWidth - wMod16) / sizeof(Float), nHeight);
      }
    }
