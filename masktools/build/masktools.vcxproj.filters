@@ -464,6 +464,9 @@
     <ClCompile Include="..\filters\merge\merge32_avx2.cpp">
       <Filter>filters\merge</Filter>
     </ClCompile>
+    <ClCompile Include="..\filters\binarize\binarize_avx2.cpp">
+      <Filter>filters\binarize</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\common\mt_resource.rc">

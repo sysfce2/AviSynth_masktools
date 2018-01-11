@@ -12,7 +12,8 @@ typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, Float nThreshold, int
 #define DEFINE_PROCESSOR(name) \
    extern Processor *binarize_##name##_c; \
    extern Processor *binarize_##name##_sse2; \
-   extern Processor *binarize_##name##_asse2
+   extern Processor *binarize_##name##_asse2; \
+   extern Processor *binarize_##name##_avx2
 
 DEFINE_PROCESSOR(upper);
 DEFINE_PROCESSOR(lower);
@@ -144,7 +145,9 @@ public:
 #define SET_MODE(mode) \
       processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_c, Constraint(CPU_NONE, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 0)); \
       processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_sse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 1)); \
-      processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
+      processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_asse2, Constraint(CPU_SSE2, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2)); \
+      /*processors.push_back(Filtering::Processor<Processor>(binarize_##mode##_avx2, Constraint(CPU_AVX2, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 1), 3));*/
+      // avx2: not any faster than 128bit sse2, don't go live
 
        if (isMode("0 x")) { SET_MODE(0_x); }
        else if (isMode("t x")) { SET_MODE(t_x); }
