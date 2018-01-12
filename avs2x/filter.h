@@ -25,6 +25,7 @@ class Filter : public GenericVideoFilter
 {
     T _filter;
     Signature signature;
+    int inputConfigSize; // to prevent MT static init problems with /Zc:threadSafeInit- settings for WinXP
 
     static AVSValue __cdecl _create(AVSValue args, void *user_data, IScriptEnvironment *env)
     {
@@ -34,6 +35,7 @@ class Filter : public GenericVideoFilter
 public:
     Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
     {
+        inputConfigSize = _filter.input_configuration().size();
         if (_filter.is_error())
         {
             env->ThrowError((signature.getName() + " : " + _filter.get_error()).c_str());
