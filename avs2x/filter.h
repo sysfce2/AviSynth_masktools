@@ -36,6 +36,22 @@ public:
     Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
     {
         inputConfigSize = _filter.input_configuration().size();
+        // When the above line is missing, problems kick in _filter.get_frame(n, destination, env)
+        // Why: "input_configuration" has static initializer that has problems in multithreaded environment
+        // when the XP compatible /Zc:threadSafeInit- switch is used for compiling in Visual Studio
+        // https://docs.microsoft.com/en-us/cpp/build/reference/zc-threadsafeinit-thread-safe-local-static-initialization
+        // In non-threadSafeInit mode (XP) when get_frame is called in multithreaded environment,
+        // the initialization is started in thread#1 and at specific timing conditions (e.g. debug mode is not OK) is not finished yet when
+        // thread#2 also calls into input_configuration().size().
+        // Real life problems: the proper size value is "2", but in thread#2 still "0" is reported!
+        // This resulted in zero sized local PVideoFrame array to be allocated, but later, when the initialization
+        // is finished in an other thread, size() turnes into "2". It needs only some 1/10000th seconds, but the problem is there by then.
+        // This zero sized array is then indexed with the proper size of "2" from 0..1 -> Access Violation
+        // Debuglog: Masktools2 Getframe #1
+        //  Masktools2 Getframe #0
+        //  Masktools2 Getframe 0, clipcount = 0 // should be 2!!
+        //  Masktools2 Getframe 0, clipcount2 = 2 // meanwhile the init was done in the background, we get 2 which is correct
+        //  Masktools2 Getframe 1, clipcount = 2
         if (_filter.is_error())
         {
             env->ThrowError((signature.getName() + " : " + _filter.get_error()).c_str());
