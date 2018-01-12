@@ -208,7 +208,7 @@ static MT_FORCEINLINE __m128i load_one_to_left(const Byte *ptr) {
     if (border_mode == Border::Left) {
         auto mask_left = _mm_setr_epi8(0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
         auto val = simd_load_si128<mem_mode>(ptr);
-        return _mm_or_si128(_mm_slli_si128(val, 1), _mm_and_si128(val, mask_left));
+        return _mm_or_si128(_mm_slli_si128(val, 1), _mm_and_si128(val, mask_left)); // clone leftmost
     } else {
         return simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr - 1);
     }
@@ -223,6 +223,54 @@ static MT_FORCEINLINE __m128i load_one_to_right(const Byte *ptr) {
     } else {
         return simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
     }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m256i load_one_to_left_si256(const Byte *ptr) {
+  if (border_mode == Border::Left) {
+    auto lo128 = load_one_to_left<border_mode, mem_mode>(ptr); // really left!
+    auto hi128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 1);
+    return _mm256_set_m128i(hi128, lo128);
+  }
+  else {
+    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr - 1);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m256i load_one_to_right_si256(const Byte *ptr) {
+  if (border_mode == Border::Right) {
+    auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
+    auto hi128 = load_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
+    return _mm256_set_m128i(hi128, lo128);
+  }
+  else {
+    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m256i load16_one_to_left_si256(const Byte *ptr) {
+  if (border_mode == Border::Left) {
+    auto lo128 = load16_one_to_left<border_mode, mem_mode>(ptr); // really left!
+    auto hi128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 2);
+    return _mm256_set_m128i(hi128, lo128);
+  }
+  else {
+    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr - 2);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+static MT_FORCEINLINE __m256i load16_one_to_right_si256(const Byte *ptr) {
+  if (border_mode == Border::Right) {
+    auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
+    auto hi128 = load16_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
+    return _mm256_set_m128i(hi128, lo128);
+  }
+  else {
+    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
+  }
 }
 
 template<Border border_mode, MemoryMode mem_mode>
@@ -274,7 +322,7 @@ static MT_FORCEINLINE __m128 load32_one_to_right(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
-static MT_FORCEINLINE __m256 load32_256_one_to_left(const Byte *ptr) {
+static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
   if (border_mode == Border::Left) {
     auto lo128 = load32_one_to_left<border_mode, mem_mode>(ptr); // really left!
     auto hi128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 4);
@@ -286,7 +334,7 @@ static MT_FORCEINLINE __m256 load32_256_one_to_left(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
-static MT_FORCEINLINE __m256 load32_256_one_to_right(const Byte *ptr) {
+static MT_FORCEINLINE __m256 load32_one_to_right_si256(const Byte *ptr) {
   if (border_mode == Border::Right) {
     auto lo128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr+4);
     auto hi128 = load32_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
@@ -362,6 +410,14 @@ static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i
     return _mm_or_si128(result, high);
 }
 
+static MT_FORCEINLINE __m256i threshold_avx2(const __m256i &value, const __m256i &lowThresh, const __m256i &highThresh, const __m256i &v128) {
+  auto sat = _mm256_sub_epi8(value, v128);
+  auto low = _mm256_cmpgt_epi8(sat, lowThresh);
+  auto high = _mm256_cmpgt_epi8(sat, highThresh);
+  auto result = _mm256_and_si256(value, low);
+  return _mm256_or_si256(result, high);
+}
+
 //  thresholds are decreased by half range in order to do signed comparison
 template<int bits_per_pixel>
 static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m128i &lowThresh, const __m128i &highThresh, const __m128i &vHalf, const __m128i &maxMask) {
@@ -372,6 +428,18 @@ static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m12
     high = _mm_and_si128(high, maxMask); // clamp FFFF to 03FF 0FFF or 3FFF at 10, 12 and 14 bits
   auto result = _mm_and_si128(value, low);
   return _mm_or_si128(result, high); 
+}
+
+//  thresholds are decreased by half range in order to do signed comparison
+template<int bits_per_pixel>
+static MT_FORCEINLINE __m256i threshold16_avx2(const __m256i &value, const __m256i &lowThresh, const __m256i &highThresh, const __m256i &vHalf, const __m256i &maxMask) {
+  auto sat = _mm256_sub_epi16(value, vHalf);
+  auto low = _mm256_cmpgt_epi16(sat, lowThresh);
+  auto high = _mm256_cmpgt_epi16(sat, highThresh);
+  if (bits_per_pixel < 16)
+    high = _mm256_and_si256(high, maxMask); // clamp FFFF to 03FF 0FFF or 3FFF at 10, 12 and 14 bits
+  auto result = _mm256_and_si256(value, low);
+  return _mm256_or_si256(result, high);
 }
 
 template<CpuFlags flags>

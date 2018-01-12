@@ -135,17 +135,17 @@ static MT_FORCEINLINE void process_line_convolution_avx(Byte *pDst, const Byte *
     auto divisor = _mm256_set1_ps(1.0f/matrix[9]);
 
     for (int x = 0; x < width; x+=32) {
-        auto up_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcp+x);
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
-        auto up_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load32_256_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrc+x);
         auto middle_center = simd256_load_ps<mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcn+x);
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
-        auto down_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcn+x);
 
         auto acc = _mm256_mul_ps(up_left, coef0);
         acc = _mm256_add_ps(acc, _mm256_mul_ps(up_center, coef1));
@@ -173,8 +173,8 @@ static MT_FORCEINLINE void process_line_sobel_avx(Byte *pDst, const Byte *pSrcp,
     for (int x = 0; x < width; x+=32) {
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
 
-        auto middle_left = load32_256_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
 
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
 
@@ -199,7 +199,7 @@ static MT_FORCEINLINE void process_line_roberts_avx(Byte *pDst, const Byte *pSrc
 
     for (int x = 0; x < width; x+=32) {
         auto middle_center = simd256_load_ps<mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
 
         auto pos = _mm256_add_ps(middle_center, middle_center);
@@ -224,17 +224,17 @@ static MT_FORCEINLINE void process_line_laplace_avx(Byte *pDst, const Byte *pSrc
     auto Eight = _mm256_set1_ps(8.0f);
     // abs( (a22 * 8.0f) - a32 - a23 - a11 - a21 - a31 - a12 - a13 - a33 ) / 8.0f
     for (int x = 0; x < width; x+=32) {
-        auto up_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcp+x);
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
-        auto up_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load32_256_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrc+x);
         auto middle_center = simd256_load_ps<mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcn+x);
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
-        auto down_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcn+x);
 
 
         auto acc = _mm256_add_ps(up_left, up_center);
@@ -261,17 +261,17 @@ static MT_FORCEINLINE void process_line_morpho_avx(Byte *pDst, const Byte *pSrcp
     UNUSED(matrix);
 
     for (int x = 0; x < width; x+=32) {
-        auto up_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcp+x);
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
-        auto up_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load32_256_one_to_left<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrc+x);
         auto middle_center = simd256_load_ps<mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcn+x);
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
-        auto down_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcn+x);
 
         auto maxv = _mm256_max_ps(middle_right, up_right);
         maxv = _mm256_max_ps(maxv, down_center);
@@ -307,7 +307,7 @@ static MT_FORCEINLINE void process_line_cartoon_avx(Byte *pDst, const Byte *pSrc
     */
     for (int x = 0; x < width; x+=32) {
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
-        auto up_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcp+x);
         auto middle_center = simd256_load_ps<mem_mode>(pSrc+x);
         
         auto acc = _mm256_add_ps(up_right, middle_center);
@@ -328,16 +328,16 @@ static MT_FORCEINLINE void process_line_prewitt_avx(Byte *pDst, const Byte *pSrc
     auto zero = _mm256_setzero_ps();
 
     for (int x = 0; x < width; x+=32) {
-        auto up_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcp+x);
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
-        auto up_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load32_256_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcn+x);
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
-        auto down_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcn+x);
 
 
         auto a21_minus_a23 = _mm256_sub_ps(up_center, down_center); // a21 - a23
@@ -381,16 +381,16 @@ static MT_FORCEINLINE void process_line_half_prewitt_avx(Byte *pDst, const Byte 
     UNUSED(matrix);
 
     for (int x = 0; x < width; x+=32) {
-        auto up_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcp+x);
+        auto up_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcp+x);
         auto up_center = simd256_load_ps<mem_mode>(pSrcp+x);
-        auto up_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcp+x);
+        auto up_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcp+x);
 
-        auto middle_left = load32_256_one_to_left<borderMode, mem_mode>(pSrc+x);
-        auto middle_right = load32_256_one_to_right<borderMode, mem_mode>(pSrc+x);
+        auto middle_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrc+x);
+        auto middle_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrc+x);
 
-        auto down_left = load32_256_one_to_left<borderMode, mem_mode>(pSrcn+x);
+        auto down_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcn+x);
         auto down_center = simd256_load_ps<mem_mode>(pSrcn+x);
-        auto down_right = load32_256_one_to_right<borderMode, mem_mode>(pSrcn+x);
+        auto down_right = load32_one_to_right_si256<borderMode, mem_mode>(pSrcn+x);
 
         //a11 + 2 * (a21 - a23) + a31 - a13 - a33
         auto t1 = _mm256_sub_ps(up_center, down_center); //2 * (a21 - a23)
