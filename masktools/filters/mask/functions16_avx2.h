@@ -119,6 +119,8 @@ void generic16_avx2(Word *pDst0, ptrdiff_t nDstPitch, const Word *pSrc0, ptrdiff
     process_line(pDst + 32, pSrcp+32, pSrc+32, pSrc+32, matrix, low_thr_v, high_thr_v, avx2_width - 32);
     /* bottom-right */
     process_line_right(pDst + nWidth - 32, pSrcp + nWidth - 32, pSrc + nWidth - 32, pSrc + nWidth - 32, matrix, low_thr_v, high_thr_v, 32);
+
+    _mm256_zeroupper();
 }
 
 } } } }
