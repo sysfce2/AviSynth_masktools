@@ -276,6 +276,12 @@
     <ClInclude Include="..\filters\mask\functions32_avx.h">
       <Filter>filters\mask</Filter>
     </ClInclude>
+    <ClInclude Include="..\filters\mask\functions_avx2.h">
+      <Filter>filters\mask</Filter>
+    </ClInclude>
+    <ClInclude Include="..\filters\mask\functions16_avx2.h">
+      <Filter>filters\mask</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avs2x\wrapper.cpp">
@@ -466,6 +472,12 @@
     </ClCompile>
     <ClCompile Include="..\filters\binarize\binarize_avx2.cpp">
       <Filter>filters\binarize</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\mask\edge\edgemask_avx2.cpp">
+      <Filter>filters\mask\edge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\mask\edge\edgemask16_avx2.cpp">
+      <Filter>filters\mask\edge</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
