@@ -204,6 +204,11 @@ public:
               try {
                 size_t i(0);
                 float f = std::stof(chroma.c_str(), &i);
+                if (f > 0) {
+                  error = "memset parameter should be <0 for chroma";
+                  return;
+                }
+                f = -f;
                 operators[1] = operators[2] = Operator(MEMSET, f); // atoi(chroma.c_str())
               }
               catch (...)
@@ -239,6 +244,11 @@ public:
             try {
               size_t i(0);
               float f = std::stof(alpha.c_str(), &i);
+              if (f > 0) {
+                error = "memset parameter should be <0 for alpha";
+                return;
+              }
+              f = -f;
               operators[3] = Operator(MEMSET, f); // atoi(chroma.c_str())
             }
             catch (...)
@@ -261,7 +271,7 @@ public:
             error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
             return;
           }
-          operators[i] = -op_f;
+          operators[i] = -op_f; // for non 1-6: automatic MEMSET
         }
 
         /* checks the operators */
