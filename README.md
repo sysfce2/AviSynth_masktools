@@ -1,13 +1,12 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.12 (20180107)**
+**Masktools2 v2.2.13 (20180201)**
 
 mod by pinterf
 
 Differences to Masktools 2.0b1
 
-- project moved to Visual Studio 2015 Update 3
-  Requires VS2015 Update 3 redistributables
+- project moved to Visual Studio 2017, requires Visual Studio redistributables
 - add back "none" and "ignore" for values to "chroma" parameter (2.2.9-)
 - mt_merge at 8 bit clips: keep exact pixel values when mask is 0 or 255 (v2.2.7-)
 - Fix: mt_merge (and probably other multi-clip filters) may result in corrupted results 
@@ -19,7 +18,7 @@ Differences to Masktools 2.0b1
   Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
   Y,U,V,A (and parameters chroma/alpha) negative (memset) values are scaled automatically to the current bit depth (v2.2.7-, chroma/alpha v.2.2.8) from a default 8-bit value.
   Default range of such parameters can be overridden to 8-16 bits or float.
-  Disable parameter scaling with scaleparams="none"
+  Disable parameter scaling with paramscale="none"
 - New plane mode: 6 (copy from fourth clip) for "Y", "U", "V" and "A"
   New "chroma" and "alpha" plane mode override: "copy fourth"
   Use for mt_lutxyza which has four clips
@@ -30,7 +29,7 @@ Differences to Masktools 2.0b1
 - some filters got AVX (float) and AVX2 (integer) support:
   mt_merge: 8-16 bit: AVX2, float:AVX
   mt_logic: 8-16 bit: AVX2, float:AVX
-  mt_edge: 32 bit float AVX
+  mt_edge: 8-16 bit: AVX2, 32 bit float AVX
 - mt_polish to recognize new constants and scaling operator, and some other operators introduced in earlier versions.
   For a complete list, see v2.2.4 change log
 - new: mt_lutxyza. Accepts four clips. 4th variable name is 'a' (besides x, y and z)
@@ -55,18 +54,20 @@ Differences to Masktools 2.0b1
 - expression syntax supporting bit depth independent expressions
   - bit-depth aware scale operators
   
-      operator "@B" or "scaleb" scales from 8 bit to current bit depth using bit-shifts
-                  Use this for YUV. "235 @B" or "235 scaleb" -> always results in max luma
+      operator "scaleb" scales from 8 bit to current bit depth using bit-shifts. scaleb alternative: @B (see warning)
+               Use this for YUV. "235 scaleb" -> always results in max luma
                   
-      operator "@F" or "scalef" scales from 8 bit to current bit depth using full range stretch
-                  "255 @F" or "255 scalef" results in maximum pixel value of current bit depth.
+      operator "scalef" scales from 8 bit to current bit depth using full range stretch. scalef alternative: @F (see warning)
+                  "255 scalef" results in maximum pixel value of current bit depth.
                   Calculation: x/255*65535 for a 8->16 bit sample (rgb)
-                  
+
+      Warning: please use scaleb or scalef instead of @B and @F, to match the syntax with avisynth's Expr filter
+            
   - hints for non-8 bit based constants: 
       Added configuration keywords i8, i10, i12, i14, i16 and f32 in order to tell the expression evaluator 
-      the bit depth of the values that are to scale by @B/scaleb and @F/scalef operators.
+      the bit depth of the values that are to scale by scaleb and scalef operators.
             
-      By default @B and @F scales from 8 bit to the bit depth of the clip.
+      By default scaleb and scalef scales from 8 bit to the bit depth of the clip.
       
       i8 .. i16 and f32 sets the default conversion base to 8..16 bits or float, respectively.
       
@@ -74,10 +75,10 @@ Differences to Masktools 2.0b1
       
       Examples 
 ```
-      8 bit video, no modifier: "x y - 256 @B *" evaluates as "x y - 256 *"
-      10 bit video, no modifier: "x y - 256 @B *" evaluates as "x y - 1024 *"
-      10 bit video: "i16 x y - 65536 @B *" evaluates as "x y - 1024 *"
-      8 bit video: "i10 x y - 512 @B *" evaluates as "x y - 128 *"                  
+      8 bit video, no modifier: "x y - 256 scaleb *" evaluates as "x y - 256 *"
+      10 bit video, no modifier: "x y - 256 scaleb *" evaluates as "x y - 1024 *"
+      10 bit video: "i16 x y - 65536 scaleb *" evaluates as "x y - 1024 *"
+      8 bit video: "i10 x y - 512 scaleb *" evaluates as "x y - 128 *"                  
 ```
 
   - new pre-defined, bit depth aware constants
@@ -98,8 +99,8 @@ Example #1 (bit depth dependent, all constants are treated as-is):
       
 Example #2 (new, with auto-scale operators )      
 ```
-      expr_luma =  "x 16 @B - 219 @B / 255 @F *"
-      expr_chroma =  "x 16 @B - 224 @B / 255 @F *"
+      expr_luma =  "x 16 scaleb - 219 scaleb / 255 scalef *"
+      expr_chroma =  "x 16 scaleb - 224 scaleb / 255 scalef *"
 ```
       
 Example #3 (new, with constants)
@@ -214,6 +215,12 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.13 (20180201)
+- Fix: rare crash in multithreading environment at the very first frames 
+  (keeping XP compatibility with /Z:threadsafeinit- caused troubles!)
+- mt_edge: AVX2 (1.4-1.9x speed) for 8 and 10-16 bits
+- fix: "chroma" parameter with negative (memset) values were not working properly for 10-14 bits and 32bit float
+
 **v2.2.12 (20180107)
 - Fix: mt_merge 10-16 bits: right side artifacts when clip is non-mod 8 (non-AVX2) or mod16 (AVX2) widths
 
@@ -246,7 +253,7 @@ Changelog
     In some cases specifying two different parameter lists with the same variables can cause troubles.
     (dual signature version can be used to override an earlierly loaded different masktools version
     (e.g. a 2.5 plugin) by defining the filters with both integer parameters _AND_ the new float parameter lists)
-- Make "scaleparams" to work consistent with all filters and parameters:
+- Make "paramscale" to work consistent with all filters and parameters:
   parameters "Y","U","V" and "A" negative (memset) values are scaled automatically to the current bit depth from a default 8-bit value.
 - New plane mode: 6 (copy from fourth clip) for "Y", "U", "V" and "A"
   New "chroma" and "alpha" plane mode override: "copy fourth"
