@@ -205,7 +205,7 @@ public:
                 size_t i(0);
                 float f = std::stof(chroma.c_str(), &i);
                 if (f > 0) {
-                  error = "memset parameter should be <0 for chroma";
+                  error = "filler value parameter should be <=0 for chroma";
                   return;
                 }
                 f = -f;
@@ -245,7 +245,7 @@ public:
               size_t i(0);
               float f = std::stof(alpha.c_str(), &i);
               if (f > 0) {
-                error = "memset parameter should be <0 for alpha";
+                error = "filler value parameter should be <=0 for alpha";
                 return;
               }
               f = -f;
