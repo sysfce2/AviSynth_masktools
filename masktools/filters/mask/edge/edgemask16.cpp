@@ -235,25 +235,25 @@ static MT_FORCEINLINE void process_line_convolution_sse2(Byte *pDst, const Byte 
         auto down_right_lo = _mm_unpacklo_epi16(down_right, zero);
         auto down_right_hi = _mm_unpackhi_epi16(down_right, zero);
 
-        auto acc_lo = _mm_mullo_epi32(up_left_lo, coef0);
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(up_center_lo, coef1));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(up_right_lo, coef2));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(middle_left_lo, coef3));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(middle_center_lo, coef4));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(middle_right_lo, coef5));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(down_left_lo, coef6));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(down_center_lo, coef7));
-        acc_lo = _mm_add_epi32(acc_lo, _mm_mullo_epi32(down_right_lo, coef8));
+        auto acc_lo = simd_mullo_epi32<flags>(up_left_lo, coef0);
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(up_center_lo, coef1));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(up_right_lo, coef2));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(middle_left_lo, coef3));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(middle_center_lo, coef4));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(middle_right_lo, coef5));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(down_left_lo, coef6));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(down_center_lo, coef7));
+        acc_lo = _mm_add_epi32(acc_lo, simd_mullo_epi32<flags>(down_right_lo, coef8));
 
-        auto acc_hi = _mm_mullo_epi32(up_left_hi, coef0);
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(up_center_hi, coef1));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(up_right_hi, coef2));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(middle_left_hi, coef3));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(middle_center_hi, coef4));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(middle_right_hi, coef5));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(down_left_hi, coef6));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(down_center_hi, coef7));
-        acc_hi = _mm_add_epi32(acc_hi, _mm_mullo_epi32(down_right_hi, coef8));
+        auto acc_hi = simd_mullo_epi32<flags>(up_left_hi, coef0);
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(up_center_hi, coef1));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(up_right_hi, coef2));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(middle_left_hi, coef3));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(middle_center_hi, coef4));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(middle_right_hi, coef5));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(down_left_hi, coef6));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(down_center_hi, coef7));
+        acc_hi = _mm_add_epi32(acc_hi, simd_mullo_epi32<flags>(down_right_hi, coef8));
 
         auto shift_lo = _mm_srai_epi32(acc_lo, 31);
         auto shift_hi = _mm_srai_epi32(acc_hi, 31);
