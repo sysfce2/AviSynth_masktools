@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.13 (20180201)**
+**Masktools2 v2.2.14 (20180225)**
 
 mod by pinterf
 
@@ -215,6 +215,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.14 (20180225)
+- Fix: mt_convolution invalid instruction on processors below SSE4.1
+
 **v2.2.13 (20180201)
 - Fix: rare crash in multithreading environment at the very first frames 
   (keeping XP compatibility with /Z:threadsafeinit- caused troubles!)
