@@ -84,10 +84,11 @@ class Lutxy : public MaskTools::Filter
    bool realtime;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
         UNUSED(n);
         UNUSED(constraints);
+        UNUSED(env);
         if (realtime) {
           // thread safety
           Parser::Context ctx(*parsed_expressions[nPlane]);
@@ -229,10 +230,11 @@ public:
    }
 
    InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
+	 InputConfiguration &input_configuration_cuda() const { return TwoFrame(); }
 
    static Signature filter_signature()
    {
-      Signature signature = "mt_lutxy";
+      Signature signature = "kmt_lutxy";
 
       signature.add(Parameter(TYPE_CLIP, "", false));
       signature.add(Parameter(TYPE_CLIP, "", false));

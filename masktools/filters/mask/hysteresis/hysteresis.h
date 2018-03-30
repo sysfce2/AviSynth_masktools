@@ -21,10 +21,11 @@ class Hysteresis : public MaskTools::Filter
     Processor *processor;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
         UNUSED(n);
         UNUSED(constraints);
+        UNUSED(env);
         processor(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
@@ -55,7 +56,7 @@ public:
 
     static Signature filter_signature()
     {
-        Signature signature = "mt_hysteresis";
+        Signature signature = "kmt_hysteresis";
 
         signature.add(Parameter(TYPE_CLIP, "", false));
         signature.add(Parameter(TYPE_CLIP, "", false));

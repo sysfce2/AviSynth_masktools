@@ -109,9 +109,9 @@ class Merge : public MaskTools::Filter
 
 protected:
 
-  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) override
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
   {
-    UNUSED(n);
+    UNUSED(n); UNUSED(env);
     int bits_per_pixel = bit_depths[C];
     if (parameters["stacked"].toBool())
       bits_per_pixel = 16;
@@ -357,10 +357,11 @@ public:
    }
 
    InputConfiguration &input_configuration() const { return InPlaceThreeFrame(); }
+	 InputConfiguration &input_configuration_cuda() const { return ThreeFrame(); }
 
    static Signature filter_signature()
    {
-      Signature signature = "mt_merge";
+      Signature signature = "kmt_merge";
 
       signature.add( Parameter( TYPE_CLIP, "", false) );
       signature.add( Parameter( TYPE_CLIP, "", false) );

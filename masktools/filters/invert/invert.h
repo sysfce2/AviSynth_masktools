@@ -28,9 +28,9 @@ class Invert : public MaskTools::Filter
    ProcessorList<Processor> processors;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
-        UNUSED(n); UNUSED(frames);
+        UNUSED(n); UNUSED(frames); UNUSED(env);
         processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), dst.width(), dst.height());
     }
 
@@ -69,10 +69,11 @@ public:
   }
 
    InputConfiguration &input_configuration() const { return InPlaceOneFrame(); }
+	 InputConfiguration &input_configuration_cuda() const { return OneFrame(); }
 
    static Signature filter_signature()
    {
-      Signature signature = "mt_invert";
+      Signature signature = "kmt_invert";
 
       signature.add( Parameter( TYPE_CLIP, "", false) );
 

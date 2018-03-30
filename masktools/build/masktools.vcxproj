@@ -55,6 +55,7 @@
     <RootNamespace>masktools</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>MaskTools</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'" Label="Configuration">
@@ -157,6 +158,9 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 8.0.props" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
@@ -312,8 +316,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -327,6 +331,7 @@
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -344,7 +349,12 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">
     <ClCompile>
@@ -353,8 +363,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -369,6 +379,7 @@
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -387,7 +398,12 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost|Win32'">
     <ClCompile>
@@ -396,8 +412,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -411,6 +427,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -429,7 +446,12 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|Win32'">
     <ClCompile>
@@ -438,8 +460,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_DUAL_SIGNATURES;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_DUAL_SIGNATURES;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -454,6 +476,7 @@
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -472,7 +495,12 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|Win32'">
     <ClCompile>
@@ -481,8 +509,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN32;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
@@ -496,6 +524,7 @@
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -514,7 +543,12 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
       <Profile>true</Profile>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">
     <Midl>
@@ -526,8 +560,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -538,6 +572,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -554,7 +589,12 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">
     <Midl>
@@ -566,8 +606,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -580,6 +620,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -597,7 +638,12 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost|x64'">
     <Midl>
@@ -609,8 +655,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -621,6 +667,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -637,7 +684,12 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|x64'">
     <Midl>
@@ -649,8 +701,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -663,6 +715,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -680,7 +733,12 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|x64'">
     <Midl>
@@ -692,8 +750,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -705,6 +763,7 @@
       </DebugInformationFormat>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -722,13 +781,18 @@
       </DataExecutionPrevention>
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN32;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -739,9 +803,10 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessToFile>false</PreprocessToFile>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)masktools.pdb</ProgramDatabaseFile>
@@ -752,6 +817,10 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">
     <Midl>
@@ -759,8 +828,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)..\avsheaders;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;ENABLE_16BIT_SUPPORT;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN64;_AMD64_;ENABLE_16BIT_SUPPORT;MT_HAVE_BOOST_SPIRIT;_DEBUG;_WINDOWS;_USRDLL;MASKTOOLS_EXPORTS;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -771,9 +840,10 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)masktools.pdb</ProgramDatabaseFile>
@@ -784,6 +854,10 @@
       <ImportLibrary>$(OutDir)masktools.lib</ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
     </Link>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\common\16bit.h" />
@@ -1054,8 +1128,10 @@
   <ItemGroup>
     <ProjectReference Include="..\..\common\build\common.vcxproj">
       <Project>{dbfbe277-5b8d-4258-b522-13146fd1e722}</Project>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 8.0.targets" />
+  </ImportGroup>
 </Project>

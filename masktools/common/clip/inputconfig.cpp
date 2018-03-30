@@ -27,9 +27,19 @@ InputConfiguration &InPlaceThreeFrame() {
     return ic;
 }
 
+InputConfiguration &ThreeFrame() {
+	static InputConfiguration ic(Input(0, 0), Input(1, 0), Input(2, 0));
+	return ic;
+}
+
 InputConfiguration &InPlaceFourFrame() {
   static InputConfiguration ic(Input(1, 0), Input(2, 0), Input(3, 0));
   return ic;
+}
+
+InputConfiguration &FourFrame() {
+	static InputConfiguration ic(Input(0, 0), Input(1, 0), Input(2, 0), Input(3, 0));
+	return ic;
 }
 
 InputConfiguration &InPlaceTemporalOneFrame() { 

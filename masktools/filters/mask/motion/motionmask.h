@@ -5,9 +5,9 @@
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask { namespace Motion {
 
-typedef bool (Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nLowThreshold, int nHighThreshold, int nMotionThreshold, int nSceneChange, int nSceneChangeValue, int nWidth, int nHeight);
-typedef bool (Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nLowThreshold, int nHighThreshold, int nMotionThreshold, int nSceneChange, int nSceneChangeValue, int nWidth, int nHeight);
-typedef bool (Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, Float nLowThreshold, Float nHighThreshold, Float nMotionThreshold, int nSceneChange, Float nSceneChangeValue_f, int nWidth, int nHeight);
+typedef bool (Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nLowThreshold, int nHighThreshold, int nMotionThreshold, int nSceneChange, int nSceneChangeValue, int nWidth, int nHeight, IScriptEnvironment* env);
+typedef bool (Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nLowThreshold, int nHighThreshold, int nMotionThreshold, int nSceneChange, int nSceneChangeValue, int nWidth, int nHeight, IScriptEnvironment* env);
+typedef bool (Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, Float nLowThreshold, Float nHighThreshold, Float nMotionThreshold, int nSceneChange, Float nSceneChangeValue_f, int nWidth, int nHeight, IScriptEnvironment* env);
 
 extern Processor *mask_c;
 extern Processor *mask_sse2;
@@ -44,38 +44,38 @@ class MotionMask : public MaskTools::Filter
 
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
         UNUSED(n);
         if (bits_per_pixel == 8) {
           if (nPlane == 0)
             nSceneChange = processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, 0, nSceneChangeValue, dst.width(), dst.height()) ? 3 : 2;
+              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, 0, nSceneChangeValue, dst.width(), dst.height(), env) ? 3 : 2;
           else
             processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, nSceneChange, nSceneChangeValue, dst.width(), dst.height());
+              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, nSceneChange, nSceneChangeValue, dst.width(), dst.height(), env);
         }
         else if (bits_per_pixel <= 16) {
           if (nPlane == 0)
             nSceneChange = processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, 0, nSceneChangeValue, dst.width(), dst.height()) ? 3 : 2;
+              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, 0, nSceneChangeValue, dst.width(), dst.height(), env) ? 3 : 2;
           else
             processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, nSceneChange, nSceneChangeValue, dst.width(), dst.height());
+              nLowThresholds[nPlane], nHighThresholds[nPlane], nMotionThreshold, nSceneChange, nSceneChangeValue, dst.width(), dst.height(), env);
         }
         else {
           if (nPlane == 0)
             nSceneChange = processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nLowThresholds_f[nPlane], nHighThresholds_f[nPlane], nMotionThreshold_f, 0, nSceneChangeValue_f, dst.width(), dst.height()) ? 3 : 2;
+              nLowThresholds_f[nPlane], nHighThresholds_f[nPlane], nMotionThreshold_f, 0, nSceneChangeValue_f, dst.width(), dst.height(), env) ? 3 : 2;
           else
             processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nLowThresholds_f[nPlane], nHighThresholds_f[nPlane], nMotionThreshold_f, nSceneChange, nSceneChangeValue_f, dst.width(), dst.height());
+              nLowThresholds_f[nPlane], nHighThresholds_f[nPlane], nMotionThreshold_f, nSceneChange, nSceneChangeValue_f, dst.width(), dst.height(), env);
         }
     }
 
@@ -203,10 +203,11 @@ public:
   }
 
    InputConfiguration &input_configuration() const { return InPlaceTemporalOneFrame(); }
+	 InputConfiguration &input_configuration_cuda() const { return TemporalOneFrame(); }
 
    static Signature filter_signature()
    {
-      Signature signature = "mt_motion";
+      Signature signature = "kmt_motion";
 
       signature.add(Parameter(TYPE_CLIP, "", false));
       signature.add(Parameter(10.0f, "thY1", true));

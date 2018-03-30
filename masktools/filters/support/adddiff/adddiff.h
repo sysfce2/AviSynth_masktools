@@ -44,9 +44,9 @@ class AddDiff : public MaskTools::Filter
     ProcessorList<Processor32> processors32;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
-        UNUSED(n);
+        UNUSED(n); UNUSED(env);
         int bits_per_pixel = bit_depths[C];
         if (parameters["stacked"].toBool())
           bits_per_pixel = 16;
@@ -121,10 +121,11 @@ public:
     }
 
     InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
+		InputConfiguration &input_configuration_cuda() const { return TwoFrame(); }
 
     static Signature filter_signature()
     {
-        Signature signature = "mt_adddiff";
+        Signature signature = "kmt_adddiff";
 
         signature.add(Parameter(TYPE_CLIP, "", false));
         signature.add(Parameter(TYPE_CLIP, "", false));

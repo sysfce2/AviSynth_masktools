@@ -1,6 +1,7 @@
 #ifndef __Common_Avs2x_Filter_H__
 #define __Common_Avs2x_Filter_H__
 
+#include "EnvCommon.h"
 #include "params.h"
 #include "../common/constraints/constraints.h"
 #include <avs/cpuid.h>
@@ -19,6 +20,14 @@ static CpuFlags AvsToInternalCpuFlags(int avsCpuFlags) {
   return flags;
 }
 
+static int GetDeviceType(const ::PClip& clip)
+{
+    int devtypes = (clip->GetVersion() >= 5) ? clip->SetCacheHints(CACHE_GET_DEV_TYPE, 0) : 0;
+    if (devtypes == 0) {
+        return DEV_TYPE_CPU;
+    }
+    return devtypes;
+}
 
 template<class T>
 class Filter : public GenericVideoFilter
@@ -35,7 +44,7 @@ class Filter : public GenericVideoFilter
 public:
     Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
     {
-        inputConfigSize = _filter.input_configuration().size();
+        inputConfigSize = (::IsCUDA(env) ? _filter.input_configuration() : _filter.input_configuration_cuda()).size();
         // When the above line is missing, problems kick in _filter.get_frame(n, destination, env)
         // Why: "input_configuration" has static initializer that has problems in multithreaded environment
         // when the XP compatible /Zc:threadSafeInit- switch is used for compiling in Visual Studio
@@ -60,9 +69,10 @@ public:
 
     PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment *env)
     {
-        PVideoFrame dst = _filter.is_in_place() ? child->GetFrame(n, env) : env->NewVideoFrame(vi);
+        bool is_in_place = !::IsCUDA(env) && _filter.is_in_place();
+        PVideoFrame dst = is_in_place ? child->GetFrame(n, env) : env->NewVideoFrame(vi);
 
-        if (_filter.is_in_place()) {
+        if (is_in_place) {
             env->MakeWritable(&dst);
         }
 
@@ -74,7 +84,13 @@ public:
     }
 
     int __stdcall SetCacheHints(int cachehints, int frame_range) override {
-        return cachehints == CACHE_GET_MTMODE ? MT_NICE_FILTER : 0;
+        if (cachehints == CACHE_GET_DEV_TYPE && _filter.is_cuda_available()) {
+            return GetDeviceType(child) & (DEV_TYPE_CPU | DEV_TYPE_CUDA);
+        }
+        else if (cachehints == CACHE_GET_MTMODE) {
+            return MT_NICE_FILTER;
+        }
+        return 0;
     }
 
     static void create(IScriptEnvironment *env)

@@ -1,6 +1,7 @@
 #ifndef __Mt_Base_H__
 #define __Mt_Base_H__
 
+#include "EnvCommon.h"
 #include "../../../common/functions/functions.h"
 #include "../../../common/params/params.h"
 #include "../../../common/parser/parser.h"
@@ -32,8 +33,7 @@ protected:
     int nXOffset, nYOffset, nXOffsetUV, nYOffsetUV;
     int nCoreWidth, nCoreHeight, nCoreWidthUV, nCoreHeightUV;
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) = 0;
-   virtual InputConfiguration &input_configuration() const = 0;
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) = 0;
 
    static Signature &add_defaults(Signature &signature)
    {
@@ -142,8 +142,6 @@ protected:
 
      return true;
    }
-
-
 
 
 public:
@@ -334,9 +332,15 @@ public:
             error = "masktools: unsupported colorspace, use Y8, YV12, YV16, YV24, YV411, greyscale, YUV(A)xxxP10-16/S, Planar RGB(A)";
     }
 
-    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4])
+    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4], IScriptEnvironment* env)
     {
+        bool isCUDA = ::IsCUDA(env);
         bool isStacked = parameters["stacked"].is_defined() && parameters["stacked"].toBool();
+
+        auto copy_plane = isCUDA ? Functions::copy_plane_cuda : Functions::copy_plane;
+        auto memset_plane = isCUDA ? Functions::memset_plane_cuda : Functions::memset_plane;
+        auto memset_plane_16 = isCUDA ? Functions::memset_plane_16_cuda : Functions::memset_plane_16;
+        auto memset_plane_32 = isCUDA ? Functions::memset_plane_32_cuda : Functions::memset_plane_32;
 
         switch (operators[nPlane].getMode())
         {
@@ -344,68 +348,68 @@ public:
           if (isStacked) {
             // in two parts, there may be sub-window
             // msb
-            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+            copy_plane(output_plane.data(), output_plane.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              output_plane.width(), output_plane.height() / 2);
+              output_plane.width(), output_plane.height() / 2, env);
             // lsb
-            Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+            copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
               frames[0].plane(nPlane).data() + frames[0].plane(nPlane).pitch() * frames[0].plane(nPlane).origheight() / 2, frames[0].plane(nPlane).pitch(),
-              output_plane.width(), output_plane.height() / 2);
+              output_plane.width(), output_plane.height() / 2, env);
           }
           else {
-            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+            copy_plane(output_plane.data(), output_plane.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              output_plane.width()*output_plane.pixelsize(), output_plane.height()); // rowsize = width*pixelsize
+              output_plane.width()*output_plane.pixelsize(), output_plane.height(), env); // rowsize = width*pixelsize
           }
           break;
         case COPY_SECOND:
             if (isStacked) {
               // msb
-              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height() / 2);
+                output_plane.width(), output_plane.height() / 2, env);
               // lsb
-              Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+              copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
                 frames[1].plane(nPlane).data() + frames[1].plane(nPlane).pitch() * frames[1].plane(nPlane).origheight() / 2, frames[1].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height() / 2);
+                output_plane.width(), output_plane.height() / 2, env);
             } else {
-              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-                output_plane.width()*output_plane.pixelsize(), output_plane.height());
+                output_plane.width()*output_plane.pixelsize(), output_plane.height(), env);
             }
             break;
         case COPY_THIRD:
             if (isStacked) {
               // msb
-              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height() / 2);
+                output_plane.width(), output_plane.height() / 2, env);
               // lsb
-              Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+              copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
                 frames[2].plane(nPlane).data() + frames[2].plane(nPlane).pitch() * frames[2].plane(nPlane).origheight() / 2, frames[2].plane(nPlane).pitch(),
-                output_plane.width(), output_plane.height() / 2);
+                output_plane.width(), output_plane.height() / 2, env);
             }
             else {
-              Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+              copy_plane(output_plane.data(), output_plane.pitch(),
                 frames[2].plane(nPlane).data(), frames[2].plane(nPlane).pitch(),
-                output_plane.width()*output_plane.pixelsize(), output_plane.height());
+                output_plane.width()*output_plane.pixelsize(), output_plane.height(), env);
             }
             break;
         case COPY_FOURTH:
           if (isStacked) {
             // msb
-            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+            copy_plane(output_plane.data(), output_plane.pitch(),
               frames[3].plane(nPlane).data(), frames[3].plane(nPlane).pitch(),
-              output_plane.width(), output_plane.height() / 2);
+              output_plane.width(), output_plane.height() / 2, env);
             // lsb
-            Functions::copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+            copy_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
               frames[3].plane(nPlane).data() + frames[3].plane(nPlane).pitch() * frames[3].plane(nPlane).origheight() / 2, frames[3].plane(nPlane).pitch(),
-              output_plane.width(), output_plane.height() / 2);
+              output_plane.width(), output_plane.height() / 2, env);
           }
           else {
-            Functions::copy_plane(output_plane.data(), output_plane.pitch(),
+            copy_plane(output_plane.data(), output_plane.pitch(),
               frames[3].plane(nPlane).data(), frames[3].plane(nPlane).pitch(),
-              output_plane.width()*output_plane.pixelsize(), output_plane.height());
+              output_plane.width()*output_plane.pixelsize(), output_plane.height(), env);
           }
           break;
         case MEMSET:
@@ -415,33 +419,33 @@ public:
                 // in two parts, there may be sub-window
                 Word val = static_cast<Word>(operators[nPlane].value());
                 // msb
-                Functions::memset_plane(output_plane.data(), output_plane.pitch(),
+                memset_plane(output_plane.data(), output_plane.pitch(),
                   output_plane.width(), output_plane.height()/2,
-                  static_cast<Byte>(val >> 8));
+                  static_cast<Byte>(val >> 8), env);
                 // lsb
-                Functions::memset_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
+                memset_plane(output_plane.data() + output_plane.pitch() * output_plane.origheight() / 2, output_plane.pitch(),
                   output_plane.width(), output_plane.height() / 2,
-                  static_cast<Byte>(val & 0xFF));
+                  static_cast<Byte>(val & 0xFF), env);
               } else {
-                Functions::memset_plane(output_plane.data(), output_plane.pitch(),
+                memset_plane(output_plane.data(), output_plane.pitch(),
                   output_plane.width(), output_plane.height(), // memset needs real width
-                  static_cast<Byte>(operators[nPlane].value()));
+                  static_cast<Byte>(operators[nPlane].value()), env);
               }
               break;
             case 2: // 16 bit
-              Functions::memset_plane_16(output_plane.data(), output_plane.pitch(),
+              memset_plane_16(output_plane.data(), output_plane.pitch(),
                 output_plane.width(), output_plane.height(),
-                static_cast<Word>(operators[nPlane].value()));
+                static_cast<Word>(operators[nPlane].value()), env);
               break;
             case 4: // 32 bit/float
-              Functions::memset_plane_32(output_plane.data(), output_plane.pitch(),
+              memset_plane_32(output_plane.data(), output_plane.pitch(),
                 output_plane.width(), output_plane.height(),
-                static_cast<float>(operators[nPlane].value_f()));
+                static_cast<float>(operators[nPlane].value_f()), env);
               break;
             }
         break;
         case PROCESS:
-            process(n, output_plane, nPlane, frames, constraints);
+            process(n, output_plane, nPlane, frames, constraints, env);
             break;
         case NONE:
         default: break;
@@ -450,19 +454,21 @@ public:
 
     virtual Frame<Byte> get_frame(int n, const Frame<Byte> &output_frame, IScriptEnvironment *env)
     {
+        bool is_cuda = IsCUDA(env);
+        auto& input_conf = is_cuda ? input_configuration_cuda() : input_configuration();
         Frame<Byte> output = output_frame.offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
 
         Frame<const Byte> frames[4];
         Constraint constraints[4];
 
-        int clipcount = int(input_configuration().size());
+        int clipcount = int(input_conf.size());
 
         std::vector<PVideoFrame> tmp_videoframes(clipcount);
 
         for (int i = 0; i < clipcount; i++) {
-            int childindex = input_configuration()[i].index();
+            int childindex = input_conf[i].index();
             PClip &currentClip = childs[childindex];
-            frames[i] = currentClip->get_const_frame(n + input_configuration()[i].offset(), tmp_videoframes[i], env)
+            frames[i] = currentClip->get_const_frame(n + input_conf[i].offset(), tmp_videoframes[i], env)
                 .offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
         }
 
@@ -477,7 +483,7 @@ public:
         }
 
         for (int i = 0; i < plane_counts[C]; i++) {
-          process_plane(n, output.plane(i), i, constraints, frames);
+          process_plane(n, output.plane(i), i, constraints, frames, env);
         }
 
         return output_frame;
@@ -488,6 +494,11 @@ public:
     String get_error() const { return error; }
     bool is_error() const { return !error.empty(); }
     bool is_in_place() const { return inPlace_; }
+    bool is_in_place_cuda() const { return false; }
+
+    virtual InputConfiguration &input_configuration() const = 0;
+    virtual InputConfiguration &input_configuration_cuda() const { return input_configuration(); }
+    virtual bool is_cuda_available() { return false; }
 
 };
 

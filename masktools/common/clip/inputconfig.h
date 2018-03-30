@@ -38,7 +38,9 @@ InputConfiguration &OneFrame();
 InputConfiguration &InPlaceTwoFrame();
 InputConfiguration &TwoFrame();
 InputConfiguration &InPlaceThreeFrame();
+InputConfiguration &ThreeFrame();
 InputConfiguration &InPlaceFourFrame();
+InputConfiguration &FourFrame();
 InputConfiguration &InPlaceTemporalOneFrame();
 InputConfiguration &TemporalOneFrame();
 

@@ -3,8 +3,9 @@
 
 using namespace Filtering;
 
-void Functions::memset_plane(Byte *ptr, ptrdiff_t pitch, int width, int height, Byte value)
+void Functions::memset_plane(Byte *ptr, ptrdiff_t pitch, int width, int height, Byte value, IScriptEnvironment* env)
 {
+   UNUSED(env);
     if (pitch == width) {
         memset(ptr, value, width*height);
     } else {
@@ -15,8 +16,9 @@ void Functions::memset_plane(Byte *ptr, ptrdiff_t pitch, int width, int height, 
     }
 }
 
-void Functions::memset_plane_16(Byte *ptr, ptrdiff_t pitch, int width, int height, Word value)
+void Functions::memset_plane_16(Byte *ptr, ptrdiff_t pitch, int width, int height, Word value, IScriptEnvironment* env)
 {
+   UNUSED(env);
   if ((size_t)pitch == width * sizeof(uint16_t)) {
     std::fill_n((Word *)ptr, width*height, value);
   }
@@ -28,8 +30,9 @@ void Functions::memset_plane_16(Byte *ptr, ptrdiff_t pitch, int width, int heigh
   }
 }
 
-void Functions::memset_plane_32(Byte *ptr, ptrdiff_t pitch, int width, int height, float value)
+void Functions::memset_plane_32(Byte *ptr, ptrdiff_t pitch, int width, int height, float value, IScriptEnvironment* env)
 {
+   UNUSED(env);
   if ((size_t)pitch == width * sizeof(float)) {
     std::fill_n((float *)ptr, width*height, value);
   }
@@ -41,8 +44,9 @@ void Functions::memset_plane_32(Byte *ptr, ptrdiff_t pitch, int width, int heigh
   }
 }
 
-void Functions::copy_plane(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int rowsize, int height)
+void Functions::copy_plane(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int rowsize, int height, IScriptEnvironment* env)
 {
+   UNUSED(env);
     if (dst_pitch == rowsize && src_pitch == rowsize) {
         memcpy(pDst, pSrc, rowsize*height);
     } else {

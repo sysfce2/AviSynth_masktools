@@ -34,9 +34,9 @@ class MappedBlur : public MaskTools::Filter
    ProcessorList<Processor32> processors32;
 
 protected:
-  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4]) override
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
   {
-    UNUSED(n);
+    UNUSED(n); UNUSED(env);
     if (bits_per_pixel == 8) {
       processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
         frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
@@ -161,7 +161,7 @@ public:
 
    static Signature filter_signature()
    {
-      Signature signature = "mt_mappedblur";
+      Signature signature = "kmt_mappedblur";
 
       signature.add(Parameter(TYPE_CLIP, "", false));
       signature.add(Parameter(TYPE_CLIP, "", false));

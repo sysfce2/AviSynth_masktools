@@ -81,4 +81,9 @@
       <Filter>constraints</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\functions\functions_cuda.cu">
+      <Filter>functions</Filter>
+    </None>
+  </ItemGroup>
 </Project>

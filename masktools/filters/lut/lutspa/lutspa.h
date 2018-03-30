@@ -17,10 +17,10 @@ class Lutspa : public MaskTools::Filter
    int pixelsize;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
         UNUSED(n); UNUSED(frames); UNUSED(constraints);
-        Functions::copy_plane(dst.data(), dst.pitch(), luts[nPlane], dst.width() * pixelsize, dst.width() * pixelsize, dst.height());
+        Functions::copy_plane(dst.data(), dst.pitch(), luts[nPlane], dst.width() * pixelsize, dst.width() * pixelsize, dst.height(), env);
         // copy_plane needs row_size in bytes
     }
 
@@ -140,9 +140,18 @@ public:
        return InPlaceOneFrame();
    }
 
+	 InputConfiguration &input_configuration_cuda() const {
+		 for (int i = 0; i < 4; i++) {
+			 if (operators[i] == COPY) {
+				 return OneFrame();
+			 }
+		 }
+		 return OneFrame();
+	 }
+
    static Signature filter_signature()
    {
-      Signature signature = "mt_lutspa";
+      Signature signature = "kmt_lutspa";
 
       signature.add(Parameter(TYPE_CLIP, "", false));
       signature.add(Parameter(String("relative"), "mode", false));

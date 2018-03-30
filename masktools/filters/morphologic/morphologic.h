@@ -30,9 +30,9 @@ protected:
     ProcessorList<Processor16> processors16;
     ProcessorList<Processor32> processors32;
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
-      UNUSED(n);
+      UNUSED(n); UNUSED(env);
       if (bits_per_pixel == 8) {
         processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
           frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
@@ -135,7 +135,7 @@ public:
         coordinates_list = NULL;
     }
 
-    InputConfiguration &input_configuration() const { return OneFrame(); }
+		InputConfiguration &input_configuration() const { return OneFrame(); }
 };
 
 } } } } // namespace Morphologic, Filters, MaskTools, Filtering

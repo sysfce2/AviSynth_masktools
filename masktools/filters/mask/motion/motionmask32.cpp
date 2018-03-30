@@ -117,12 +117,12 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
 #endif
 
 template <decltype(sad32_c_op) sad, decltype(mask32_c_op) mask>
-bool mask32_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, Float nLowThreshold, Float nHighThreshold, Float nMotionThreshold, int nSceneChange, Float nSceneChangeValue, int nWidth, int nHeight)
+bool mask32_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, Float nLowThreshold, Float nHighThreshold, Float nMotionThreshold, int nSceneChange, Float nSceneChangeValue, int nWidth, int nHeight, IScriptEnvironment* env)
 {
     bool scenechange = nSceneChange >= 2 ? nSceneChange == 3 : sad(pDst, nDstPitch, pSrc, nSrcPitch, nWidth, nHeight) > (double)(nMotionThreshold * nWidth * nHeight);
 
     if (scenechange) {
-        Functions::memset_plane_32((Byte *)pDst, nDstPitch, nWidth, nHeight, nSceneChangeValue);
+        Functions::memset_plane_32((Byte *)pDst, nDstPitch, nWidth, nHeight, nSceneChangeValue, env);
     } else {
         mask(pDst, nDstPitch, pSrc, nSrcPitch, nLowThreshold, nHighThreshold, nWidth, nHeight);
     }

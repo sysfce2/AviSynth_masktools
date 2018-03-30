@@ -47,9 +47,9 @@ class MakeDiff : public MaskTools::Filter
 
 protected:
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
     {
-        UNUSED(n);
+        UNUSED(n); UNUSED(env);
         if (bits_per_pixel == 8)
           processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
@@ -120,10 +120,11 @@ public:
     }
 
     InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
+		InputConfiguration &input_configuration_cuda() const { return TwoFrame(); }
 
     static Signature filter_signature()
     {
-        Signature signature = "mt_makediff";
+        Signature signature = "kmt_makediff";
 
         signature.add(Parameter(TYPE_CLIP, "", false));
         signature.add(Parameter(TYPE_CLIP, "", false));

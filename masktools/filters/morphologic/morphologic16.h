@@ -22,9 +22,9 @@ protected:
    ProcessorList<StackedProcessor> stackedProcessors;
    ProcessorList<Processor16> processors16;
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3]) override
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3], IScriptEnvironment* env) override
     {
-        UNUSED(n);
+        UNUSED(n); UNUSED(env);
         if (parameters["stacked"].toBool()) {
             stackedProcessors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), 
                 frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 

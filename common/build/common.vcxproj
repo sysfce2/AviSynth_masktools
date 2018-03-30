@@ -55,6 +55,7 @@
     <RootNamespace>common</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>MaskToolsCommon</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'" Label="Configuration">
@@ -128,6 +129,9 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 8.0.props" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
@@ -256,8 +260,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN32;_DEBUG;_LIB;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -267,10 +271,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>../../bin/common_d.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">
     <Midl>
@@ -278,8 +287,8 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;_DEBUG;_LIB;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN64;_AMD64_;_DEBUG;_LIB;DEBUG;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -289,10 +298,15 @@
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>../../bin/common_d.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">
     <ClCompile>
@@ -302,8 +316,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;MT_HAVE_BOOST_SPIRIT;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN32;MT_HAVE_BOOST_SPIRIT;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -313,10 +327,15 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">
     <ClCompile>
@@ -326,8 +345,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -340,10 +359,15 @@
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost|Win32'">
     <ClCompile>
@@ -353,8 +377,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -366,10 +390,15 @@
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|Win32'">
     <ClCompile>
@@ -379,8 +408,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_DUAL_SIGNATURES;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_DUAL_SIGNATURES;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -393,10 +422,15 @@
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|Win32'">
     <ClCompile>
@@ -406,8 +440,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -418,10 +452,15 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">
     <Midl>
@@ -434,8 +473,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN64;_AMD64_;MT_HAVE_BOOST_SPIRIT;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -444,10 +483,15 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">
     <Midl>
@@ -460,8 +504,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -473,10 +517,15 @@
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost|x64'">
     <Midl>
@@ -489,8 +538,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -499,10 +548,15 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|x64'">
     <Midl>
@@ -515,8 +569,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -528,10 +582,15 @@
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|x64'">
     <Midl>
@@ -544,8 +603,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>%BOOST_HOME%;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%BOOST_HOME%;$(SolutionDir)include;$(SolutionDir)common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ENABLE_CUDA;MT_HAVE_BOOST_SPIRIT;MT_DUAL_SIGNATURES;WIN64;_AMD64_;NDEBUG;_LIB;_CRT_SECURE_NO_WARNINGS;FILTER_AVS_26;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StructMemberAlignment>16Bytes</StructMemberAlignment>
       <BufferSecurityCheck>false</BufferSecurityCheck>
@@ -554,10 +613,15 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>
       </DebugInformationFormat>
+      <DisableSpecificWarnings>4505</DisableSpecificWarnings>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)common.lib</OutputFile>
     </Lib>
+    <CudaCompile>
+      <CodeGeneration>compute_61,sm_61;compute_35,sm_35</CodeGeneration>
+      <AdditionalOptions>-Xcompiler "/wd 4819" -Xcompiler  "/wd 4505" </AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\utils\utils.h" />
@@ -579,5 +643,16 @@
     <ClCompile Include="..\functions\functions.cpp" />
     <ClCompile Include="..\constraints\constraints.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\functions\functions_cuda.cu">
+      <FileType>Document</FileType>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\functions\functions_cuda.cu" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 8.0.targets" />
+  </ImportGroup>
 </Project>
