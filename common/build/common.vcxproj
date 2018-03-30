@@ -644,11 +644,6 @@
     <ClCompile Include="..\constraints\constraints.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\functions\functions_cuda.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-  </ItemGroup>
-  <ItemGroup>
     <CudaCompile Include="..\functions\functions_cuda.cu" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
