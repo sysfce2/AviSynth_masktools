@@ -2,13 +2,13 @@
 
 using namespace Filtering;
 
-void Filtering::MaskTools::Filters::Lut::Single::lut16_c_native(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int)
+void Filtering::MaskTools::Filters::Lut::Single::lut16_c_native(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word* lut, int mask)
 {
     for ( int y = 0; y < nHeight; y++ )
     {
         auto pDst16 = reinterpret_cast<Word*>(pDst);
         for ( int x = 0; x < nWidth; x+=1 )
-            pDst16[x] = lut[pDst16[x]];
+            pDst16[x] = lut[pDst16[x] & mask];
         pDst += nDstPitch;
     }
 }

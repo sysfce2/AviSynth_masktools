@@ -3,6 +3,7 @@
 
 #include "../../../common/base/filter.h"
 #include "../../../../common/parser/parser.h"
+#include "../lut_data.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Trial {
 
@@ -51,7 +52,7 @@ class Lutxyz : public MaskTools::Filter
    bool realtime;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
     {
         UNUSED(n);
         UNUSED(constraints);
@@ -73,8 +74,10 @@ protected:
     }
 
 public:
-   Lutxyz(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
+   Lutxyz(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+      : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
+      UNUSED(env);
       for (int i = 0; i < 4; i++) {
         parsed_expressions[i] = nullptr;
       }

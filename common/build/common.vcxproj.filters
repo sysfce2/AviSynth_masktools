@@ -82,8 +82,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\functions\functions_cuda.cu">
+    <CudaCompile Include="..\functions\functions_cuda.cu">
       <Filter>functions</Filter>
-    </None>
+    </CudaCompile>
   </ItemGroup>
 </Project>

@@ -21,7 +21,7 @@ class Hysteresis : public MaskTools::Filter
     Processor *processor;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
     {
         UNUSED(n);
         UNUSED(constraints);
@@ -33,7 +33,10 @@ protected:
     }
 
 public:
-    Hysteresis(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), stack(nullptr) {
+    Hysteresis(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2 *env)
+       : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), stack(nullptr)
+    {
+       UNUSED(env);
       int bits_per_pixel = bit_depths[C];
       int pixelsize = bits_per_pixel == 8 ? 1 : (bits_per_pixel == 32 ? 4 : 2);
       switch (bits_per_pixel) {

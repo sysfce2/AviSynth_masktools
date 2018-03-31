@@ -282,6 +282,12 @@
     <ClInclude Include="..\filters\mask\functions16_avx2.h">
       <Filter>filters\mask</Filter>
     </ClInclude>
+    <ClInclude Include="..\filters\lut\lut_data.h">
+      <Filter>filters\lut</Filter>
+    </ClInclude>
+    <ClInclude Include="..\filters\lut\lut_kernel.h">
+      <Filter>filters\lut</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avs2x\wrapper.cpp">
@@ -479,6 +485,12 @@
     <ClCompile Include="..\filters\mask\edge\edgemask16_avx2.cpp">
       <Filter>filters\mask\edge</Filter>
     </ClCompile>
+    <ClCompile Include="..\helpers\CudaHelper.cpp">
+      <Filter>helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\lut\lut_data.cpp">
+      <Filter>filters\lut</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\common\mt_resource.rc">
@@ -489,5 +501,10 @@
     <None Include="..\documentation\mt_masktools.html">
       <Filter>documentation</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\filters\lut\lut_kernel.cu">
+      <Filter>filters\lut</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

@@ -123,7 +123,7 @@ class Logic : public MaskTools::Filter
 
 protected:
 
-  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
   {
     UNUSED(n); UNUSED(env);
     if (bits_per_pixel == 8) {
@@ -144,8 +144,10 @@ protected:
   }
 
 public:
-  Logic(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
+  Logic(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2 *env)
+     : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
   {
+     UNUSED(env);
     isStacked = parameters["stacked"].toBool();
     bits_per_pixel = bit_depths[C];
 

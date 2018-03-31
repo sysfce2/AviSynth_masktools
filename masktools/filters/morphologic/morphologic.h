@@ -30,7 +30,7 @@ protected:
     ProcessorList<Processor16> processors16;
     ProcessorList<Processor32> processors32;
 
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
     {
       UNUSED(n); UNUSED(env);
       if (bits_per_pixel == 8) {
@@ -70,8 +70,10 @@ protected:
     }
 
 public:
-    MorphologicFilter(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), coordinates_list(NULL), coordinates_count(0)
+    MorphologicFilter(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+       : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), coordinates_list(NULL), coordinates_count(0)
     {
+       UNUSED(env);
       isStacked = parameters["stacked"].toBool();
       bits_per_pixel = bit_depths[C];
 
