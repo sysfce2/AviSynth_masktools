@@ -28,14 +28,14 @@ class Invert : public MaskTools::Filter
    ProcessorList<Processor> processors;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) override
     {
         UNUSED(n); UNUSED(frames); UNUSED(env);
         processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(), dst.width(), dst.height());
     }
 
 public:
-  Invert(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2 *env)
+  Invert(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
      : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
   {
      UNUSED(env);

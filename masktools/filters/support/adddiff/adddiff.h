@@ -44,7 +44,7 @@ class AddDiff : public MaskTools::Filter
     ProcessorList<Processor32> processors32;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) override
     {
         UNUSED(n); UNUSED(env);
         int bits_per_pixel = bit_depths[C];
@@ -65,7 +65,7 @@ protected:
     }
 
 public:
-    AddDiff(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+    AddDiff(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
        : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
     {
        UNUSED(env);

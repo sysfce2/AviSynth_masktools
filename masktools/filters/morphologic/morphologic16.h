@@ -22,7 +22,7 @@ protected:
    ProcessorList<StackedProcessor> stackedProcessors;
    ProcessorList<Processor16> processors16;
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3], IScriptEnvironment2* env) override
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[3], const Constraint constraints[3], PNeoEnv env) override
     {
         UNUSED(n); UNUSED(env);
         if (parameters["stacked"].toBool()) {
@@ -52,7 +52,7 @@ protected:
    }
 
 public:
-   MorphologicFilter16(const Parameters &parameters, IScriptEnvironment2* env)
+   MorphologicFilter16(const Parameters &parameters, PNeoEnv env)
       : MaskTools::Filter( parameters, FilterProcessingType::CHILD ), coordinates_list( NULL ), coordinates_count( 0 )
    {
      bool isStacked = parameters["stacked"].toBool();

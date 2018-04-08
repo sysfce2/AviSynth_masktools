@@ -22,7 +22,7 @@ extern Processor32 *deflate32_c;
 class Deflate : public Morphologic::MorphologicFilter
 {
 public:
-  Deflate(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+  Deflate(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
      : Morphologic::MorphologicFilter(parameters, (CpuFlags)cpuFlags, env)
   {
     int _bits_per_pixel = bit_depths[C];

@@ -37,7 +37,7 @@ class Lutxy : public MaskTools::Filter
    bool realtime;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) override
     {
         UNUSED(n);
         UNUSED(constraints);
@@ -55,7 +55,7 @@ protected:
     }
 
 public:
-   Lutxy(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+   Lutxy(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
       : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };

@@ -17,7 +17,7 @@ class Lutspa : public MaskTools::Filter
    int pixelsize;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) override
     {
         UNUSED(n); UNUSED(frames); UNUSED(constraints);
         Functions::copy_plane(dst.data(), dst.pitch(), luts[nPlane], dst.width() * pixelsize, dst.width() * pixelsize, dst.height(), env);
@@ -25,7 +25,7 @@ protected:
     }
 
 public:
-   Lutspa(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+   Lutspa(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
       : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags)
    {
       bits_per_pixel = bit_depths[C];

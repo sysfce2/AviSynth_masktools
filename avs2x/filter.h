@@ -39,11 +39,11 @@ class Filter : public GenericVideoFilter
     static AVSValue __cdecl _create(AVSValue args, void *user_data, IScriptEnvironment *env_)
     {
         UNUSED(user_data);
-        IScriptEnvironment2* env = static_cast<IScriptEnvironment2*>(env_);
+        PNeoEnv env = env_;
         return new Filter<T>(args[0].AsClip(), GetParameters(args, T::filter_signature(), env), env);
     }
 public:
-    Filter(::PClip child, const Parameters &parameters, IScriptEnvironment2 *env)
+    Filter(::PClip child, const Parameters &parameters, PNeoEnv env)
        : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags()), env), GenericVideoFilter(child), signature(T::filter_signature())
     {
         inputConfigSize = (::IsCUDA(env) ? _filter.input_configuration() : _filter.input_configuration_cuda()).size();
@@ -71,7 +71,7 @@ public:
 
     PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment *env_)
     {
-       IScriptEnvironment2* env = static_cast<IScriptEnvironment2*>(env_);
+       PNeoEnv env = env_;
 
         bool is_in_place = !::IsCUDA(env) && _filter.is_in_place();
         PVideoFrame dst = is_in_place ? child->GetFrame(n, env) : env->NewVideoFrame(vi);

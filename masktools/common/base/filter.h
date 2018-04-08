@@ -33,7 +33,7 @@ protected:
     int nXOffset, nYOffset, nXOffsetUV, nYOffsetUV;
     int nCoreWidth, nCoreHeight, nCoreWidthUV, nCoreHeightUV;
 
-   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) = 0;
+   virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) = 0;
 
    static Signature &add_defaults(Signature &signature)
    {
@@ -332,7 +332,7 @@ public:
             error = "masktools: unsupported colorspace, use Y8, YV12, YV16, YV24, YV411, greyscale, YUV(A)xxxP10-16/S, Planar RGB(A)";
     }
 
-    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4], IScriptEnvironment2* env)
+    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4], PNeoEnv env)
     {
         bool isCUDA = ::IsCUDA(env);
         bool isStacked = parameters["stacked"].is_defined() && parameters["stacked"].toBool();
@@ -452,7 +452,7 @@ public:
         }
     }
 
-    virtual Frame<Byte> get_frame(int n, const Frame<Byte> &output_frame, IScriptEnvironment2 *env)
+    virtual Frame<Byte> get_frame(int n, const Frame<Byte> &output_frame, PNeoEnv env)
     {
         bool is_cuda = IsCUDA(env);
         auto& input_conf = is_cuda ? input_configuration_cuda() : input_configuration();

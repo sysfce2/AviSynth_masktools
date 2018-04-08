@@ -59,7 +59,7 @@ class Lutxyza : public MaskTools::Filter
    bool realtime;
 
 protected:
-    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
+    virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) override
     {
         UNUSED(n);
         UNUSED(constraints);
@@ -84,7 +84,7 @@ protected:
     }
 
 public:
-   Lutxyza(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+   Lutxyza(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
       : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
    {
       UNUSED(env);

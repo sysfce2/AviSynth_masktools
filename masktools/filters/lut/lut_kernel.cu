@@ -121,7 +121,7 @@ __global__ void kl_lut_xyz(vpixel_t* dst,
 }
 
 template <typename vpixel_t, typename pixel_t, int bits_per_pixel>
-void lut_cuda(int num_input, pixel_t *pDst, const pixel_t * const *pSrc, int pitch, int width, int height, const pixel_t* lut, IScriptEnvironment2* env)
+void lut_cuda(int num_input, pixel_t *pDst, const pixel_t * const *pSrc, int pitch, int width, int height, const pixel_t* lut, PNeoEnv env)
 {
    const int mask = (1 << bits_per_pixel) - 1;
 
@@ -153,7 +153,7 @@ void lut_cuda(int num_input, pixel_t *pDst, const pixel_t * const *pSrc, int pit
    }
 }
 
-void lut_cuda_16(int bits_per_pixel, int num_input, uint16_t *pDst, const uint16_t * const *pSrc, int pitch, int width, int height, const uint16_t* lut, IScriptEnvironment2* env)
+void lut_cuda_16(int bits_per_pixel, int num_input, uint16_t *pDst, const uint16_t * const *pSrc, int pitch, int width, int height, const uint16_t* lut, PNeoEnv env)
 {
    switch (bits_per_pixel) {
    case 10: return lut_cuda<ushort4, uint16_t, 8>(num_input, pDst, pSrc, pitch, width, height, lut, env);
@@ -163,7 +163,7 @@ void lut_cuda_16(int bits_per_pixel, int num_input, uint16_t *pDst, const uint16
    }
 }
 
-void lut_cuda(int bits_per_pixel, int num_input, uint8_t *pDst, const uint8_t * const *pSrc, int pitch, int width, int height, const void* lut, IScriptEnvironment2* env)
+void lut_cuda(int bits_per_pixel, int num_input, uint8_t *pDst, const uint8_t * const *pSrc, int pitch, int width, int height, const void* lut, PNeoEnv env)
 {
    if (bits_per_pixel == 8) {
       return lut_cuda<uchar4, uint8_t, 8>(num_input, pDst, pSrc, pitch, width, height, (const uint8_t*)lut, env);

@@ -6,7 +6,7 @@ namespace Filtering {
 
 template <int bits_per_pixel>
 std::unique_ptr<LutData> make_lut_data(int num_input,
-   const std::vector<std::unique_ptr<Parser::Context>>& exprs, IScriptEnvironment2* env)
+   const std::vector<std::unique_ptr<Parser::Context>>& exprs, PNeoEnv env)
 {
    int num_planes = (int)exprs.size();
    int depth = (1 << bits_per_pixel);
@@ -47,7 +47,7 @@ std::unique_ptr<LutData> make_lut_data(int num_input,
 
 template <>
 std::unique_ptr<LutData> make_lut_data<8>(int num_input,
-   const std::vector<std::unique_ptr<Parser::Context>>& exprs, IScriptEnvironment2* env)
+   const std::vector<std::unique_ptr<Parser::Context>>& exprs, PNeoEnv env)
 {
    int num_planes = (int)exprs.size();
    int depth = (1 << 8);
@@ -85,7 +85,7 @@ std::unique_ptr<LutData> make_lut_data<8>(int num_input,
 }
 
 std::unique_ptr<LutData> make_lut_data(int bits_per_pixel, int num_input,
-   const std::vector<std::unique_ptr<Parser::Context>>& exprs, IScriptEnvironment2* env)
+   const std::vector<std::unique_ptr<Parser::Context>>& exprs, PNeoEnv env)
 {
    if (bits_per_pixel * num_input > 24) {
       env->ThrowError("[kmt_lut] %d bit %d input is not supported");

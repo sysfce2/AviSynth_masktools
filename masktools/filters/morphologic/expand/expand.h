@@ -57,7 +57,7 @@ extern Processor32 *expand32_custom_c;
 class Expand : public Morphologic::MorphologicFilter
 {
 public:
-  Expand(const Parameters&parameters, CpuFlags cpuFlags, IScriptEnvironment2* env) : Morphologic::MorphologicFilter(parameters, (CpuFlags)cpuFlags, env)
+  Expand(const Parameters&parameters, CpuFlags cpuFlags, PNeoEnv env) : Morphologic::MorphologicFilter(parameters, (CpuFlags)cpuFlags, env)
   {
     int _bits_per_pixel = bit_depths[C];
     bool _isStacked = parameters["stacked"].toBool();

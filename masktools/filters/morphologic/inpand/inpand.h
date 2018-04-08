@@ -56,7 +56,7 @@ extern Processor32 *inpand32_custom_c;
 class Inpand : public Morphologic::MorphologicFilter
 {
 public:
-  Inpand(const Parameters&parameters, CpuFlags cpuFlags, IScriptEnvironment2* env)
+  Inpand(const Parameters&parameters, CpuFlags cpuFlags, PNeoEnv env)
      : Morphologic::MorphologicFilter(parameters, (CpuFlags)cpuFlags, env)
   {
     int _bits_per_pixel = bit_depths[C];

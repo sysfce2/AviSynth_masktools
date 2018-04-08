@@ -34,7 +34,7 @@ class Gradient : public MaskTools::Filter
 
 protected:
 
-  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], IScriptEnvironment2* env) override
+  virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Frame<const Byte> frames[4], const Constraint constraints[4], PNeoEnv env) override
   {
     UNUSED(n); UNUSED(env);
     if (bits_per_pixel == 8)
@@ -55,7 +55,7 @@ protected:
   }
 
 public:
-   Gradient(const Parameters &parameters, CpuFlags cpuFlags, IScriptEnvironment2 *env)
+   Gradient(const Parameters &parameters, CpuFlags cpuFlags, PNeoEnv env)
       : MaskTools::Filter( parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags)
    {
       UNUSED(env);
