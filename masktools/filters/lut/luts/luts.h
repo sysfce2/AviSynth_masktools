@@ -9,6 +9,7 @@
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Spatial {
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], const Float lut_w[65536], Parser::Context *ctx, Parser::Context *ctx_w, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], const Float lut_w[65536], Parser::Context *ctx, Parser::Context *ctx_w, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode, bool chroma);
 
 // lut 8-16
 extern Processor *processors_array[NUM_MODES];
@@ -28,14 +29,14 @@ extern Processor *processors_realtime_10_array[NUM_MODES];
 extern Processor *processors_realtime_12_array[NUM_MODES];
 extern Processor *processors_realtime_14_array[NUM_MODES];
 extern Processor *processors_realtime_16_array[NUM_MODES];
-extern Processor *processors_realtime_32_array[NUM_MODES];
+extern Processor32 *processors_realtime_32_array[NUM_MODES];
 
 extern Processor *processors_weight_realtime_8_array[NUM_MODES];
 extern Processor *processors_weight_realtime_10_array[NUM_MODES];
 extern Processor *processors_weight_realtime_12_array[NUM_MODES];
 extern Processor *processors_weight_realtime_14_array[NUM_MODES];
 extern Processor *processors_weight_realtime_16_array[NUM_MODES];
-extern Processor *processors_weight_realtime_32_array[NUM_MODES];
+extern Processor32 *processors_weight_realtime_32_array[NUM_MODES];
 
 class Luts : public MaskTools::Filter
 {
@@ -44,6 +45,8 @@ class Luts : public MaskTools::Filter
 
    ProcessorList<Processor> processors;
    ProcessorList<Processor> processors_weight;
+   ProcessorList<Processor32> processors32;
+   ProcessorList<Processor32> processors32_weight;
 
    // for realtime
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
@@ -147,15 +150,31 @@ protected:
           Parser::Context ctx(*parsed_expressions[nPlane]);
           if (!parsed_expressions_w[nPlane]) {
             // no weights
-            processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nullptr, nullptr, &ctx, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+            if (bits_per_pixel <= 16) {
+              processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                nullptr, nullptr, &ctx, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+            }
+            else {
+              const bool chroma = frames[0].is_chroma(nPlane);
+              processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                nullptr, nullptr, &ctx, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode, chroma);
+            }
           }
           else {
             Parser::Context ctx_w(*parsed_expressions_w[nPlane]);
-            processors_weight.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              nullptr, nullptr, &ctx, &ctx_w, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+            if (bits_per_pixel <= 16) {
+              processors_weight.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                nullptr, nullptr, &ctx, &ctx_w, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
+            }
+            else {
+              const bool chroma = frames[0].is_chroma(nPlane);
+              processors32_weight.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+                frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+                nullptr, nullptr, &ctx, &ctx_w, pCoordinates, nCoordinates, dst.width(), dst.height(), mode, chroma);
+            }
           }
         }
         else {
@@ -344,7 +363,7 @@ public:
        case 12:  processors.push_back(processors_realtime_12_array[ModeToInt(mode)]); break;
        case 14:  processors.push_back(processors_realtime_14_array[ModeToInt(mode)]); break;
        case 16:  processors.push_back(processors_realtime_16_array[ModeToInt(mode)]); break;
-       case 32:  processors.push_back(processors_realtime_32_array[ModeToInt(mode)]); break;
+       case 32:  processors32.push_back(processors_realtime_32_array[ModeToInt(mode)]); break;
        }
      }
      else {
@@ -364,7 +383,7 @@ public:
          case 12:  processors_weight.push_back(processors_weight_realtime_12_array[ModeToInt(mode)]); break;
          case 14:  processors_weight.push_back(processors_weight_realtime_14_array[ModeToInt(mode)]); break;
          case 16:  processors_weight.push_back(processors_weight_realtime_16_array[ModeToInt(mode)]); break;
-         case 32:  processors_weight.push_back(processors_weight_realtime_32_array[ModeToInt(mode)]); break;
+         case 32:  processors32_weight.push_back(processors_weight_realtime_32_array[ModeToInt(mode)]); break;
          }
        }
        else {

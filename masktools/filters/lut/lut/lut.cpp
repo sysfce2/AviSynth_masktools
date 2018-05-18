@@ -42,12 +42,12 @@ void realtime16_t_c(Byte *dstp, ptrdiff_t dst_pitch, int width, int height, Pars
   }
 }
 
-void Filtering::MaskTools::Filters::Lut::Single::realtime32_c(Byte *dstp, ptrdiff_t dst_pitch, int width, int height, Parser::Context &ctx)
+void Filtering::MaskTools::Filters::Lut::Single::realtime32_c(Byte *dstp, ptrdiff_t dst_pitch, int width, int height, bool chroma, Parser::Context &ctx)
 {
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float_x(reinterpret_cast<Float *>(dstp)[x]);
+      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float_x(reinterpret_cast<Float *>(dstp)[x], chroma);
     }
     dstp += dst_pitch;
   }

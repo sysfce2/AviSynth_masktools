@@ -111,12 +111,13 @@ public:
              }
            break;
          case 32:
+           const bool chroma = !planes_isRGB[C] && (i == 1 || i == 2); // not RGB and plane U or V
            for (int x = 0; x < w; x++)
              for (int y = 0; y < h; y++) {
                float val = is_relative ?
                  ctx.compute_float_xy(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
-                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1)) 
-                 : ctx.compute_float_xy(x, y);
+                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1), chroma) 
+                 : ctx.compute_float_xy(x, y, chroma);
                reinterpret_cast<float *>(luts[i])[x + y*w] = val;
              }
            break;

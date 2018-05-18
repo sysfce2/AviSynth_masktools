@@ -115,6 +115,11 @@ public:
 
    int width(int nPlane) const { assert( nPlane < plane_counts[C] ); return planes[nPlane].width(); }
    int height(int nPlane) const { assert( nPlane < plane_counts[C] ); return planes[nPlane].height(); }
+   bool is_chroma(int nPlane) const {
+     // plane #1 and #2 (U/V) for nonRGB colorspaces
+     assert(nPlane < plane_counts[C]); 
+     return ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]);
+   }
    Colorspace colorspace() const { return C; }
 };
 

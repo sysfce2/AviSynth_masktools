@@ -110,7 +110,7 @@ static void frame16_c(Word *dstp, ptrdiff_t dst_pitch, const Word *srcp, ptrdiff
 
 
 template<class T>
-static void frame32_c(Float *dstp, ptrdiff_t dst_pitch, const Float *srcp, ptrdiff_t src_pitch, Parser::Context *ctx, int width, int height)
+static void frame32_c(Float *dstp, ptrdiff_t dst_pitch, const Float *srcp, ptrdiff_t src_pitch, Parser::Context *ctx, int width, int height, bool chroma)
 {
   dst_pitch /= sizeof(Float);
   src_pitch /= sizeof(Float);
@@ -134,7 +134,7 @@ static void frame32_c(Float *dstp, ptrdiff_t dst_pitch, const Float *srcp, ptrdi
   // always full realtime
   for (int j = 0; j < height; j++) {
     for (int i = 0; i < width; i++) {
-      dstp[i] = ctx->compute_float_xy(X, srcp[i]);
+      dstp[i] = ctx->compute_float_xy(X, srcp[i], chroma);
     }
     srcp += src_pitch;
     dstp += dst_pitch;

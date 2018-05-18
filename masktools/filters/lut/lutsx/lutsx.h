@@ -10,6 +10,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { 
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, const Byte *lut, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode1, const String &mode2);
 typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Parser::Context *ctx, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode1, const String &mode2);
+typedef void(ProcessorCtx32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Parser::Context *ctx, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode1, const String &mode2, bool chroma);
 
 extern Processor *processors_array[NUM_MODES][NUM_MODES];
 extern ProcessorCtx *processors_realtime_8_array[NUM_MODES][NUM_MODES];
@@ -17,7 +18,7 @@ extern ProcessorCtx *processors_realtime_10_array[NUM_MODES][NUM_MODES];
 extern ProcessorCtx *processors_realtime_12_array[NUM_MODES][NUM_MODES];
 extern ProcessorCtx *processors_realtime_14_array[NUM_MODES][NUM_MODES];
 extern ProcessorCtx *processors_realtime_16_array[NUM_MODES][NUM_MODES];
-extern ProcessorCtx *processors_realtime_32_array[NUM_MODES][NUM_MODES];
+extern ProcessorCtx32 *processors_realtime_32_array[NUM_MODES][NUM_MODES];
 
 class Lutsx : public MaskTools::Filter
 {
@@ -29,6 +30,7 @@ class Lutsx : public MaskTools::Filter
    ProcessorList<Processor> processors;
 
    ProcessorList<ProcessorCtx> processorsCtx;
+   ProcessorList<ProcessorCtx32> processorsCtx32;
 
    // for realtime
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
@@ -74,10 +76,20 @@ protected:
         if (realtime) {
           // thread safety
           Parser::Context ctx(*parsed_expressions[nPlane]);
-          processorsCtx.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
-            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-            &ctx, pCoordinates, nCoordinates, dst.width(), dst.height(), mode1, mode2);
+
+          if (bits_per_pixel <= 16) {
+            processorsCtx.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+              &ctx, pCoordinates, nCoordinates, dst.width(), dst.height(), mode1, mode2);
+          }
+          else {
+            const bool chroma = frames[0].is_chroma(nPlane);
+            processorsCtx32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+              &ctx, pCoordinates, nCoordinates, dst.width(), dst.height(), mode1, mode2, chroma);
+          }
         }
         else if (bits_per_pixel == 8) {
           processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
@@ -169,7 +181,7 @@ public:
         case 12: processorsCtx.push_back(processors_realtime_12_array[ModeToInt(mode1)][ModeToInt(mode2)]); break;
         case 14: processorsCtx.push_back(processors_realtime_14_array[ModeToInt(mode1)][ModeToInt(mode2)]); break;
         case 16: processorsCtx.push_back(processors_realtime_16_array[ModeToInt(mode1)][ModeToInt(mode2)]); break;
-        case 32: processorsCtx.push_back(processors_realtime_32_array[ModeToInt(mode1)][ModeToInt(mode2)]); break;
+        case 32: processorsCtx32.push_back(processors_realtime_32_array[ModeToInt(mode1)][ModeToInt(mode2)]); break;
         }
       }
       else {

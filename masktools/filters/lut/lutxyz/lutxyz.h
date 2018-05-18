@@ -8,6 +8,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { 
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, const Byte *lut);
 typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, Parser::Context &ctx);
+typedef void(ProcessorCtx32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight, bool chroma, Parser::Context &ctx);
 
 Processor lut_c;
 
@@ -16,7 +17,7 @@ extern ProcessorCtx *realtime10_c;
 extern ProcessorCtx *realtime12_c;
 extern ProcessorCtx *realtime14_c;
 extern ProcessorCtx *realtime16_c;
-ProcessorCtx realtime32_c;
+ProcessorCtx32 realtime32_c;
 
 class Lutxyz : public MaskTools::Filter
 {
@@ -46,7 +47,7 @@ class Lutxyz : public MaskTools::Filter
 
    ProcessorCtx *processorCtx;
    ProcessorCtx *processorCtx16;
-   ProcessorCtx *processorCtx32;
+   ProcessorCtx32 *processorCtx32;
    int bits_per_pixel;
    bool realtime;
 
@@ -58,10 +59,20 @@ protected:
         if (realtime) {
           // thread safety
           Parser::Context ctx(*parsed_expressions[nPlane]);
-          processorCtx(dst.data(), dst.pitch(), 
-            frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), 
-            frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
-            dst.width(), dst.height(), ctx);
+
+          if (bits_per_pixel <= 16)
+            processorCtx(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+              dst.width(), dst.height(), ctx);
+          else {
+            const bool chroma = frames[0].is_chroma(nPlane);
+            processorCtx32(dst.data(), dst.pitch(),
+              frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
+              frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),
+              dst.width(), dst.height(), chroma, ctx);
+          }
+
         }
         else if (bits_per_pixel == 8) {
           lut_c(dst.data(), dst.pitch(),
@@ -131,7 +142,7 @@ public:
             case 12: processorCtx = realtime12_c; break;
             case 14: processorCtx = realtime14_c; break;
             case 16: processorCtx = realtime16_c; break;
-            case 32: processorCtx = realtime32_c; break;
+            case 32: processorCtx32 = realtime32_c; break;
             }
             continue;
           }

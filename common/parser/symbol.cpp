@@ -324,13 +324,33 @@ Context::Context(const std::deque<Symbol> &expression)
      a_cmin[bits - 8] = 16 << (bits - 8); // 16 scaled
      a_cmax[bits - 8] = 240 << (bits - 8);// 240 scaled
    }
-   range_half_f = 0.5; // or 0.0 for float chroma in the future?
-   range_max_f = 1.0;
+
+   // [0]: luma, [1]: chroma
+   range_half_f[0] = 0.5;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+   range_half_f[1] = 0.5; // chroma
+#else
+   range_half_f[1] = 0.0;
+#endif
+
+   // [0]: luma, [1]: chroma
+   range_max_f[0] = 1.0;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+   range_max_f[1] = 1.0;
+#else
+   range_max_f[1] = 0.5;
+#endif
+
    range_size_f = 1.0;
+
    ymin_f = 16.0 / 255;
    ymax_f = 235.0 / 255;
-   cmin_f = 16.0 / 255;
-   cmax_f = 235.0 / 255;
+   cmin_f = (16.0 - 128.0)/ 255;
+   cmax_f = (240.0 - 128.0) / 255;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+   cmin_f += 0.5f; // back to 0.5 centered
+   cmax_f += 0.5f;
+#endif
 
    float_autoscale_bitdepth = default_float_autoscale_bitdepth;
 
@@ -369,8 +389,8 @@ double Context::rec_compute()
     case Symbol::VARIABLE_BITDEPTH: { last = bitdepth; break; } // bit-depth for autoscale
     case Symbol::VARIABLE_SCRIPT_BITDEPTH: { last = sbitdepth_f; break; } // source bit depth for autoscale
 
-    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f : a_range_half[bitdepth - 8]; break; } // or 0.0 for float in the future?
-    case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f : a_range_max[bitdepth-8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float
+    case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth-8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float, 0.5 float chroma)
     case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth-8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: { last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
     case Symbol::VARIABLE_YMAX: { last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
@@ -398,8 +418,8 @@ double Context::rec_compute()
       case Symbol::VARIABLE_BITDEPTH: { exprstack[p++] = last; last = bitdepth; break; } // bit-depth for autoscale
       case Symbol::VARIABLE_SCRIPT_BITDEPTH: { exprstack[p++] = last; last = sbitdepth_f; break; } // source bit depth for autoscale
 
-      case Symbol::VARIABLE_RANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f : a_range_half[bitdepth - 8]; break; } // or 0.0 for float in the future?
-      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+      case Symbol::VARIABLE_RANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // or 0.0 for float in the future?
+      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
       case Symbol::VARIABLE_RANGE_SIZE: { exprstack[p++] = last; last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth - 8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
       case Symbol::VARIABLE_YMIN: { exprstack[p++] = last; last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
       case Symbol::VARIABLE_YMAX: { exprstack[p++] = last; last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
@@ -516,7 +536,8 @@ double Context::rec_compute_old()
   }
 }
 
-double Context::compute(double _x, double _y, double _z, double _a, int _bitdepth)
+/*
+double Context::compute(double _x, double _y, double _z, double _a, int _bitdepth, bool _chroma)
 {
    nPos = nSymbols;
    this->x = _x;
@@ -524,13 +545,14 @@ double Context::compute(double _x, double _y, double _z, double _a, int _bitdept
    this->z = _z;
    this->a = _a;
 
+   this->luma_chroma = _chroma ? 1 : 0;
    this->bitdepth = _bitdepth;
    // all other expr constants are calculated from bitdepth
 
    return rec_compute(); // check x86 rec_compute_old with x,y,z,a is faster
 }
-
-double Context::compute_4(double _x, double _y, double _z, double _a, int _bitdepth)
+*/
+double Context::compute_4(double _x, double _y, double _z, double _a, int _bitdepth, bool _chroma)
 {
   nPos = nSymbols;
   this->x = _x;
@@ -538,42 +560,46 @@ double Context::compute_4(double _x, double _y, double _z, double _a, int _bitde
   this->z = _z;
   this->a = _a;
 
+  this->luma_chroma = _chroma ? 1 : 0;
   this->bitdepth = _bitdepth;
   // all other expr constants are calculated from bitdepth
   
   return rec_compute(); // on x86 rec_compute_old is MUCH faster
 }
 
-double Context::compute_3(double _x, double _y, double _z, int _bitdepth)
+double Context::compute_3(double _x, double _y, double _z, int _bitdepth, bool _chroma)
 {
   nPos = nSymbols;
   this->x = _x;
   this->y = _y;
   this->z = _z;
 
+  this->luma_chroma = _chroma ? 1 : 0;
   this->bitdepth = _bitdepth;
   // all other expr constants are calculated from bitdepth
 
   return rec_compute();
 }
 
-double Context::compute_2(double _x, double _y, int _bitdepth)
+double Context::compute_2(double _x, double _y, int _bitdepth, bool _chroma)
 {
   nPos = nSymbols;
   this->x = _x;
   this->y = _y;
 
+  this->luma_chroma = _chroma ? 1 : 0;
   this->bitdepth = _bitdepth;
   // all other expr constants are calculated from bitdepth
 
   return rec_compute();
 }
 
-double Context::compute_1(double _x, int _bitdepth)
+double Context::compute_1(double _x, int _bitdepth, bool _chroma)
 {
   nPos = nSymbols;
   this->x = _x;
 
+  this->luma_chroma = _chroma ? 1 : 0;
   this->bitdepth = _bitdepth;
   // all other expr constants are calculated from bitdepth
 

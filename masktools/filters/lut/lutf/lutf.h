@@ -10,7 +10,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { 
 
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, const Byte lut[65536], Parser::Context *ctx, int nWidth, int nHeight); // common lut/realtime, templatized
 typedef void(Processor16)(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, const Word *lut, Parser::Context *ctx, int nWidth, int nHeight); // common lut/realtime, templatized
-typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, Parser::Context *ctx, int nWidth, int nHeight); // realtime only
+typedef void(Processor32)(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, Parser::Context *ctx, int nWidth, int nHeight, bool chroma); // realtime only
 
 extern Processor *processors_array[NUM_MODES];
 extern Processor *processorsCtx_array[NUM_MODES];
@@ -98,10 +98,12 @@ protected:
             processors16.best_processor(constraints[nPlane])((Word *)dst.data(), dst.pitch(),
               (Word *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
               nullptr, &ctx, dst.width(), dst.height());
-          else
+          else {
+            const bool chroma = frames[0].is_chroma(nPlane);
             processors32.best_processor(constraints[nPlane])((Float *)dst.data(), dst.pitch(),
               (Float *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-              &ctx, dst.width(), dst.height());
+              &ctx, dst.width(), dst.height(), chroma);
+          }
         }
         else {
           // lut

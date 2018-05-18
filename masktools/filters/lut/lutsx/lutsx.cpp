@@ -108,7 +108,8 @@ static void custom_realtime_uint16_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte
 }
 
 template<class T, class U>
-static void custom_realtime_32_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Parser::Context *ctx, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode1, const String &mode2)
+static void custom_realtime_32_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pSrc2, ptrdiff_t nSrc2Pitch, Parser::Context *ctx, 
+  const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, const String &mode1, const String &mode2, bool chroma)
 {
   T new_value1(mode1);
   U new_value2(mode2);
@@ -137,7 +138,7 @@ static void custom_realtime_32_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pS
         new_value1.add(pSrc1_32[x + (y - j) * nSrc1Pitch]);
         new_value2.add(pSrc2_32[x + (y - j) * nSrc2Pitch]);
       }
-      pDst_32[i] = (float)ctx->compute_float_xyz(pDst_32[i], new_value1.finalize(), new_value2.finalize());
+      pDst_32[i] = (float)ctx->compute_float_xyz(pDst_32[i], new_value1.finalize(), new_value2.finalize(), chroma);
     }
     pSrc1_32 += nSrc1Pitch;
     pSrc2_32 += nSrc2Pitch;
@@ -232,7 +233,7 @@ ProcessorCtx *processors_realtime_16_array[NUM_MODES][NUM_MODES] =
   MPROCESSOR16_DUAL(custom_realtime_uint16_c, MedianizerBetter16<2>, true, 16),
 };
 
-ProcessorCtx *processors_realtime_32_array[NUM_MODES][NUM_MODES] =
+ProcessorCtx32 *processors_realtime_32_array[NUM_MODES][NUM_MODES] =
 {
   MPROCESSOR32_DUAL(custom_realtime_32_c, Nonizer32),
   MPROCESSOR32_DUAL(custom_realtime_32_c, Averager32),

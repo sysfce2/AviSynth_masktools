@@ -67,12 +67,12 @@ static void realtime16_t_c(Byte *dstp, ptrdiff_t dst_pitch, const Byte *srcp, pt
   }
 }
 
-void Filtering::MaskTools::Filters::Lut::Dual::realtime32_c(Byte *dstp, ptrdiff_t dst_pitch, const Byte *srcp, ptrdiff_t nSrcPitch, int width, int height, Parser::Context &ctx)
+void Filtering::MaskTools::Filters::Lut::Dual::realtime32_c(Byte *dstp, ptrdiff_t dst_pitch, const Byte *srcp, ptrdiff_t nSrcPitch, int width, int height, bool chroma, Parser::Context &ctx)
 {
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float_xy(reinterpret_cast<Float *>(dstp)[x], reinterpret_cast<const Float *>(srcp)[x]);
+      reinterpret_cast<Float *>(dstp)[x] = ctx.compute_float_xy(reinterpret_cast<Float *>(dstp)[x], reinterpret_cast<const Float *>(srcp)[x], chroma);
     }
     dstp += dst_pitch;
     srcp += nSrcPitch;

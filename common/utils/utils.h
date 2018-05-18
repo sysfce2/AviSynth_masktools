@@ -281,7 +281,7 @@ true, true, true, true, true, true // RGBAP 8,10,12,14,16,32/f
 
 };
 
-template<Colorspace C> int plane_isRGB() { return planes_isRGB[C]; }
+template<Colorspace C> bool plane_isRGB() { return planes_isRGB[C]; }
 
 static const int width_ratios[4][COLORSPACE_COUNT] =
 {
