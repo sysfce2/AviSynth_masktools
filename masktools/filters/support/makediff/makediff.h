@@ -8,7 +8,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Suppor
 /* 8 bit */
 typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
 typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, int nOrigHeight);
-typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight);
+typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, bool chroma);
 
 Processor makediff_c;
 extern Processor *makediff_sse2;
@@ -58,10 +58,12 @@ protected:
           processors16.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             dst.width(), dst.height(), dst.origheight());
-        else
+        else {
+          const bool chroma = frames[0].is_chroma(nPlane); // chroma center is 0.0 others are 0.5
           processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
-            dst.width(), dst.height());
+            dst.width(), dst.height(), chroma);
+        }
     }
 
 public:
