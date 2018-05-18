@@ -32,6 +32,8 @@ ipch/
 *.cachefile
 *.VC.db
 *.VC.VC.opendb
+*.VC.db-shm
+*.VC.db-wal
 
 # Visual Studio profiler
 *.psess
