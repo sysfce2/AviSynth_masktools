@@ -179,6 +179,18 @@ Symbol Symbol::SetFloatToClampUseI14Range("clamp_f_i14", -14.0, FUNCTION_CONFIG_
 Symbol Symbol::SetFloatToClampUseI16Range("clamp_f_i16", -16.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetFloatToClampUseF32Range("clamp_f_f32", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetFloatToClampUseF32Range_2("clamp_f", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
+// 2.2.15- autoscale 8-16, no 32bit intermediate option
+Symbol Symbol::SetScriptAutoBitDepthAs8("as8", 8.0, FUNCTION_CONFIG_AUTO_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs10("as10", 10.0, FUNCTION_CONFIG_AUTO_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs12("as12", 12.0, FUNCTION_CONFIG_AUTO_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs14("as14", 14.0, FUNCTION_CONFIG_AUTO_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs16("as16", 16.0, FUNCTION_CONFIG_AUTO_BITDEPTH, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs8f("as8f", 8.0, FUNCTION_CONFIG_AUTO_BITDEPTH_FULL, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs10f("as10f", 10.0, FUNCTION_CONFIG_AUTO_BITDEPTH_FULL, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs12f("as12f", 12.0, FUNCTION_CONFIG_AUTO_BITDEPTH_FULL, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs14f("as14f", 14.0, FUNCTION_CONFIG_AUTO_BITDEPTH_FULL, 0, NULL);
+Symbol Symbol::SetScriptAutoBitDepthAs16f("as16f", 16.0, FUNCTION_CONFIG_AUTO_BITDEPTH_FULL, 0, NULL);
+
 
 Symbol Symbol::Dup("dup", DUP);
 Symbol Symbol::Swap("swap", SWAP);
@@ -287,6 +299,8 @@ Context::Context(const std::deque<Symbol> &expression)
 
    int default_sbitdepth = 8;
    int default_float_autoscale_bitdepth = 0; // no clamp and autoscale
+   int default_all_autoscale_bitdepth = 0; // general autoscale v2.2.15-
+   bool default_fullrange_autoscale = false;
 
    int symbolCount = 0;
    int symbolCount_control = 0;
@@ -305,6 +319,18 @@ Context::Context(const std::deque<Symbol> &expression)
          default_float_autoscale_bitdepth = -(int)it->dValue;
        }
      }
+     else if (it->type == Symbol::FUNCTION_CONFIG_AUTO_BITDEPTH) {
+       pSymbols_control[symbolCount_control++] = *it;
+       // as8, as10, as12, as14, as16
+       default_all_autoscale_bitdepth = (int)it->dValue;
+       default_fullrange_autoscale = false; // limited range conversion
+     }
+     else if (it->type == Symbol::FUNCTION_CONFIG_AUTO_BITDEPTH_FULL) {
+       pSymbols_control[symbolCount_control++] = *it;
+       // as8f, as10f, as12f, as14f, as16f
+       default_all_autoscale_bitdepth = (int)it->dValue;
+       default_fullrange_autoscale = true; // full range conversion
+     }
      else {
        pSymbols[symbolCount++] = *it;
      }
@@ -315,12 +341,12 @@ Context::Context(const std::deque<Symbol> &expression)
    sbitdepth = default_sbitdepth;
    sbitdepth_f = default_sbitdepth; // copy to double type for direct variable use
 
-   // fill predefined constants for faster rec_compute access
+   // fill predefined constants for faster rec_compute access. Integer bit-depth only
    for (int bits = 8; bits <= 16; bits++) {
-     a_range_half[bits - 8] = 128 << (bits - 8); // or 0.0 for float chroma in the future?
+     a_range_half[bits - 8] = 128 << (bits - 8); // 
      a_range_min[bits - 8] = 0; // min_pixel_value. 8*16bit: 0, for the sake of completeness
-     a_range_max[bits - 8] = (1 << bits) - 1; // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
-     a_range_size[bits - 8] = (1 << bits); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
+     a_range_max[bits - 8] = (1 << bits) - 1; // max_pixel_value. 255, 1023, 4095, 16383, 65535
+     a_range_size[bits - 8] = (1 << bits); // 256, 1024, 4096, 16384, 65536
      a_ymin[bits - 8] = 16 << (bits - 8); // 16 scaled
      a_ymax[bits - 8] = 235 << (bits - 8);// 235 scaled
      a_cmin[bits - 8] = 16 << (bits - 8); // 16 scaled
@@ -357,13 +383,22 @@ Context::Context(const std::deque<Symbol> &expression)
    cmax_f += 0.5f;
 #endif
 
+   // target bitdepth, into which float is converted
    float_autoscale_bitdepth = default_float_autoscale_bitdepth;
+
+   // target bitdepth, into which any input bitdepth is converted
+   all_autoscale_bitdepth = default_all_autoscale_bitdepth;
+   fullrange_autoscale = default_fullrange_autoscale; // full or limited
+
+   // when all_autoscale is specified, it applies also to float input (old masktools2 option)
+   if (float_autoscale_bitdepth == 0 && all_autoscale_bitdepth != 0)
+     float_autoscale_bitdepth = all_autoscale_bitdepth;
 
    // precalculate scale factor and its inverse
    float_input_scalefactor = 1.0; // for default and 32 bit
    if (float_autoscale_bitdepth >= 8 && float_autoscale_bitdepth <= 16)
-     float_input_scalefactor = double((1 << float_autoscale_bitdepth) - 1);
-   float_input_invscalefactor = 1.0 / float_input_scalefactor;
+     float_input_scalefactor = float((1 << float_autoscale_bitdepth) - 1);
+   float_input_invscalefactor = 1.0f / float_input_scalefactor;
 
 }
 
