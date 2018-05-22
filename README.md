@@ -87,6 +87,7 @@ Differences to Masktools 2.0b1
     - bitdepth: automatic silent parameter of the lut expression (clip bit depth)
     - sbitdepth: automatic silent parameter of the lut expression (bit depth of values to scale)
     - range_half --> autoscaled 128 or 0.5 for float luma/rgb, 0.0 for float chroma
+    - range_min --> 0 for 8-16 bits and non-UV 32bit, or -0.5 for float UV chroma (new from 2.2.15)
     - range_max --> 255/1023/4095/16383/65535 or 1.0 for float luma or 0.5 for float chroma
     - range_size --> 256/1024...65536
     - ymin, ymax, cmin, cmax --> 16/235 and 16/240 autoscaled. For zero based float: (16-128)/255.0 and (240-128)/255.0
@@ -108,6 +109,7 @@ Example #3 (new, with constants)
 ```
       expr_luma = "x ymin - ymax ymin - / range_max *"
       expr_chroma = "x cmin - cmax cmin - / range_max *"
+      works for float with range_min: expr_chroma = "x cmin - cmax cmin - / range_max range_min - *"
 ```
   - new expression syntax: auto scale modifiers for float clips (test for real.finder):
     Keyword at the beginning of the expression:
@@ -222,6 +224,7 @@ Changelog
   Affected predefined expression constants when plane is U or V: 
   cmin and cmax (limited range (16-128)/255 and (240-128)/255 instead of 16/255.0 and 240/255.0
   range_max: 0.5 instead of 1.0
+  new: introduce range_min: -0.5 for float U/V chroma, 0 otherwise
   range_half (0.0 instead of 0.5)
   (range_size remained 1.0)
 
