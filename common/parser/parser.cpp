@@ -20,7 +20,29 @@ Parser::Parser &Parser::Parser::addSymbol(const Symbol &symbol)
 
 const Parser::Symbol *Parser::Parser::findSymbol(const String &value) const
 {
+    // this one only finds exact symbols
+    // special syntax elements should be treated here
+    // Little problem: we should give unique Symbol to all 26*3 user variable method?
+    // Better have introduce special symbol types instead
+    //   'A'..'Z' variables
+    //   'A@'..'Z@' variable store
+    //   'A^'..'Z^' variable store and pop from stack
+    //   dupN and swapN where N is an integer 0..
+    // Constants that are bit-depth dependent are changed later in a 2nd pass to constants (NUMBER)
     for (auto &symbol: symbols) {
+      /* temporarily off
+        if (value.length >= 1) {
+          if (value[0] >= 'A' && value[0] <= 'Z')
+          {
+            // user variable related
+            if (value.length == 1)
+            {
+              const Symbol s = new Symbol("A", Symbol::VARIABLE, Symbol::);
+            }
+              
+          }
+        }
+        */
         if (symbol.value == value || symbol.value2 == value) {
             return &symbol;
         }
@@ -37,23 +59,23 @@ Parser::Symbol Parser::Parser::stringToSymbol(const String &value) const
         : *found;
 }
 
-Parser::Parser &Parser::Parser::parse(const String &parsed_string, const String &separators)
+Parser::Parser &Parser::Parser::parse(const String &_parsed_string, const String &separators)
 {
-   this->parsed_string = parsed_string;
+   this->parsed_string = _parsed_string;
 
-   size_t nPos = parsed_string.find_first_not_of(separators, 0);
+   size_t nPos = _parsed_string.find_first_not_of(separators, 0);
    size_t nEndPos;
 
    elements.clear();
 
-   while ( nPos != String::npos && (nEndPos = parsed_string.find_first_of(separators, nPos)) != String::npos )
+   while ( nPos != String::npos && (nEndPos = _parsed_string.find_first_of(separators, nPos)) != String::npos )
    {
-      elements.push_back(stringToSymbol(parsed_string.substr(nPos, nEndPos - nPos)));
-      nPos = parsed_string.find_first_not_of(separators, nEndPos);
+      elements.push_back(stringToSymbol(_parsed_string.substr(nPos, nEndPos - nPos)));
+      nPos = _parsed_string.find_first_not_of(separators, nEndPos);
    }
 
    if ( nPos != String::npos )
-      elements.push_back(stringToSymbol(parsed_string.substr(nPos)));
+      elements.push_back(stringToSymbol(_parsed_string.substr(nPos)));
 
    return *this;
 }
@@ -100,7 +122,7 @@ Parser::Parser Parser::getDefaultParser()
    parser.addSymbol(Symbol::SetFloatToClampUseI8Range).addSymbol(Symbol::SetFloatToClampUseI10Range).addSymbol(Symbol::SetFloatToClampUseI12Range).addSymbol(Symbol::SetFloatToClampUseI14Range);
    parser.addSymbol(Symbol::SetFloatToClampUseI16Range).addSymbol(Symbol::SetFloatToClampUseF32Range).addSymbol(Symbol::SetFloatToClampUseF32Range_2);
    /* special bit-depth adaptive constants */
-   parser.addSymbol(Symbol::RANGE_HALF).addSymbol(Symbol::RANGE_MAX).addSymbol(Symbol::RANGE_SIZE);
+   parser.addSymbol(Symbol::RANGE_HALF).addSymbol(Symbol::RANGE_MIN).addSymbol(Symbol::RANGE_MAX).addSymbol(Symbol::RANGE_SIZE);
    parser.addSymbol(Symbol::YMIN).addSymbol(Symbol::YMAX);
    parser.addSymbol(Symbol::CMIN).addSymbol(Symbol::CMAX);
 

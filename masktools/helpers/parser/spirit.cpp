@@ -105,6 +105,7 @@ public:
              str_p("bitdepth")[AddNamedSymbol("bitdepth", self.rpn)] |
              str_p("sbitdepth")[AddNamedSymbol("sbitdepth", self.rpn)] |
              str_p("range_half")[AddNamedSymbol("range_half", self.rpn)] |
+             str_p("range_min")[AddNamedSymbol("range_min", self.rpn)] |
              str_p("range_max")[AddNamedSymbol("range_max", self.rpn)] |
              str_p("range_size")[AddNamedSymbol("range_size", self.rpn)] |
              str_p("ymin")[AddNamedSymbol("ymin", self.rpn)] |

@@ -45,6 +45,7 @@ public:
 
      // special adaptive constants filled by bitdepth
      VARIABLE_RANGE_HALF,
+     VARIABLE_RANGE_MIN,
      VARIABLE_RANGE_MAX,
      VARIABLE_RANGE_SIZE,
      VARIABLE_YMIN,
@@ -145,6 +146,7 @@ public:
    static Symbol SCRIPT_BITDEPTH;
    // special adaptive constants filled by bitdepth
    static Symbol RANGE_HALF;
+   static Symbol RANGE_MIN;
    static Symbol RANGE_MAX;
    static Symbol RANGE_SIZE;
    static Symbol YMIN;
@@ -209,6 +211,7 @@ class Context {
    // predefined bit-depth dependent constant 8..16 -> 0..8
    // calculated in advance for realtime speed gain
    double a_range_half[9];
+   double a_range_min[9];
    double a_range_max[9];
    double a_range_size[9];
    double a_ymin[9];
@@ -216,6 +219,7 @@ class Context {
    double a_cmin[9];
    double a_cmax[9];
    double range_half_f[2]; // luma/chroma
+   double range_min_f[2];  // luma/chroma
    double range_max_f[2];  // luma/chroma
    double range_size_f;
    double ymin_f;

@@ -138,6 +138,7 @@ Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE, VARIABLE_BITDEPTH);
 Symbol Symbol::SCRIPT_BITDEPTH("sbitdepth", VARIABLE, VARIABLE_SCRIPT_BITDEPTH);
 // bit-depth adaptive constants, since v2.2.1
 Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE, VARIABLE_RANGE_HALF); // 128  scaled
+Symbol Symbol::RANGE_MIN      ("range_min", VARIABLE, VARIABLE_RANGE_MIN);   // 0, or -0.5 for 32 bit float chroma
 Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE, VARIABLE_RANGE_MAX);   // 255, 4095, .. 65535
 Symbol Symbol::RANGE_SIZE     ("range_size", VARIABLE, VARIABLE_RANGE_SIZE); // 256, 1024, 4096, 16384, 65536
 Symbol Symbol::YMIN           ("ymin", VARIABLE, VARIABLE_YMIN); // 16 scaled
@@ -317,6 +318,7 @@ Context::Context(const std::deque<Symbol> &expression)
    // fill predefined constants for faster rec_compute access
    for (int bits = 8; bits <= 16; bits++) {
      a_range_half[bits - 8] = 128 << (bits - 8); // or 0.0 for float chroma in the future?
+     a_range_min[bits - 8] = 0; // min_pixel_value. 8*16bit: 0, for the sake of completeness
      a_range_max[bits - 8] = (1 << bits) - 1; // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
      a_range_size[bits - 8] = (1 << bits); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
      a_ymin[bits - 8] = 16 << (bits - 8); // 16 scaled
@@ -334,10 +336,13 @@ Context::Context(const std::deque<Symbol> &expression)
 #endif
 
    // [0]: luma, [1]: chroma
+   range_min_f[0] = 0.0;
    range_max_f[0] = 1.0;
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+   range_min_f[1] = 0.0;
    range_max_f[1] = 1.0;
 #else
+   range_min_f[1] = -0.5;
    range_max_f[1] = 0.5;
 #endif
 
@@ -390,6 +395,7 @@ double Context::rec_compute()
     case Symbol::VARIABLE_SCRIPT_BITDEPTH: { last = sbitdepth_f; break; } // source bit depth for autoscale
 
     case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float
+    case Symbol::VARIABLE_RANGE_MIN: { last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0 or -0.5
     case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth-8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float, 0.5 float chroma)
     case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth-8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: { last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
@@ -419,7 +425,8 @@ double Context::rec_compute()
       case Symbol::VARIABLE_SCRIPT_BITDEPTH: { exprstack[p++] = last; last = sbitdepth_f; break; } // source bit depth for autoscale
 
       case Symbol::VARIABLE_RANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // or 0.0 for float in the future?
-      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+      case Symbol::VARIABLE_RANGE_MIN: { exprstack[p++] = last; last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; } // min_pixel_value. 0 or -0.5f
+      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
       case Symbol::VARIABLE_RANGE_SIZE: { exprstack[p++] = last; last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth - 8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
       case Symbol::VARIABLE_YMIN: { exprstack[p++] = last; last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
       case Symbol::VARIABLE_YMAX: { exprstack[p++] = last; last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
@@ -495,6 +502,7 @@ double Context::rec_compute_old()
     case Symbol::VARIABLE_SCRIPT_BITDEPTH: return sbitdepth_f; // source bit depth for autoscale
 
     case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
+    case Symbol::VARIABLE_RANGE_MIN: return bitdepth == 32 ? 0.0 : 0; // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
     case Symbol::VARIABLE_RANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
     case Symbol::VARIABLE_RANGE_SIZE: return bitdepth == 32 ? 1.0 : (1 << bitdepth); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
@@ -621,6 +629,7 @@ String Context::rec_infix()
       case Symbol::VARIABLE_BITDEPTH:
       case Symbol::VARIABLE_SCRIPT_BITDEPTH:
       case Symbol::VARIABLE_RANGE_HALF:
+      case Symbol::VARIABLE_RANGE_MIN:
       case Symbol::VARIABLE_RANGE_MAX:
       case Symbol::VARIABLE_RANGE_SIZE:
       case Symbol::VARIABLE_YMIN:
