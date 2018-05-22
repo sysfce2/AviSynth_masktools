@@ -99,7 +99,7 @@ protected:
               (Word *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
               nullptr, &ctx, dst.width(), dst.height());
           else {
-            const bool chroma = frames[0].is_chroma(nPlane);
+            const bool chroma = ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]);
             processors32.best_processor(constraints[nPlane])((Float *)dst.data(), dst.pitch(),
               (Float *)frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
               &ctx, dst.width(), dst.height(), chroma);

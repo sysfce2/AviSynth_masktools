@@ -95,7 +95,7 @@ protected:
           if (bits_per_pixel <= 16)
             processorCtx(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), ctx);
           else {
-            const bool chroma = frames[0].is_chroma(nPlane);
+            const bool chroma = ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]);
             processorCtx32(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), chroma, ctx); // extra parameter
           }
         }

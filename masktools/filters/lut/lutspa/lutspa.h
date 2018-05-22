@@ -89,6 +89,7 @@ public:
          case 10:
          case 12:
          case 14:
+         case 16:
            for (int x = 0; x < w; x++)
              for (int y = 0; y < h; y++) {
                // input is not integer, don't use compute_word_xy<n>
@@ -97,16 +98,6 @@ public:
                    y * 1.0 / ((is_biased || h < 2) ? h : h - 1),
                    bits_per_pixel // new: bit-depth goes to param B
                  ) : ctx.compute_word_xy_safe(x, y, bits_per_pixel);
-               reinterpret_cast<uint16_t *>(luts[i])[x + y*w] = val;
-             }
-           break;
-         case 16:
-           for (int x = 0; x < w; x++)
-             for (int y = 0; y < h; y++) {
-               uint16_t val = is_relative ?
-                 ctx.compute_word_xy_dblinput<16>(x * 1.0 / ((is_biased || w < 2) ? w : w - 1),
-                   y * 1.0 / ((is_biased || h < 2) ? h : h - 1)
-                 ) : ctx.compute_word_xy<16>(x, y);
                reinterpret_cast<uint16_t *>(luts[i])[x + y*w] = val;
              }
            break;

@@ -84,7 +84,7 @@ protected:
               &ctx, pCoordinates, nCoordinates, dst.width(), dst.height(), mode1, mode2);
           }
           else {
-            const bool chroma = frames[0].is_chroma(nPlane);
+            const bool chroma = ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]);
             processorsCtx32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
               frames[1].plane(nPlane).data(), frames[1].plane(nPlane).pitch(),

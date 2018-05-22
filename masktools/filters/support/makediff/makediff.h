@@ -59,7 +59,7 @@ protected:
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             dst.width(), dst.height(), dst.origheight());
         else {
-          const bool chroma = frames[0].is_chroma(nPlane); // chroma center is 0.0 others are 0.5
+          const bool chroma = ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]); // chroma center is 0.0 others are 0.5
           processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
             frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
             dst.width(), dst.height(), chroma);

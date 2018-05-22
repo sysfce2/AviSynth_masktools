@@ -156,7 +156,7 @@ protected:
                 nullptr, nullptr, &ctx, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
             }
             else {
-              const bool chroma = frames[0].is_chroma(nPlane);
+              const bool chroma = ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]);
               processors32.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
                 frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                 nullptr, nullptr, &ctx, nullptr, pCoordinates, nCoordinates, dst.width(), dst.height(), mode, chroma);
@@ -170,7 +170,7 @@ protected:
                 nullptr, nullptr, &ctx, &ctx_w, pCoordinates, nCoordinates, dst.width(), dst.height(), mode);
             }
             else {
-              const bool chroma = frames[0].is_chroma(nPlane);
+              const bool chroma = ((nPlane == 1 || nPlane == 2) && !planes_isRGB[C]);
               processors32_weight.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
                 frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
                 nullptr, nullptr, &ctx, &ctx_w, pCoordinates, nCoordinates, dst.width(), dst.height(), mode, chroma);
