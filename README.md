@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.15 (201805xx)**
+**Masktools2 v2.2.15 (20180601)**
 
 mod by pinterf
 
@@ -15,7 +15,8 @@ Differences to Masktools 2.0b1
 - filters are auto registering their mt mode as MT_NICE_FILTER for Avisynth+
 - Avisynth+ high bit depth support (incl. planar RGB, color spaces with alpha plane are supported from v2.2.7)
   All filters are now supporting 10, 12, 14, 16 bits and float
-  Note: From v2.2.15 the 32 bit float U and V chroma channels are 0 centered instead of 0.5, supporting the change in Avisynth+ in May 2018. Use masktools2 v2.2.14 with Avs+ r2664
+  Note: From v2.2.15 the 32 bit float U and V chroma channels are 0 centered instead of 0.5, supporting the change in Avisynth+ in May 2018. This change affects lut functions and mt_diff.
+  (The last Avisynth+ version that matches masktools 2.2.14 is Avs+ r2664)
   Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
   Y,U,V,A (and parameters chroma/alpha) negative (memset) values are scaled automatically to the current bit depth (v2.2.7-, chroma/alpha v.2.2.8) from a default 8-bit value.
   Default range of such parameters can be overridden to 8-16 bits or float.
@@ -114,51 +115,53 @@ Example #3 (new, with constants)
   - new expression syntax for Lut expressions: 
     Autoscale any input (x,y,z,a) bit depths to 8-16 bit for internal expression use, the conversion method
     is either full range or limited YUV range.
+    Experimental, extends and replaces clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16, clamp_f_f32 or clamp_f
     
-	Feature is available from v2.2.15
-	
+    Feature is available from v2.2.15
+
     The keywords should appear at the beginning of the expression.
     The primary reason of this feature is the "easy" usage of formerly written 8 bit optimized expressions.
-	
-	Use
-    - as8, as10, as12, as14 or as16 for limited range YUV inputs
-	- as8f, as10f, as12f, as14f or as16f for full range YUV inputs or RGB
-	
-    How it works:
-	- Scales (x,y,z,a) 8-32 bit input to the given 8-16 bit value
-	  For example 'as8' converts any input to 8 bit range. No truncation occurs however, e.g. 16 bit data is converted to 8 bit in
-	  floating point precision, using division by 256.0. So it is not a simple shift-right-8, which would lose precision.
-	- Calculate expression (lut, lut_xy, lut_xyz, lut_xyza)
-	- Scales the result back to the original video bit depth.
-	  Clamping (clipping to valid range) and converting to integer (if video is 8-16 bits) occurs here.
 
-	The predefined constants such as 'range_max', etc. will behave for 8, 10,..16 bits for as8/10/...16.
-	
-	Warning#1 
-	This asXX autoscale feature was created for easy porting earlier 8-bit-video-only lut expressions.
-	Understand, how it works internally.
-	
-	Let's see a 16bit input in 'as8' and 'as8f' mode.
-	
-	Limited range 16->8 bits conversion has a factor of 1/256.0
-	Full range 16->8 bits conversion has a factor of 255.0/65535
-	
-	Using bit shifts (really it's division and multiplication by 2^8=256.0): 
-	  result = calculate_lut_value(input / 256.0) * 256.0
-	Full scale 16-8-16 bit mode ('as8f')
-	  result = calculate_lut_value(input / 65535.0 * 255.0 ) / 255.0 * 65535.0
-	
-	So use 'as8' for YUV videos with 'limited' range e.g. in 8 bits: Y=16..235, UV=16..240).
-	So use 'as8f' for RGB or YUV videos with 'full' range e.g. in 8 bits: channels 0..255.
-	
-	When input is 32bit float, the 0..1.0 (luma) and -0.5..0.5 (chroma) channel is scaled
-	to 0..255 ('as8'), 0..1023('as10'), 0..4095('as12'), 0..16383('as14'), 0..65535('as16') then back.
-	
-	Warning#2
-	One cannot specify different conversion methods for converting before and after the expression.
-	Neither can you specify different methods for different input clips (e.g. x is full, y is limited is not supported).
+    Use
+    - as8, as10, as12, as14 or as16 for limited range YUV inputs
+    - as8f, as10f, as12f, as14f or as16f for full range YUV inputs or RGB
+
+    How it works:
+    - Scales (x,y,z,a) 8-32 bit input to the given 8-16 bit value
+      For example 'as8' converts any input to 8 bit range. No truncation occurs however, e.g. 16 bit data is converted to 8 bit in
+      floating point precision, using division by 256.0. So it is not a simple shift-right-8, which would lose precision.
+    - Calculate expression (lut, lut_xy, lut_xyz, lut_xyza)
+    - Scales the result back to the original video bit depth.
+      Clamping (clipping to valid range) and converting to integer (if video is 8-16 bits) occurs here.
+
+    The predefined constants such as 'range_max', etc. will behave for 8, 10,..16 bits for as8/10/...16.
+
+    Warning#1 
+    This asXX autoscale feature was created for easy porting earlier 8-bit-video-only lut expressions.
+    You have to understand how it works internally.
+
+    Let's see a 16bit input in 'as8' and 'as8f' mode.
+
+    Limited range 16->8 bits conversion has a factor of 1/256.0 (would be shift right 8 in integer domain, but it would lose presision)
+    Full range 16->8 bits conversion has a factor of 255.0/65535
+
+    Using bit shifts (really it's division and multiplication by 2^8=256.0): 
+      result = calculate_lut_value(input / 256.0) * 256.0
+    Full scale 16-8-16 bit mode ('as8f')
+      result = calculate_lut_value(input / 65535.0 * 255.0 ) / 255.0 * 65535.0
+
+    Use 'as8' for YUV videos with 'limited' range e.g. in 8 bits: Y=16..235, UV=16..240).
+    Use 'as8f' for RGB or YUV videos with 'full' range e.g. in 8 bits: channels 0..255.
+
+    When input is 32bit float, the 0..1.0 (luma) and -0.5..0.5 (chroma) channel is scaled
+    to 0..255 ('as8'), 0..1023('as10'), 0..4095('as12'), 0..16383('as14'), 0..65535('as16') then back.
+
+    Warning#2
+    One cannot specify different conversion methods for converting before and after the expression.
+    Neither can you specify different methods for different input clips (e.g. x is full, y is limited is not supported).
  
   - new expression syntax: auto scale modifiers for float clips (test for real.finder):
+    !!! Test only, will be removed in later editions, in v2.2.15 there is as8..as32 (also experimental)
     Keyword at the beginning of the expression:
     - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
     - clamp_f_f32 or clamp_f: for clamping the result to 0..1 (floats are not clamped by default!)
@@ -265,7 +268,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (201805xx)
+**v2.2.15 (20180601)
 - 32 bit float U and V chroma channels are now zero based (+/-0.5 for full scale). Was: 0..1, same as luma
   (Following the change in Avisynth+ over r2664)
   Affected predefined expression constants when plane is U or V: 
@@ -274,11 +277,12 @@ Changelog
   new: introduce range_min: -0.5 for float U/V chroma, 0 otherwise
   range_half (0.0 instead of 0.5)
   (range_size remained 1.0)
-- New expression syntax for Lut expressions: autoscale any input (x,y,z,a) bit depths to 8-16 bit for internal 
+- New expression syntax for Lut expressions: autoscale any input (x,y,z,a) bit depths to 8-16 bits for internal 
   expression use. The primary reason of this feature is the "easy" usage of formerly written 8 bit optimized expressions.
   Keywords are:
   as8, as10, as12, as14 or as16 for limited range YUV inputs
   as8f, as10f, as12f, as14f or as16f for full range YUV inputs or RGB
+  Extends and replaces experimental clamp_xxxx keywords.
 
 **v2.2.14 (20180225)
 - Fix: mt_convolution invalid instruction on processors below SSE4.1
