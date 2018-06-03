@@ -112,7 +112,16 @@ Example #3 (new, with constants)
       expr_chroma = "x cmin - cmax cmin - / range_max *"
       or works for float with: range_min: expr_chroma = "x cmin - cmax cmin - / range_max range_min - *"
 ```
-  - new expression syntax for Lut expressions: 
+  - new option for Lut expressions: 
+
+    Parameter "clamp_float"
+
+    True: clamps 32 bit float to valid ranges, which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV channels
+    Default false, ignored (treated as true) when scale_inputs scales float
+  - new option for Lut expressions: 
+
+    parameter "scale_inputs" (default "none")
+
     Autoscale any input (x,y,z,a) bit depths to 8-16 bit for internal expression use, the conversion method
     is either full range or limited YUV range.
     Experimental, extends and replaces clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16, clamp_f_f32 or clamp_f
@@ -123,45 +132,59 @@ Example #3 (new, with constants)
     The primary reason of this feature is the "easy" usage of formerly written 8 bit optimized expressions.
 
     Use
-    - as8, as10, as12, as14 or as16 for limited range YUV inputs
-    - as8f, as10f, as12f, as14f or as16f for full range YUV inputs or RGB
+    - "int" : scales limited range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
+    - "intf": scales full range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
+    - "float" : scales limited range videos, only 32 bit float format to 8 (or bit depth specified by 'i8'..'i16')
+    - "floatf": scales full scale videos, only 32 bit float format to 8 (or bit depth specified by 'i8'..'i16')
+    - "all": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses limited_range logic (mul/div by two's power)
+    - "allf": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses full scale logic (stretch)
+    - "none": no magic
+
+    Usually limited range is for normal YUV videos, full scale is for RGB or known-to-be-fullscale YUV
+
+    By default the internal conversion target is 8 bits, so old expressions written for 8 bit videos will probably work.
+    This internal working bit-depth can be overwritten by the i8, i10, i12, i14, i16 specifiers.
+
+    When using autoscale mode, scaleb and scalef keywords are meaningless, because there is nothing to scale.
 
     How it works:
-    - Scales (x,y,z,a) 8-32 bit input to the given 8-16 bit value
-      For example 'as8' converts any input to 8 bit range. No truncation occurs however, e.g. 16 bit data is converted to 8 bit in
-      floating point precision, using division by 256.0. So it is not a simple shift-right-8, which would lose precision.
-    - Calculate expression (lut, lut_xy, lut_xyz, lut_xyza)
+    - This option scales (x,y,z,a) 8-32 bit input to a common bit depth value, which bit depth is 8 by default and can be 
+      set to 10, 12, 14 and 16 bits by the 'i10'..'i16' keywords
+      For example: scale_inputs="all" converts any inputs to 8 bit range. No truncation occurs however (no precision loss), 
+      because even a 16 bit data is converted to 8 bit in floating point precision, using division by 256.0 (2^16/2^8). 
+      So the conversion is _not_ a simple shift-right-8 in the integer domain, which would lose precision.
+    - Calculates expression (lut, lut_xy, lut_xyz, lut_xyza)
     - Scales the result back to the original video bit depth.
-      Clamping (clipping to valid range) and converting to integer (if video is 8-16 bits) occurs here.
+      Clamping (clipping to valid range) and converting to integer occurs here.
 
-    The predefined constants such as 'range_max', etc. will behave for 8, 10,..16 bits for as8/10/...16.
+    The predefined constants such as 'range_max', etc. will behave according to the internal working bit depth
 
     Warning#1 
-    This asXX autoscale feature was created for easy porting earlier 8-bit-video-only lut expressions.
+    This feature was created for easy porting earlier 8-bit-video-only lut expressions.
     You have to understand how it works internally.
 
-    Let's see a 16bit input in 'as8' and 'as8f' mode.
+    Let's see a 16bit input in "all" and "allf" mode (scale_tobits is default 8)
 
     Limited range 16->8 bits conversion has a factor of 1/256.0 (would be shift right 8 in integer domain, but it would lose presision)
     Full range 16->8 bits conversion has a factor of 255.0/65535
 
     Using bit shifts (really it's division and multiplication by 2^8=256.0): 
       result = calculate_lut_value(input / 256.0) * 256.0
-    Full scale 16-8-16 bit mode ('as8f')
+    Full scale 16-8-16 bit mode ('intf', 'allf')
       result = calculate_lut_value(input / 65535.0 * 255.0 ) / 255.0 * 65535.0
 
-    Use 'as8' for YUV videos with 'limited' range e.g. in 8 bits: Y=16..235, UV=16..240).
-    Use 'as8f' for RGB or YUV videos with 'full' range e.g. in 8 bits: channels 0..255.
+    Use scale_inputs = "all" ("int", "float") for YUV videos with 'limited' range e.g. in 8 bits: Y=16..235, UV=16..240).
+    Use scale_inputs = "allf" (intf, floatf) for RGB or YUV videos with 'full' range e.g. in 8 bits: channels 0..255.
 
     When input is 32bit float, the 0..1.0 (luma) and -0.5..0.5 (chroma) channel is scaled
-    to 0..255 ('as8'), 0..1023('as10'), 0..4095('as12'), 0..16383('as14'), 0..65535('as16') then back.
+    to 0..255 (scale_tobits=8), 0..1023 (scale_tobits=10), 0..4095 (scale_tobits=12), 0..16383(scale_tobits=14), 0..65535(scale_tobits=16) then back.
 
     Warning#2
     One cannot specify different conversion methods for converting before and after the expression.
     Neither can you specify different methods for different input clips (e.g. x is full, y is limited is not supported).
  
-  - new expression syntax: auto scale modifiers for float clips (test for real.finder):
-    !!! Test only, will be removed in later editions, in v2.2.15 there is as8..as32 (also experimental)
+  - new expression syntax for lut-type filters: auto scale modifiers for float clips (test for real.finder):
+    !!! Test only, will be removed in later editions, in v2.2.15 there are "scale_inputs" and "clamp_float" parameters! (also experimental)
     Keyword at the beginning of the expression:
     - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
     - clamp_f_f32 or clamp_f: for clamping the result to 0..1 (floats are not clamped by default!)
@@ -268,9 +291,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (20180601)
+**v2.2.15 (20180603)
 - 32 bit float U and V chroma channels are now zero based (+/-0.5 for full scale). Was: 0..1, same as luma
-  (Following the change in Avisynth+ over r2664)
+  (Following the change in Avisynth+ over r2664: use this plugin with r2996 or newer)
   Affected predefined expression constants when plane is U or V: 
   cmin and cmax (limited range (16-128)/255 and (240-128)/255 instead of 16/255.0 and 240/255.0
   range_max: 0.5 instead of 1.0
@@ -279,9 +302,12 @@ Changelog
   (range_size remained 1.0)
 - New expression syntax for Lut expressions: autoscale any input (x,y,z,a) bit depths to 8-16 bits for internal 
   expression use. The primary reason of this feature is the "easy" usage of formerly written 8 bit optimized expressions.
-  Keywords are:
-  as8, as10, as12, as14 or as16 for limited range YUV inputs
-  as8f, as10f, as12f, as14f or as16f for full range YUV inputs or RGB
+
+  New parameters for lut functions: 
+    String "scale_inputs": "all","allf","int","intf","float","floatf","none", default "none"
+  and 
+    Boolean "clamp_float": default false, but treated as always true (and thus ignored) when scale_inputs involves a float autoscale.
+
   Extends and replaces experimental clamp_xxxx keywords.
 
 **v2.2.14 (20180225)

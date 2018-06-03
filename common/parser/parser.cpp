@@ -121,9 +121,6 @@ Parser::Parser Parser::getDefaultParser()
    parser.addSymbol(Symbol::SetScriptBitDepthI14).addSymbol(Symbol::SetScriptBitDepthI16).addSymbol(Symbol::SetScriptBitDepthF32);
    parser.addSymbol(Symbol::SetFloatToClampUseI8Range).addSymbol(Symbol::SetFloatToClampUseI10Range).addSymbol(Symbol::SetFloatToClampUseI12Range).addSymbol(Symbol::SetFloatToClampUseI14Range);
    parser.addSymbol(Symbol::SetFloatToClampUseI16Range).addSymbol(Symbol::SetFloatToClampUseF32Range).addSymbol(Symbol::SetFloatToClampUseF32Range_2);
-   // auto bitdepth conversion v2.2.15-
-   parser.addSymbol(Symbol::SetScriptAutoBitDepthAs8).addSymbol(Symbol::SetScriptAutoBitDepthAs10).addSymbol(Symbol::SetScriptAutoBitDepthAs12).addSymbol(Symbol::SetScriptAutoBitDepthAs14).addSymbol(Symbol::SetScriptAutoBitDepthAs16);
-   parser.addSymbol(Symbol::SetScriptAutoBitDepthAs8f).addSymbol(Symbol::SetScriptAutoBitDepthAs10f).addSymbol(Symbol::SetScriptAutoBitDepthAs12f).addSymbol(Symbol::SetScriptAutoBitDepthAs14f).addSymbol(Symbol::SetScriptAutoBitDepthAs16f);
    /* special bit-depth adaptive constants */
    parser.addSymbol(Symbol::RANGE_HALF).addSymbol(Symbol::RANGE_MIN).addSymbol(Symbol::RANGE_MAX).addSymbol(Symbol::RANGE_SIZE);
    parser.addSymbol(Symbol::YMIN).addSymbol(Symbol::YMAX);

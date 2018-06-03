@@ -37,8 +37,9 @@ class Lutsx : public MaskTools::Filter
 
    int bits_per_pixel;
    bool realtime;
+   String scale_inputs;
+   bool clamp_float;
 
-   
    String mode1, mode2;
 
    void FillCoordinates(const String &coordinates)
@@ -55,8 +56,8 @@ class Lutsx : public MaskTools::Filter
       }
    }
 
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr) {
-       Parser::Context ctx(expr);
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, String scale_inputs, bool clamp_float) {
+       Parser::Context ctx(expr, scale_inputs, clamp_float);
        Byte *lut = new Byte[256 * 256 * 256];
 
        for ( int x = 0; x < 256; x++ ) {
@@ -75,7 +76,7 @@ protected:
         UNUSED(n);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane]);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
 
           if (bits_per_pixel <= 16) {
             processorsCtx.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
@@ -108,6 +109,8 @@ public:
 
      bits_per_pixel = bit_depths[C];
      realtime = parameters["realtime"].toBool();
+     scale_inputs = parameters["scale_inputs"].toString();
+     clamp_float = parameters["clamp_float"].toBool();
 
      if (bits_per_pixel > 8)
        realtime = true;
@@ -142,7 +145,7 @@ public:
             parser.parse(parameters["expr"].toString(), " ");
 
           // for check:
-          Parser::Context ctx(parser.getExpression());
+          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
 
           if (!ctx.check())
           {
@@ -157,12 +160,12 @@ public:
 
           if (customExpressionDefined) {
               luts[i].first = true;
-              luts[i].second = calculateLut(parser.getExpression());
+              luts[i].second = calculateLut(parser.getExpression(), scale_inputs, clamp_float);
           }
           else {
               if (luts[4].second == nullptr) {
                   luts[4].first = true;
-                  luts[4].second = calculateLut(parser.getExpression());
+                  luts[4].second = calculateLut(parser.getExpression(), scale_inputs, clamp_float);
               }
               luts[i].second = luts[4].second;
           }
@@ -222,6 +225,8 @@ public:
 
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("y"), "aExpr", false));
+      signature.add(Parameter(String("none"), "scale_inputs", false));
+      signature.add(Parameter(false, "clamp_float", false));
       return signature;
    }
 };

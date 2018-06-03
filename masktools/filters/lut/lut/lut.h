@@ -39,6 +39,8 @@ class Lut : public MaskTools::Filter
    int bits_per_pixel;
    bool isStacked;
    bool realtime;
+   String scale_inputs;
+   bool clamp_float;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
@@ -48,7 +50,7 @@ protected:
         UNUSED(frames);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane]);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
           if(bits_per_pixel <= 16)
             processorCtx(dst.data(), dst.pitch(), dst.width(), dst.height(), ctx);
           else {
@@ -87,6 +89,8 @@ public:
         bits_per_pixel = 16;
 
       realtime = parameters["realtime"].toBool();
+      scale_inputs = parameters["scale_inputs"].toString();
+      clamp_float = parameters["clamp_float"].toBool();
 
       if (bits_per_pixel == 32) { // no lookup for float
         realtime = true;
@@ -114,7 +118,7 @@ public:
         else
           parser.parse(parameters["expr"].toString(), " ");
 
-        Parser::Context ctx(parser.getExpression());
+        Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
 
         if (!ctx.check())
         {
@@ -206,6 +210,8 @@ public:
 
       signature.add(Parameter(false, "stacked", false));
       signature.add(Parameter(false, "realtime", false));
+      signature.add(Parameter(String("none"), "scale_inputs", false));
+      signature.add(Parameter(false, "clamp_float", false));
       return signature;
    }
 };

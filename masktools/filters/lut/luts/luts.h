@@ -54,6 +54,8 @@ class Luts : public MaskTools::Filter
 
    int bits_per_pixel;
    bool realtime;
+   String scale_inputs;
+   bool clamp_float;
 
    String mode;
 
@@ -72,8 +74,8 @@ class Luts : public MaskTools::Filter
 
    Lut_w luts_weight[4+1]; // max planes + 1
 
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
-     Parser::Context ctx(expr);
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, bool clamp_float) {
+     Parser::Context ctx(expr, scale_inputs, clamp_float);
      int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
      size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
      Byte *lut = new Byte[buffer_size];
@@ -113,8 +115,8 @@ class Luts : public MaskTools::Filter
 
    // weight luts: float content
    template<int bits_per_pixel>
-   static Float *calculateLut_w(const std::deque<Filtering::Parser::Symbol> &expr) {
-     Parser::Context ctx(expr);
+   static Float *calculateLut_w(const std::deque<Filtering::Parser::Symbol> &expr, String scale_inputs, bool clamp_float) {
+     Parser::Context ctx(expr, scale_inputs, clamp_float);
      const int size = 1 << bits_per_pixel;
 
      size_t buffer_size = ((size_t)size) * ((size_t)size);
@@ -147,7 +149,7 @@ protected:
         UNUSED(n);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane]);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
           if (!parsed_expressions_w[nPlane]) {
             // no weights
             if (bits_per_pixel <= 16) {
@@ -214,6 +216,8 @@ public:
 
      bits_per_pixel = bit_depths[C];
      realtime = parameters["realtime"].toBool();
+     scale_inputs = parameters["scale_inputs"].toString();
+     clamp_float = parameters["clamp_float"].toBool();
 
      // same as in lut_xy
      // 14, 16 bit and float: default realtime, 
@@ -260,7 +264,7 @@ public:
          parser.parse(parameters["expr"].toString(), " ");
 
        // for check:
-       Parser::Context ctx(parser.getExpression());
+       Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
 
        if (!ctx.check())
        {
@@ -278,12 +282,12 @@ public:
          // save memory, reuse luts, like in xyz
          if (customExpressionDefined) {
            luts[i].used = true;
-           luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+           luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float);
          }
          else {
            if (luts[4].ptr == nullptr) { // 0..3 planes, 4:extra
              luts[4].used = true;
-             luts[4].ptr = calculateLut(parser.getExpression(), bits_per_pixel);
+             luts[4].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float);
            }
            luts[i].ptr = luts[4].ptr;
          }
@@ -305,7 +309,7 @@ public:
        hasWeights = true;
 
        // for check:
-       Parser::Context ctx_w(parser.getExpression());
+       Parser::Context ctx_w(parser.getExpression(), scale_inputs, clamp_float);
 
        if (!ctx_w.check())
        {
@@ -324,12 +328,12 @@ public:
          if (customExpressionDefined_w) {
            luts_weight[i].used = true;
            switch (bits_per_pixel) {
-           case 8: luts_weight[i].ptr = calculateLut_w<8>(parser.getExpression()); break;
-           case 10: luts_weight[i].ptr = calculateLut_w<10>(parser.getExpression()); break;
-           case 12: luts_weight[i].ptr = calculateLut_w<12>(parser.getExpression()); break;
-           case 14: luts_weight[i].ptr = calculateLut_w<14>(parser.getExpression()); break;
+           case 8: luts_weight[i].ptr = calculateLut_w<8>(parser.getExpression(), scale_inputs, clamp_float); break;
+           case 10: luts_weight[i].ptr = calculateLut_w<10>(parser.getExpression(), scale_inputs, clamp_float); break;
+           case 12: luts_weight[i].ptr = calculateLut_w<12>(parser.getExpression(), scale_inputs, clamp_float); break;
+           case 14: luts_weight[i].ptr = calculateLut_w<14>(parser.getExpression(), scale_inputs, clamp_float); break;
 #if defined(_M_X64) || defined(__amd64__)
-           case 16: luts_weight[i].ptr = calculateLut_w<16>(parser.getExpression()); break;
+           case 16: luts_weight[i].ptr = calculateLut_w<16>(parser.getExpression(), scale_inputs, clamp_float); break;
 #endif
            }
          }
@@ -337,12 +341,12 @@ public:
            if (luts_weight[4].ptr == nullptr) {
              luts_weight[4].used = true;
              switch (bits_per_pixel) {
-             case 8: luts_weight[4].ptr = calculateLut_w<8>(parser.getExpression()); break;
-             case 10: luts_weight[4].ptr = calculateLut_w<10>(parser.getExpression()); break;
-             case 12: luts_weight[4].ptr = calculateLut_w<12>(parser.getExpression()); break;
-             case 14: luts_weight[4].ptr = calculateLut_w<14>(parser.getExpression()); break;
+             case 8: luts_weight[4].ptr = calculateLut_w<8>(parser.getExpression(), scale_inputs, clamp_float); break;
+             case 10: luts_weight[4].ptr = calculateLut_w<10>(parser.getExpression(), scale_inputs, clamp_float); break;
+             case 12: luts_weight[4].ptr = calculateLut_w<12>(parser.getExpression(), scale_inputs, clamp_float); break;
+             case 14: luts_weight[4].ptr = calculateLut_w<14>(parser.getExpression(), scale_inputs, clamp_float); break;
 #if defined(_M_X64) || defined(__amd64__)
-             case 16: luts_weight[4].ptr = calculateLut_w<16>(parser.getExpression()); break;
+             case 16: luts_weight[4].ptr = calculateLut_w<16>(parser.getExpression(), scale_inputs, clamp_float); break;
 #endif
              }
            }
@@ -440,6 +444,8 @@ public:
       signature.add(Parameter(String("1"), "vwExpr", false));
       signature.add(Parameter(String("y"), "aExpr", false));
       signature.add(Parameter(String("1"), "awExpr", false));
+      signature.add(Parameter(String("none"), "scale_inputs", false));
+      signature.add(Parameter(false, "clamp_float", false));
       return signature;
    }
 };

@@ -28,8 +28,8 @@ class Lutxyza : public MaskTools::Filter
 
    Lut luts[4+1];
 
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel) {
-       Parser::Context ctx(expr);
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, bool clamp_float) {
+       Parser::Context ctx(expr, scale_inputs, clamp_float);
        size_t bufsize = ((size_t)1 << bits_per_pixel);
        bufsize = bufsize * bufsize*bufsize*bufsize;
        Byte *lut = new Byte[bufsize];
@@ -58,6 +58,8 @@ class Lutxyza : public MaskTools::Filter
    ProcessorCtx32 *processorCtx32;
    int bits_per_pixel;
    bool realtime;
+   String scale_inputs;
+   bool clamp_float;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
@@ -66,8 +68,7 @@ protected:
         UNUSED(constraints);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane]);
-
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
 
           if (bits_per_pixel <= 16)
             processorCtx(dst.data(), dst.pitch(),
@@ -108,6 +109,8 @@ public:
 
       bits_per_pixel = bit_depths[C];
       realtime = parameters["realtime"].toBool();
+      scale_inputs = parameters["scale_inputs"].toString();
+      clamp_float = parameters["clamp_float"].toBool();
      
       // once, when a 4 GByte lut memory is nothing, allow 8 bit 4D real lut by default :)
       if(bits_per_pixel>8)
@@ -141,7 +144,7 @@ public:
             parser.parse(parameters["expr"].toString(), " ");
 
           // for check:
-          Parser::Context ctx(parser.getExpression());
+          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
 
           if (!ctx.check())
           {
@@ -168,12 +171,12 @@ public:
 
           if (customExpressionDefined) {
               luts[i].used = true;
-              luts[i].ptr = calculateLut(parser.getExpression(), 8);
+              luts[i].ptr = calculateLut(parser.getExpression(), 8, scale_inputs, clamp_float);
           }
           else {
               if (luts[4].ptr == nullptr) {
                   luts[4].used = true;
-                  luts[4].ptr = calculateLut(parser.getExpression(), 8);
+                  luts[4].ptr = calculateLut(parser.getExpression(), 8, scale_inputs, clamp_float);
               }
               luts[i].ptr = luts[4].ptr;
           }
@@ -211,6 +214,8 @@ public:
 
       signature.add(Parameter(true, "realtime", false)); // 4D lut: default realtime calc.
       signature.add(Parameter(String("x"), "aExpr", false));
+      signature.add(Parameter(String("none"), "scale_inputs", false));
+      signature.add(Parameter(false, "clamp_float", false));
       return signature;
    }
 };
