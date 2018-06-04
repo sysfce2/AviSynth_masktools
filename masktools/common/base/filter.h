@@ -59,6 +59,19 @@ protected:
    }
 
    // general helper function
+   static bool checkValidScaleInputs(String scale_inputs, String &error) {
+     if (scale_inputs != "int" && scale_inputs != "intf" &&
+       scale_inputs != "float" && scale_inputs != "floatf" &&
+       scale_inputs != "all" && scale_inputs != "allf" &&
+       scale_inputs != "none") {
+       error = "invalid parameter: scale_inputs. Use int, intf, float, floatf, all, allf or none";
+       return false;
+     }
+     return true;
+   }
+
+
+   // general helper function
    static bool ScaleParam(String scalemode, float input, int clip_bits_per_pixel, float &scaled_f, int &scaled_i, bool fullscale, bool allowNegative)
    {
      int param_bits_per_pixel;

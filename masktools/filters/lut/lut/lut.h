@@ -65,9 +65,9 @@ protected:
     }
 
 public:
-   Lut(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter( parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
-   {
-     for (int i = 0; i < 4; i++) {
+  Lut(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
+  {
+      for (int i = 0; i < 4; i++) {
         luts16[i] = nullptr;
         parsed_expressions[i] = nullptr;
       }
@@ -90,6 +90,9 @@ public:
 
       realtime = parameters["realtime"].toBool();
       scale_inputs = parameters["scale_inputs"].toString();
+      if (!checkValidScaleInputs(scale_inputs, error))
+        return; // error message filled
+
       clamp_float = parameters["clamp_float"].toBool();
 
       if (bits_per_pixel == 32) { // no lookup for float

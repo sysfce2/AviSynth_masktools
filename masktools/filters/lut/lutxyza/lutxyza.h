@@ -110,6 +110,8 @@ public:
       bits_per_pixel = bit_depths[C];
       realtime = parameters["realtime"].toBool();
       scale_inputs = parameters["scale_inputs"].toString();
+      if (!checkValidScaleInputs(scale_inputs, error))
+        return; // error message filled
       clamp_float = parameters["clamp_float"].toBool();
      
       // once, when a 4 GByte lut memory is nothing, allow 8 bit 4D real lut by default :)
