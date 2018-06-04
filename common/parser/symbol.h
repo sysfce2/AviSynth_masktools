@@ -364,7 +364,7 @@ public:
        }
      }
      else {
-       const double factor = ((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
+       const double factor = (double)((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
        if (bits_per_pixel == 16)
          return clip<Word, double>(compute_1(_x * factor, sbitdepth, false) / factor); // chroma = false: n/a for 10-16 bits
        else
@@ -400,7 +400,7 @@ public:
        }
      }
      else {
-       const double factor = ((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
+       const double factor = (double)((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
        if (bits_per_pixel == 16)
          return clip<Word, double>(compute_2(_x * factor, _y * factor, sbitdepth, false) / factor); // chroma = false: n/a for 10-16 bits
        else
@@ -446,7 +446,7 @@ public:
        }
      }
      else {
-       const double factor = ((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
+       const double factor = (double)((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
        if (bits_per_pixel == 16)
          return clip<Word, double>(compute_3(_x * factor, _y * factor, _z * factor, sbitdepth, false) / factor); // chroma = false: n/a for 10-16 bits
        else
@@ -482,7 +482,7 @@ public:
        }
      }
      else {
-       const double factor = ((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
+       const double factor = (double)((1 << sbitdepth) - 1) / ((1 << bits_per_pixel) - 1);
        if (bits_per_pixel == 16)
          return clip<Word, double>(compute_4(_x * factor, _y * factor, _z * factor, _a * factor, sbitdepth, false) / factor); // chroma = false: n/a for 10-16 bits
        else
