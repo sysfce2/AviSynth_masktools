@@ -29,8 +29,8 @@ class Filter : public GenericVideoFilter
 
     static AVSValue __cdecl _create(AVSValue args, void *user_data, IScriptEnvironment *env)
     {
-        UNUSED(user_data);
-        return new Filter<T>(args[0].AsClip(), GetParameters(args, T::filter_signature(), env), env);
+      UNUSED(user_data);
+      return new Filter<T>(args[0].AsClip(), GetParameters(args, T::filter_signature(), env), env);
     }
 public:
     Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
@@ -60,17 +60,52 @@ public:
 
     PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment *env)
     {
-        PVideoFrame dst = _filter.is_in_place() ? child->GetFrame(n, env) : env->NewVideoFrame(vi);
 
-        if (_filter.is_in_place()) {
-            env->MakeWritable(&dst);
-        }
+      // lut, lutxy, lutxyz, lutxyza: 'use_expr' parameters option to pass expression to the Expr filter of avs+
+      // which is much faster than masktools2 realtime interpreted pixel-by-pixel calculation
+      // expr_need_process[4] and expr_list[4] are all filled for avs+ requirement
+      const bool effective_expr_need_process = _filter.expr_need_process[0] || _filter.expr_need_process[1] || _filter.expr_need_process[2] || _filter.expr_need_process[3];
+      if (effective_expr_need_process) {
+        const int planecount = plane_counts[_filter.colorspace()];
+        AVSValue clip_out;
+        // lut, lutxy, lutxyz, lutxyza: InPlaceTwoFrame: size is less by one, first clip is explicit
+        int realInputConfigSize = inputConfigSize + 1;
+        int param_length = realInputConfigSize + planecount + 1 + 1;
 
-        Frame<Byte> destination = dynamic_cast<Clip *>((Filtering::Clip *)_filter.get_childs()[0].get())->ConvertTo<Byte>(dst);
+        // c+s+[format]s[optAvx2]b[optSingleMode]b[optSSE2]b[scale_inputs]s[clamp_float]b
+        const char *arg_names[4 + 4 + 2]; // worst case
+        for (int i = 0; i < param_length - 2; i++)
+          arg_names[i] = nullptr;
+        arg_names[param_length - 2] = (const char *)"scale_inputs";
+        arg_names[param_length - 1] = (const char *)"clamp_float";
 
-        _filter.get_frame(n, destination, env);
+        std::vector<AVSValue> new_args(param_length, AVSValue());
 
+        for (int i = 0; i < realInputConfigSize; i++)
+          new_args[i] = _filter.get_childs()[i]->get_avs_clip();
+        for (int i = 0; i < planecount; i++)
+          new_args[i + realInputConfigSize] = _filter.expr_list[i].c_str();
+
+        new_args[param_length - 2] = _filter.expr_scale_inputs.c_str();
+        new_args[param_length - 1] = _filter.expr_clamp_float;
+
+        clip_out = env->Invoke("Expr", AVSValue(new_args.data(), param_length), arg_names);
+        PVideoFrame dst = clip_out.AsClip()->GetFrame(n, env);
         return dst;
+      }
+
+      // filter is not a lut or lut w/o "Expr" call
+      PVideoFrame dst = _filter.is_in_place() ? child->GetFrame(n, env) : env->NewVideoFrame(vi);
+
+      if (_filter.is_in_place()) {
+        env->MakeWritable(&dst);
+      }
+
+      Frame<Byte> destination = dynamic_cast<Clip *>((Filtering::Clip *)_filter.get_childs()[0].get())->ConvertTo<Byte>(dst);
+
+      _filter.get_frame(n, destination, env);
+
+      return dst;
     }
 
     int __stdcall SetCacheHints(int cachehints, int frame_range) override {

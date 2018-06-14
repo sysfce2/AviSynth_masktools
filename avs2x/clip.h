@@ -192,6 +192,12 @@ public:
      frame_out = pclip->GetFrame(clip<int>(n, 0, nFrames - 1), env);
      return ConvertTo<const Byte>(frame_out);
    }
+
+   virtual ::PClip get_avs_clip()
+   {
+     return pclip;
+   }
+
 };
 
 } } // namespace Avisynth2x, Common

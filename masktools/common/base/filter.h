@@ -161,6 +161,12 @@ protected:
 
 public:
 
+    // v2.2.15 for lut functions, when calling "Expr". We are forwarding:
+    bool expr_need_process[4];
+    String expr_scale_inputs;
+    bool expr_clamp_float;
+    String expr_list[4];
+
     Filter(const Parameters &parameters, FilterProcessingType processingType, CpuFlags _flags) :
         parameters(parameters),
         flags(_flags),
@@ -345,6 +351,13 @@ public:
         /* check the colorspace */
         if (C == COLORSPACE_NONE)
             error = "masktools: unsupported colorspace, use Y8, YV12, YV16, YV24, YV411, greyscale, YUV(A)xxxP10-16/S, Planar RGB(A)";
+
+        // use avs+ expr instead of realcalc lut
+        // overridden in lut##.h
+        for (int i = 0; i < 4; i++) {
+          expr_need_process[i] = false;
+          expr_list[i] = "";
+        }
     }
 
     void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4])
@@ -463,37 +476,38 @@ public:
 
     virtual Frame<Byte> get_frame(int n, const Frame<Byte> &output_frame, IScriptEnvironment *env)
     {
-        Frame<Byte> output = output_frame.offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
+      Frame<Byte> output = output_frame.offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
 
-        Frame<const Byte> frames[4];
-        Constraint constraints[4];
+      Frame<const Byte> frames[4];
+      Constraint constraints[4];
 
-        int clipcount = int(input_configuration().size());
+      int clipcount = int(input_configuration().size());
 
-        std::vector<PVideoFrame> tmp_videoframes(clipcount);
+      std::vector<PVideoFrame> tmp_videoframes(clipcount);
 
-        for (int i = 0; i < clipcount; i++) {
-            int childindex = input_configuration()[i].index();
-            PClip &currentClip = childs[childindex];
-            frames[i] = currentClip->get_const_frame(n + input_configuration()[i].offset(), tmp_videoframes[i], env)
-                .offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
+      for (int i = 0; i < clipcount; i++) {
+        int childindex = input_configuration()[i].index();
+        PClip &currentClip = childs[childindex];
+        // output in tmp_videoframes
+        frames[i] = currentClip->get_const_frame(n + input_configuration()[i].offset(), tmp_videoframes[i], env)
+          .offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
+      }
+
+      for (int i = 0; i < plane_counts[C]; i++) {
+        constraints[i] = Constraint(flags, output.plane(i));
+      }
+
+      for (int i = 0; i < clipcount; i++) {
+        for (int j = 0; j < plane_counts[frames[i].colorspace()]; j++) {
+          constraints[j] = Constraint(constraints[j], frames[i].plane(j));
         }
+      }
 
-        for (int i = 0; i < plane_counts[C]; i++) {
-            constraints[i] = Constraint(flags, output.plane(i));
-        }
+      for (int i = 0; i < plane_counts[C]; i++) {
+        process_plane(n, output.plane(i), i, constraints, frames);
+      }
 
-        for (int i = 0; i < clipcount; i++) {
-          for (int j = 0; j < plane_counts[frames[i].colorspace()]; j++) {
-                constraints[j] = Constraint(constraints[j], frames[i].plane(j));
-            }
-        }
-
-        for (int i = 0; i < plane_counts[C]; i++) {
-          process_plane(n, output.plane(i), i, constraints, frames);
-        }
-
-        return output_frame;
+      return output_frame;
     }
 
     ClipArray &get_childs() { return childs; }
@@ -501,6 +515,7 @@ public:
     String get_error() const { return error; }
     bool is_error() const { return !error.empty(); }
     bool is_in_place() const { return inPlace_; }
+    Colorspace colorspace() const { return C; }
 
 };
 

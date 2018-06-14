@@ -52,6 +52,7 @@ class Lutxyz : public MaskTools::Filter
    bool realtime;
    String scale_inputs;
    bool clamp_float;
+   int use_expr;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
@@ -108,18 +109,73 @@ public:
 
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
 
-      Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z);
-
-      /* compute the luts */
-      for ( int i = 0; i < 4; i++ )
-      {
-          if (operators[i] != PROCESS) {
+      // 2.2.15- decide on using external Expr filter
+      // This part is duplicated in lut, lutxy, lutxyz, lutxyza
+      use_expr = parameters["use_expr"].toInt();
+      bool use_external_expr = false;
+      if (use_expr < 0 || use_expr>2) {
+        error = "invalid value for parameter 'use_expr'";
+        return;
+      }
+      if (use_expr == 1 && bits_per_pixel > 8) // mode 1: use Expr when over 8 bits or lutxyza
+        use_external_expr = true;
+      if (use_expr == 2 && realtime) // mode 2: use Expr when masktools would use its own slow calculation
+        use_external_expr = true;
+      if (use_external_expr) {
+        expr_clamp_float = clamp_float;
+        // expr_need_process[4] and expr_list[4] is defined in filter level
+        expr_scale_inputs = scale_inputs; // copy parameter
+                                          // we pass whole frame for Expr, set expression for all planes
+        for (int i = 0; i < 4; i++)
+        {
+          expr_need_process[i] = true;
+          if (operators[i] == COPY) {
+            expr_list[i] = "x"; // Expr will optimize it to 'copy plane'
+          }
+          else if (operators[i] == COPY_SECOND) {
+            expr_list[i] = "y";
+          }
+          else if (operators[i] == COPY_THIRD) {
+            expr_list[i] = "z";
+          }
+          else if (operators[i] == COPY_FOURTH) {
+            expr_list[i] = "a";
+          }
+          else if (operators[i] == MEMSET) {
+            expr_list[i] = std::to_string(operators[i].value_f()); // Expr will optimize it to 'fill plane'
+          }
+          else if (operators[i] == PROCESS) {
+            // no expression for spec y/u/v/a plane, neither have we the jolly joker "expr"
+            if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
+              expr_list[i] = "x"; // in Expr: no such thing as 'no process', copy 1st clip
               continue;
+            }
+            else if (parameters[expr_strs[i]].is_defined()) {
+              expr_list[i] = parameters[expr_strs[i]].toString();
+            }
+            else {
+              expr_list[i] = parameters["expr"].toString();
+            }
+          }
+          else {
+            expr_need_process[i] = false;
+          }
+        } // planes
+      }
+      else {
+
+        Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z);
+
+        /* compute the luts */
+        for (int i = 0; i < 4; i++)
+        {
+          if (operators[i] != PROCESS) {
+            continue;
           }
 
           if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
-              operators[i] = COPY_SECOND; //inplace
-              continue;
+            operators[i] = COPY_SECOND; //inplace
+            continue;
           }
 
           bool customExpressionDefined = false;
@@ -154,16 +210,17 @@ public:
           }
 
           if (customExpressionDefined) {
-              luts[i].used = true;
-              luts[i].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float); // 8 bit always
+            luts[i].used = true;
+            luts[i].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float); // 8 bit always
           }
           else {
-              if (luts[4].ptr == nullptr) {
-                  luts[4].used = true;
-                  luts[4].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float);
-              }
-              luts[i].ptr = luts[4].ptr;
+            if (luts[4].ptr == nullptr) {
+              luts[4].used = true;
+              luts[4].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float);
+            }
+            luts[i].ptr = luts[4].ptr;
           }
+        }
       }
    }
 
@@ -199,6 +256,7 @@ public:
       signature.add(Parameter(String("x"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
       signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(0, "use_expr", false));
       return signature;
    }
 };

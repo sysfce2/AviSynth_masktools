@@ -41,6 +41,7 @@ class Lut : public MaskTools::Filter
    bool realtime;
    String scale_inputs;
    bool clamp_float;
+   int use_expr;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const ::Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
@@ -104,86 +105,141 @@ public:
         return;
       }
 
-      /* compute the luts16 */
-      for (int i = 0; i < 4; i++)
-      {
-        if (operators[i] != PROCESS) {
-          continue;
-        }
-
-        if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
-          operators[i] = NONE; //inplace
-          continue;
-        }
-
-        if (parameters[expr_strs[i]].is_defined())
-          parser.parse(parameters[expr_strs[i]].toString(), " ");
-        else
-          parser.parse(parameters["expr"].toString(), " ");
-
-        Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
-
-        if (!ctx.check())
+      // 2.2.15- decide on using external Expr filter
+      // This part is duplicated in lut, lutxy, lutxyz, lutxyza
+      use_expr = parameters["use_expr"].toInt();
+      bool use_external_expr = false;
+      if (use_expr < 0 || use_expr>2) {
+        error = "invalid value for parameter 'use_expr'";
+        return;
+      }
+      if (use_expr == 1 && bits_per_pixel > 8) // mode 1: use Expr when over 8 bits or lutxyza
+        use_external_expr = true;
+      if (use_expr == 2 && realtime) // mode 2: use Expr when masktools would use its own slow calculation
+        use_external_expr = true;
+      if (use_external_expr) {
+        expr_clamp_float = clamp_float;
+        // expr_need_process[4] and expr_list[4] is defined in filter level
+        expr_scale_inputs = scale_inputs; // copy parameter
+                                          // we pass whole frame for Expr, set expression for all planes
+        for (int i = 0; i < 4; i++)
         {
-          error = "invalid expression in the lut";
-          return;
-        }
+          expr_need_process[i] = true;
+          if (operators[i] == COPY) {
+            expr_list[i] = "x"; // Expr will optimize it to 'copy plane'
+          }
+          else if (operators[i] == COPY_SECOND) {
+            expr_list[i] = "y";
+          }
+          else if (operators[i] == COPY_THIRD) {
+            expr_list[i] = "z";
+          }
+          else if (operators[i] == COPY_FOURTH) {
+            expr_list[i] = "a";
+          }
+          else if (operators[i] == MEMSET) {
+            expr_list[i] = std::to_string(operators[i].value_f()); // Expr will optimize it to 'fill plane'
+          }
+          else if (operators[i] == PROCESS) {
+            // no expression for spec y/u/v/a plane, neither have we the jolly joker "expr"
+            if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
+              expr_list[i] = "x"; // in Expr: no such thing as 'no process', copy 1st clip
+              continue;
+            }
+            else if (parameters[expr_strs[i]].is_defined()) {
+              expr_list[i] = parameters[expr_strs[i]].toString();
+            }
+            else {
+              expr_list[i] = parameters["expr"].toString();
+            }
+          }
+          else {
+            expr_need_process[i] = false;
+          }
+        } // planes
+      }
+      else {
+        /* compute the luts or set up internal realtime processor */
+        for (int i = 0; i < 4; i++)
+        {
+          if (operators[i] != PROCESS) {
+            continue;
+          }
 
-        if (realtime) {
-          parsed_expressions[i] = new std::deque<Parser::Symbol>(parser.getExpression());
+          if (parameters[expr_strs[i]].undefinedOrEmptyString() && parameters["expr"].undefinedOrEmptyString()) {
+            operators[i] = NONE; //inplace
+            continue;
+          }
+
+          if (parameters[expr_strs[i]].is_defined())
+            parser.parse(parameters[expr_strs[i]].toString(), " ");
+          else
+            parser.parse(parameters["expr"].toString(), " ");
+
+          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
+
+          if (!ctx.check())
+          {
+            error = "invalid expression in the lut";
+            return;
+          }
+
+          if (realtime) {
+            parsed_expressions[i] = new std::deque<Parser::Symbol>(parser.getExpression());
+
+            switch (bits_per_pixel) {
+            case 8: processorCtx = realtime8_c; break;
+            case 10: processorCtx = realtime10_c; break;
+            case 12: processorCtx = realtime12_c; break;
+            case 14: processorCtx = realtime14_c; break;
+            case 16: processorCtx = realtime16_c; break;
+            case 32: processorCtx32 = realtime32_c; break;
+            }
+            continue;
+          }
+
+          // real lut
+          if (bits_per_pixel >= 8 && bits_per_pixel <= 16)
+            luts16[i] = reinterpret_cast<Word*>(_aligned_malloc(65536 * sizeof(uint16_t), 16));
 
           switch (bits_per_pixel) {
-          case 8: processorCtx = realtime8_c; break;
-          case 10: processorCtx = realtime10_c; break;
-          case 12: processorCtx = realtime12_c; break;
-          case 14: processorCtx = realtime14_c; break;
-          case 16: processorCtx = realtime16_c; break;
-          case 32: processorCtx32 = realtime32_c; break;
+          case 8:
+            for (int x = 0; x < 256; x++)
+              luts[i][x] = ctx.compute_byte_x(x);
+            break;
+          case 10:
+            for (int x = 0; x < 1024; x++)
+              luts16[i][x] = ctx.compute_word_x<10>(x);
+            break;
+          case 12:
+            for (int x = 0; x < 4096; x++)
+              luts16[i][x] = ctx.compute_word_x<12>(x);
+            break;
+          case 14:
+            for (int x = 0; x < 16384; x++)
+              luts16[i][x] = ctx.compute_word_x<14>(x);
+            break;
+          case 16:
+            // real or stacked 16 bit
+            for (int x = 0; x < 65536; x++)
+              luts16[i][x] = ctx.compute_word_x<16>(x);
+            break;
           }
-          continue;
-        }
+          // fill the rest against invalid input values for 10-14 bits
+          if (bits_per_pixel > 8 && bits_per_pixel < 16) {
+            for (int x = max_pixel_value; x < 65536; x++)
+              luts16[i][x] = Word(max_pixel_value);
+          }
 
-        // real lut
-        if(bits_per_pixel >=8 && bits_per_pixel <= 16) 
-          luts16[i] = reinterpret_cast<Word*>(_aligned_malloc(65536*sizeof(uint16_t), 16));
-
-        switch(bits_per_pixel) {
-        case 8: 
-          for (int x = 0; x < 256; x++)
-            luts[i][x] = ctx.compute_byte_x(x);
-          break;
-        case 10:
-          for (int x = 0; x < 1024; x++)
-            luts16[i][x] = ctx.compute_word_x<10>(x);
-          break;
-        case 12:
-          for (int x = 0; x < 4096; x++)
-            luts16[i][x] = ctx.compute_word_x<12>(x);
-          break;
-        case 14:
-          for (int x = 0; x < 16384; x++)
-            luts16[i][x] = ctx.compute_word_x<14>(x);
-          break;
-        case 16:
-          // real or stacked 16 bit
-          for (int x = 0; x < 65536; x++)
-            luts16[i][x] = ctx.compute_word_x<16>(x);
-          break;
-        }
-        // fill the rest against invalid input values for 10-14 bits
-        if (bits_per_pixel > 8 && bits_per_pixel < 16) {
-          for (int x = max_pixel_value; x < 65536; x++)
-            luts16[i][x] = Word(max_pixel_value);
-        }
-
-        if (bits_per_pixel == 8) {
-          processor = lut_c;
-        }
-        else {
-          if (isStacked)
-            processor16 = lut16_c_stacked;
-          else
-            processor16 = lut16_c_native;
+          if (bits_per_pixel == 8) {
+            processor = lut_c;
+          }
+          else {
+            if (isStacked)
+              processor16 = lut16_c_stacked;
+            else
+              processor16 = lut16_c_native;
+          }
         }
       }
    }
@@ -215,6 +271,7 @@ public:
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
       signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(0, "use_expr", false));
       return signature;
    }
 };

@@ -37,6 +37,7 @@ public:
 
    // not used: virtual Frame<Byte> get_frame(int n, PVideoFrame &current_frame, IScriptEnvironment *env) = 0;
    virtual Frame<const Byte> get_const_frame(int n, PVideoFrame &current_frame, IScriptEnvironment *env) = 0;
+   virtual ::PClip get_avs_clip() = 0;
 
 };
 
