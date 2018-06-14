@@ -128,14 +128,12 @@ Example #3 (new, with constants)
     
     Feature is available from v2.2.15
 
-    The keywords should appear at the beginning of the expression.
-    The primary reason of this feature is the "easy" usage of formerly written 8 bit optimized expressions.
+    The primary reason of this feature is the "easy" usage of formerly written expressions optimized for 8 bits.
 
     Use
     - "int" : scales limited range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
     - "intf": scales full range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
-    - "float" : scales limited range videos, only 32 bit float format to 8 (or bit depth specified by 'i8'..'i16')
-    - "floatf": scales full scale videos, only 32 bit float format to 8 (or bit depth specified by 'i8'..'i16')
+    - "float" or "floatf" : only scales 32 bit float format to 8 bit range (or bit depth specified by 'i8'..'i16')
     - "all": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses limited_range logic (mul/div by two's power)
     - "allf": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses full scale logic (stretch)
     - "none": no magic
@@ -148,24 +146,24 @@ Example #3 (new, with constants)
     When using autoscale mode, scaleb and scalef keywords are meaningless, because there is nothing to scale.
 
     How it works:
-    - This option scales (x,y,z,a) 8-32 bit input to a common bit depth value, which bit depth is 8 by default and can be 
+    - This option scales (x,y,z,a) 8-32 bit inputs to a common bit depth value, which bit depth is 8 by default and can be 
       set to 10, 12, 14 and 16 bits by the 'i10'..'i16' keywords
       For example: scale_inputs="all" converts any inputs to 8 bit range. No truncation occurs however (no precision loss), 
       because even a 16 bit data is converted to 8 bit in floating point precision, using division by 256.0 (2^16/2^8). 
       So the conversion is _not_ a simple shift-right-8 in the integer domain, which would lose precision.
-    - Calculates expression (lut, lut_xy, lut_xyz, lut_xyza)
-    - Scales the result back to the original video bit depth.
+    - Calculates expression
+    - Scales the result back to the output video bit depth.
       Clamping (clipping to valid range) and converting to integer occurs here.
 
     The predefined constants such as 'range_max', etc. will behave according to the internal working bit depth
 
     Warning#1 
-    This feature was created for easy porting earlier 8-bit-video-only lut expressions.
+    This feature was created for easy porting earlier 8-bit-video-only expressions.
     You have to understand how it works internally.
 
-    Let's see a 16bit input in "all" and "allf" mode (scale_tobits is default 8)
+    Let's see a 16bit input in "all" and "allf" mode (target is the default 8 bits)
 
-    Limited range 16->8 bits conversion has a factor of 1/256.0 (would be shift right 8 in integer domain, but it would lose presision)
+    Limited range 16->8 bits conversion has a factor of 1/256.0 (Instead of shift right 8 in integer domain, float-division is used or else it would lose presision)
     Full range 16->8 bits conversion has a factor of 255.0/65535
 
     Using bit shifts (really it's division and multiplication by 2^8=256.0): 
@@ -177,13 +175,13 @@ Example #3 (new, with constants)
     Use scale_inputs = "allf" (intf, floatf) for RGB or YUV videos with 'full' range e.g. in 8 bits: channels 0..255.
 
     When input is 32bit float, the 0..1.0 (luma) and -0.5..0.5 (chroma) channel is scaled
-    to 0..255 (scale_tobits=8), 0..1023 (scale_tobits=10), 0..4095 (scale_tobits=12), 0..16383(scale_tobits=14), 0..65535(scale_tobits=16) then back.
+    to 0..255 (8 bits), 0..1023 (i10 mode), 0..4095 (i12 mode), 0..16383(i14 mode), 0..65535(i16 mode) then back.
 
     Warning#2
     One cannot specify different conversion methods for converting before and after the expression.
     Neither can you specify different methods for different input clips (e.g. x is full, y is limited is not supported).
  
-  - new expression syntax for lut-type filters: auto scale modifiers for float clips (test for real.finder):
+  - (obsolate) new expression syntax for lut-type filters: auto scale modifiers for float clips (test for real.finder):
     !!! Test only, will be removed in later editions, in v2.2.15 there are "scale_inputs" and "clamp_float" parameters! (also experimental)
     Keyword at the beginning of the expression:
     - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
@@ -197,6 +195,7 @@ Example #3 (new, with constants)
     No integer rounding occurs.
 
 ```
+    # obsolate examples, from v2.2.15 use scale_inputs and clamp_float parameter instead of clamp_f_xx keywords
     expr = "x y - range_half +"  # good for 8..32 bits but float is not clamped
     expr = "clamp_f y - range_half +"  # good for 8..32 bits and float clamped to 0..1 (or +/-0.5 when chroma)
     expr = "x y - 128 + "  # good for 8 bits
@@ -209,10 +208,28 @@ Example #3 (new, with constants)
   Filters currently without stacked support will never have it. 
 - parameter "realtime" for lut-type filters, slower but at least works on those bit depths
   where LUT tables would occupy too much memory.
+
+  Also see: 'use_expr' which can pass realtime calculation to Avisynth+ Expr filter!
+
   For bit depth limits where realtime = true is set as the default working mode, see table below.
     
   realtime=true can be overridden, one can experiment and force realtime=false even for a 16 bit lutxy 
   (8GBytes lut table!, x64 only) or for 8 bit lutxzya (4GBytes lut table)
+
+- parameter "use_expr" integer (default 0) for 'lut', 'lutxy', 'lutxyz', 'lutxyza' filters (from v2.2.15)
+  Use it when realtime calculation (interpreted pixel-by-pixel expression calculation) is slow and an appropriate Avisynth+ version (>r2712) is available.
+
+  By sending the expression to Avisynth+, lut filters can utilize a realtime JIT-compiled fast expression calculation.
+
+  Possible values:
+  0: uses lut and internal realtime calculation
+  1: Expr, when bit depth>=10 or lutxyza
+  2: When masktools would use realtime calc,  Passes the expressions, scale_inputs and clamp_float parameter to the "Expr" filter in Avisynth+
+
+  For modes 1 and 2: passes the expression strings, scale_inputs and clamp_float parameters to the "Expr" filter in Avisynth+
+
+  Note #1: Avisynth+ internal precision is 32bit float, masktools2 is double (usually no difference can be seen)
+  Note #2: Some keywords (e.g. bit shift) are not available on Avisynth+
    
 - parameter "paramscale" for filters working with threshold-like parameters (v2.2.5-)
   Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion, mt_logic, mt_clamp
@@ -291,7 +308,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (20180603)
+**v2.2.15 (20180614)
 - 32 bit float U and V chroma channels are now zero based (+/-0.5 for full scale). Was: 0..1, same as luma
   (Following the change in Avisynth+ over r2664: use this plugin with r2996 or newer)
   Affected predefined expression constants when plane is U or V: 
@@ -307,6 +324,11 @@ Changelog
     String "scale_inputs": "all","allf","int","intf","float","floatf","none", default "none"
   and 
     Boolean "clamp_float": default false, but treated as always true (and thus ignored) when scale_inputs involves a float autoscale.
+  and 
+    Boolean "use_expr": default 0, calls fast JIT-compiled "Expr" in Avisynth+ for mt_lut, lutxy, lutxyz, lutxyza
+    0: no Expr, use slow internal realtime calc if needed
+    1: call Expr for bits>8 or lutxyza
+    2: call Expr, when masktools would do its slow realtime calc
 
   Extends and replaces experimental clamp_xxxx keywords.
 
