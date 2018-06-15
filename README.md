@@ -1,8 +1,10 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.15 (20180601)**
+**Masktools2 v2.2.15 (20180615)**
 
 mod by pinterf
+
+Change log at the end of this document
 
 Differences to Masktools 2.0b1
 
@@ -72,6 +74,8 @@ Differences to Masktools 2.0b1
       By default scaleb and scalef scales from 8 bit to the bit depth of the clip.
       
       i8 .. i16 and f32 sets the default conversion base to 8..16 bits or float, respectively.
+
+      When used with scale_inputs=true (v2.2.15-), it specifies the internal working range (temporary scaling target)
       
       These keywords can appear anywhere in the expression, but only the last occurence will be effective for the whole expression.
       
@@ -230,6 +234,7 @@ Example #3 (new, with constants)
 
   Note #1: Avisynth+ internal precision is 32bit float, masktools2 is double (usually no difference can be seen)
   Note #2: Some keywords (e.g. bit shift) are not available on Avisynth+
+  Note #3: Since "Expr" can work only on full sized clips, offX, offY, w and h parameters are ignored.
    
 - parameter "paramscale" for filters working with threshold-like parameters (v2.2.5-)
   Filters: mt_binarize, mt_edge, mt_inpand, mt_expand, mt_inflate, mt_deflate, mt_motion, mt_logic, mt_clamp
@@ -263,21 +268,21 @@ Example #3 (new, with constants)
    
 - Feature matrix   
 ```
-                   8 bit | 10-16 bit | float | stacked | realtime
+                   8 bit | 10-16 bit | float | stacked | realtime       | use_expr
       mt_invert      X         X         X        -
       mt_binarize    X         X         X        X
       mt_inflate     X         X         X        X
       mt_deflate     X         X         X        X
       mt_inpand      X         X         X        X
       mt_expand      X         X         X        X
-      mt_lut         X         X         X        X      when float
-      mt_lutxy       X         X         X        -      when bits>=14
-      mt_lutxyz      X         X         X        -      when bits>=10
-      mt_lutxyza     X         X         X        -      always
-      mt_luts        X         X         X        -      when bits>=14 
-      mt_lutf        X         X         X        -      when bits>=14   
-      mt_lutsx       X         X         X        -      when bits>=10
-      mt_lutspa      X         X         X        -
+      mt_lut         X         X         X        X      when float     yes
+      mt_lutxy       X         X         X        -      when bits>=14  yes
+      mt_lutxyz      X         X         X        -      when bits>=10  yes
+      mt_lutxyza     X         X         X        -      always         yes
+      mt_luts        X         X         X        -      when bits>=14  no
+      mt_lutf        X         X         X        -      when bits>=14  no
+      mt_lutsx       X         X         X        -      when bits>=10  no
+      mt_lutspa      X         X         X        -                     no
       mt_merge       X         X         X        X
       mt_logic       X         X         X        X
       mt_convolution X         X         X        -
@@ -308,7 +313,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (20180614)
+**v2.2.15 (20180615)
 - 32 bit float U and V chroma channels are now zero based (+/-0.5 for full scale). Was: 0..1, same as luma
   (Following the change in Avisynth+ over r2664: use this plugin with r2996 or newer)
   Affected predefined expression constants when plane is U or V: 
@@ -326,9 +331,9 @@ Changelog
     Boolean "clamp_float": default false, but treated as always true (and thus ignored) when scale_inputs involves a float autoscale.
   and 
     Boolean "use_expr": default 0, calls fast JIT-compiled "Expr" in Avisynth+ for mt_lut, lutxy, lutxyz, lutxyza
-    0: no Expr, use slow internal realtime calc if needed
+    0: no Expr, use slow internal realtime calc if needed (as before)
     1: call Expr for bits>8 or lutxyza
-    2: call Expr, when masktools would do its slow realtime calc
+    2: call Expr, when masktools would do its slow realtime calc (see 'realtime' column in the table above)
 
   Extends and replaces experimental clamp_xxxx keywords.
 
