@@ -137,6 +137,15 @@ public:
       if (use_expr == 2 && realtime) // mode 2: use Expr when masktools would use its own slow calculation
         use_external_expr = true;
       if (use_external_expr) {
+        if (nXOffset != 0 || nYOffset != 0) {
+          error = "X and Y offset must be zero when using 'use_expr'";
+          return;
+        }
+        if (nWidth != nCoreWidth || nHeight != nCoreHeight) {
+          error = "Cannot change original width or height when using 'use_expr'";
+          return;
+        }
+
         expr_clamp_float = clamp_float;
         // expr_need_process[4] and expr_list[4] is defined in filter level
         expr_scale_inputs = scale_inputs; // copy parameter
