@@ -43,7 +43,7 @@ public:
         mode = MEMSET; 
         this->nValue_f = -_nValue_f; // negate!
         this->nValue = int(this->nValue_f);
-        // todo: problematic when float clip chroma is negative, shift by -0.5 later?
+        // float clip chroma is not allowed to be set by this function
         break;
       }
    }

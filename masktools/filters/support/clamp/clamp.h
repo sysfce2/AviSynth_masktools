@@ -94,7 +94,7 @@ public:
 
         if (parameters["undershoot"].is_defined()) {
           nUndershoot_f = (float)parameters["undershoot"].toFloat();
-          if (!ScaleParam(scalemode, nUndershoot_f, bits_per_pixel, nUndershoot_f, nUndershoot, fullscale, false))
+          if (!ScaleParam(scalemode, nUndershoot_f, bits_per_pixel, nUndershoot_f, nUndershoot, fullscale, false, false))
           {
             error = errortxt;
             return;
@@ -103,7 +103,7 @@ public:
 
         if (parameters["overshoot"].is_defined()) {
           nOvershoot_f = (float)parameters["overshoot"].toFloat();
-          if (!ScaleParam(scalemode, nOvershoot_f, bits_per_pixel, nOvershoot_f, nOvershoot, fullscale, false))
+          if (!ScaleParam(scalemode, nOvershoot_f, bits_per_pixel, nOvershoot_f, nOvershoot, fullscale, false, false))
           {
             error = errortxt;
             return;

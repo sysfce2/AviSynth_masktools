@@ -72,7 +72,7 @@ protected:
 
 
    // general helper function
-   static bool ScaleParam(String scalemode, float input, int clip_bits_per_pixel, float &scaled_f, int &scaled_i, bool fullscale, bool allowNegative)
+   static bool ScaleParam(String scalemode, float input, int clip_bits_per_pixel, float &scaled_f, int &scaled_i, bool fullscale, bool allowNegative, bool chroma)
    {
      int param_bits_per_pixel;
      int max_pixel_value = (1 << clip_bits_per_pixel) - 1;
@@ -115,20 +115,54 @@ protected:
          input = input / ((1 << param_bits_per_pixel) - 1); // convert to 0..1 range
        }
        // input is now scaled_f to 0..1
-       if (clip_bits_per_pixel == 32)
-         scaled_f = input; // as-is
+       if (clip_bits_per_pixel == 32) {
+         if (chroma) {
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+           scaled_f = input; // as-is
+#else
+           scaled_f = input - 0.5f; // +/-0.5
+#endif
+         }
+         else {
+           scaled_f = input; // as-is
+         }
+       } 
        else
          scaled_f = input * ((1 << clip_bits_per_pixel) - 1); // scaling up to video bit depth
      }
      else {
-       // bit shift mode, but preserves if max is specified
+       // bit shift mode, for integers but preserves max value if max (255) is specified
        if (clip_bits_per_pixel == 32) { // convert to float
-         scaled_f = input / ((1 << param_bits_per_pixel) - 1);
+         // integer parameter -> float value
+         const int param_max_pixel_value = (1 << param_bits_per_pixel) - 1;
+         if (chroma) {
+           const int chroma_center = 1 << (param_bits_per_pixel - 1);
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+           scaled_f = (input - chroma_center) / param_max_pixel_value + 0.5f;
+#else
+           scaled_f = (input - chroma_center) / param_max_pixel_value;
+#endif
+         }
+         else {
+           scaled_f = input / param_max_pixel_value;
+         }
        }
        else if (param_bits_per_pixel == 32) {
-         scaled_f = input * ((1 << clip_bits_per_pixel) - 1);
+         // float parameter -> integer value
+         if (chroma) {
+           const int target_chroma_center = 1 << (clip_bits_per_pixel - 1);
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+           scaled_f = (input - 0.5f) * max_pixel_value + target_chroma_center;
+#else
+           scaled_f = input * max_pixel_value + target_chroma_center;
+#endif
+         }
+         else {
+           scaled_f = input * ((1 << clip_bits_per_pixel) - 1);
+         }
        }
        else {
+         // integer parameter -> integer value
          bool isNegativeInput = input < 0;
          input = std::abs(input);
          float input_range_max = (float)((1 << param_bits_per_pixel) - 1);
@@ -161,7 +195,7 @@ protected:
 
 public:
 
-    // v2.2.15 for lut functions, when calling "Expr". We are forwarding:
+    // v2.2.15 Save parameters of lut functions, used when calling external "Expr":
     bool expr_need_process[4];
     String expr_scale_inputs;
     bool expr_clamp_float;
@@ -198,6 +232,10 @@ public:
         if (nXOffset + nCoreWidth  > nWidth  || nCoreWidth  < 0) nCoreWidth = nWidth - nXOffset;
         if (nYOffset + nCoreHeight > nHeight || nCoreHeight < 0) nCoreHeight = nHeight - nYOffset;
 
+        String scalemode = parameters["paramscale"].toString();
+        const bool fullscale = planes_isRGB[C];
+        const int bits_per_pixel = bit_depths[C];
+
         if (parameters["chroma"].is_defined())
         {
             /* overrides chroma channel operators according to the "chroma" string */
@@ -227,8 +265,14 @@ public:
                   error = "filler value parameter should be <=0 for chroma";
                   return;
                 }
-                f = -f;
-                operators[1] = operators[2] = Operator(MEMSET, f); // atoi(chroma.c_str())
+#ifndef FLOAT_CHROMA_IS_HALF_CENTERED
+                if (bits_per_pixel == 32 && (scalemode == "none" || scalemode == "f32")) {
+                  error = "Cannot use 'chroma' to set filler value for 32 bit float formats, use paramscale";
+                  return;
+                }
+#endif
+                f = -f; // !! For 32bit float chroma +/-0.5 negative values cannot be set with this method, only by paramscale
+                operators[1] = operators[2] = Operator(MEMSET, f);
               }
               catch (...)
               {
@@ -268,7 +312,7 @@ public:
                 return;
               }
               f = -f;
-              operators[3] = Operator(MEMSET, f); // atoi(chroma.c_str())
+              operators[3] = Operator(MEMSET, f);
             }
             catch (...)
             {
@@ -282,15 +326,14 @@ public:
           if (operators[i].getMode() != MEMSET) continue;
           float op_f = operators[i].value_f();
           int op;
-          String scalemode = parameters["paramscale"].toString();
-          bool fullscale = planes_isRGB[C];
-          int bits_per_pixel = bit_depths[C];
-          if (!ScaleParam(scalemode, op_f, bits_per_pixel, op_f, op, fullscale, false))
+          const bool as_chroma = !planes_isRGB[C] && (i == 1 || i == 2); // scales to float specially
+          const bool as_fullscale = fullscale || i == 3; // alpha channel is always fullscale
+          if (!ScaleParam(scalemode, op_f, bits_per_pixel, op_f, op, as_fullscale, false, as_chroma))
           {
             error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
             return;
           }
-          operators[i] = -op_f; // for non 1-6: automatic MEMSET
+          operators[i] = Operator(MEMSET, op_f);
         }
 
         /* checks the operators */

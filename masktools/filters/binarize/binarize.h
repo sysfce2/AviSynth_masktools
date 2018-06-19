@@ -128,7 +128,7 @@ public:
        nThreshold = parameters["threshold"].toInt();
        String scalemode = parameters["paramscale"].toString();
        bool fullscale = planes_isRGB[C];
-       if (!ScaleParam(scalemode, nThreshold_f, bits_per_pixel, nThreshold_f, nThreshold, fullscale, false))
+       if (!ScaleParam(scalemode, nThreshold_f, bits_per_pixel, nThreshold_f, nThreshold, fullscale, false, false))
        {
          error = "invalid parameter: paramscale. Use i8, i10, i12, i14, i16, f32 for scale or none/empty to disable scaling";
          return;

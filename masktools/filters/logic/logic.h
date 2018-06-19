@@ -170,7 +170,7 @@ public:
     // threshold 1
     if (parameters["th1"].is_defined()) {
       nTh1_f = (float)parameters["th1"].toFloat();
-      if (!ScaleParam(scalemode, nTh1_f, bits_per_pixel, nTh1_f, nTh1, fullscale, true)) // allow negatives
+      if (!ScaleParam(scalemode, nTh1_f, bits_per_pixel, nTh1_f, nTh1, fullscale, true, false)) // allow negatives
       {
         error = errortxt;
         return;
@@ -179,7 +179,7 @@ public:
     // threshold 2
     if (parameters["th2"].is_defined()) {
       nTh2_f = (float)parameters["th2"].toFloat();
-      if (!ScaleParam(scalemode, nTh2_f, bits_per_pixel, nTh2_f, nTh2, fullscale, true)) // allow negatives
+      if (!ScaleParam(scalemode, nTh2_f, bits_per_pixel, nTh2_f, nTh2, fullscale, true, false)) // allow negatives
       {
         error = errortxt;
         return;
