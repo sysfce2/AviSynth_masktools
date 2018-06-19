@@ -36,14 +36,15 @@ public:
     Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
     {
         inputConfigSize = _filter.input_configuration().size();
+        // This is a warning left here intentionally, why multithreading and threadSafeInit- for winXp causes big troubles sometimes.
         // When the above line is missing, problems kick in _filter.get_frame(n, destination, env)
         // Why: "input_configuration" has static initializer that has problems in multithreaded environment
         // when the XP compatible /Zc:threadSafeInit- switch is used for compiling in Visual Studio
         // https://docs.microsoft.com/en-us/cpp/build/reference/zc-threadsafeinit-thread-safe-local-static-initialization
         // In non-threadSafeInit mode (XP) when get_frame is called in multithreaded environment,
-        // the initialization is started in thread#1 and at specific timing conditions (e.g. debug mode is not OK) is not finished yet when
+        // the initialization is started in thread#1 and at specific timing conditions (e.g. debug mode is not OK) this initialization is not finished yet when
         // thread#2 also calls into input_configuration().size().
-        // Real life problems: the proper size value is "2", but in thread#2 still "0" is reported!
+        // Real life problems: the proper size value is "2", but for thread#2 still "0" is reported!
         // This resulted in zero sized local PVideoFrame array to be allocated, but later, when the initialization
         // is finished in an other thread, size() turnes into "2". It needs only some 1/10000th seconds, but the problem is there by then.
         // This zero sized array is then indexed with the proper size of "2" from 0..1 -> Access Violation
@@ -61,13 +62,15 @@ public:
     PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment *env)
     {
 
+      // v2.2.15-
       // lut, lutxy, lutxyz, lutxyza: 'use_expr' parameters option to pass expression to the Expr filter of avs+
       // which is much faster than masktools2 realtime interpreted pixel-by-pixel calculation
-      // expr_need_process[4] and expr_list[4] are all filled for avs+ requirement
+      // expr_need_process[4] and expr_list[4] are all filled for avs+ requirements
+      // copy-plane or fill operators are also converted to valid expression strings (single "x" or like "128")
       const bool effective_expr_need_process = _filter.expr_need_process[0] || _filter.expr_need_process[1] || _filter.expr_need_process[2] || _filter.expr_need_process[3];
       if (effective_expr_need_process) {
         const int planecount = plane_counts[_filter.colorspace()];
-        AVSValue clip_out;
+
         // lut, lutxy, lutxyz, lutxyza: InPlaceTwoFrame: size is less by one, first clip is explicit
         int realInputConfigSize = inputConfigSize + 1;
         int param_length = realInputConfigSize + planecount + 1 + 1;
@@ -89,7 +92,7 @@ public:
         new_args[param_length - 2] = _filter.expr_scale_inputs.c_str();
         new_args[param_length - 1] = _filter.expr_clamp_float;
 
-        clip_out = env->Invoke("Expr", AVSValue(new_args.data(), param_length), arg_names);
+        AVSValue clip_out = env->Invoke("Expr", AVSValue(new_args.data(), param_length), arg_names);
         PVideoFrame dst = clip_out.AsClip()->GetFrame(n, env);
         return dst;
       }
