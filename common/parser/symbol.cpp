@@ -57,18 +57,44 @@ static double mtfloor           (double x) { return floor(x); }
 static double mtceil            (double x) { return ceil(x); }
 static double mttrunc           (double x) { return double(Int64(x)); }
 // bit depth conversion helpers. x:value on 8 bit scale y: target bit depth 8-32 z:base bit depth
-static double upscaleByShift(double x, int y, int z)
+static double upscaleByShift(double x, int y, int z, bool chroma)
 {
   const int target_bit_depth = y;
   const int source_bit_depth = z;
+
   if (target_bit_depth == source_bit_depth) return x; // same bit 
+  
   if (target_bit_depth == 32) { // target float
-    const int max_pixel_value_source = (1 << source_bit_depth) - 1;
-    return x / max_pixel_value_source;
+    if (chroma) {
+      const int src_middle_chroma = 1 << (source_bit_depth - 1);
+      const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+      return (x - src_middle_chroma) / max_pixel_value_source + 0.5;
+#else
+      return (x - src_middle_chroma) / max_pixel_value_source;
+#endif
+    }
+    else {
+      const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+      return x / max_pixel_value_source;
+    }
   }
-  if (source_bit_depth == 32) { // treat original as float, target 8-16 bits
-    const int max_pixel_value_target = (1 << target_bit_depth) - 1;
-    return x * max_pixel_value_target;
+  if (source_bit_depth == 32) {
+    // treat original as float, target 8-16 bits
+    // for 32bit float: same as scaleb
+    if (chroma) {
+      const int target_middle_chroma = 1 << (target_bit_depth - 1);
+      const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+      return (x - 0.5) * max_pixel_value_target + target_middle_chroma;
+#else
+      return (x - 0.0) * max_pixel_value_target + target_middle_chroma;
+#endif
+    }
+    else {
+      const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+      return x * max_pixel_value_target;
+    }
   }
   // 8-16 <-> 8-16
   if (target_bit_depth > source_bit_depth) // e.g. 8-->10
@@ -76,19 +102,45 @@ static double upscaleByShift(double x, int y, int z)
   else
     return double(x / (1 << (source_bit_depth - target_bit_depth))); // downscale: div by 2^N bits
 }
-static double upscaleByStretch(double x, int y, int z) // e.g. 8->10 bit rgb: x/255*1023
+
+static double upscaleByStretch(double x, int y, int z, bool chroma) // e.g. 8->10 bit rgb: x/255*1023
 {
   const int target_bit_depth = y;
   const int source_bit_depth = z;
   if (target_bit_depth == source_bit_depth) return x; // same bit 
   
   if (target_bit_depth == 32) { // target float
-    const int max_pixel_value_source = (1 << source_bit_depth) - 1;
-    return x / max_pixel_value_source;
+    // for 32bit float: same as scaleb
+    if (chroma) {
+      const int src_middle_chroma = 1 << (source_bit_depth - 1);
+      const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+      return (x - src_middle_chroma) / max_pixel_value_source + 0.5;
+#else
+      return (x - src_middle_chroma) / max_pixel_value_source;
+#endif
+    }
+    else {
+      const int max_pixel_value_source = (1 << source_bit_depth) - 1;
+      return x / max_pixel_value_source;
+    }
   }
-  if (source_bit_depth == 32) { // treat original as float, target 8-16 bits
-    const int max_pixel_value_target = (1 << target_bit_depth) - 1;
-    return x * max_pixel_value_target;
+  if (source_bit_depth == 32) {
+    // treat original as float, target 8-16 
+    // for 32bit float: same as scaleb
+    if (chroma) {
+      const int target_middle_chroma = 1 << (target_bit_depth - 1);
+      const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+      return (x - 0.5) * max_pixel_value_target + target_middle_chroma;
+#else
+      return (x - 0.0) * max_pixel_value_target + target_middle_chroma;
+#endif
+    }
+    else {
+      const int max_pixel_value_target = (1 << target_bit_depth) - 1;
+      return x * max_pixel_value_target;
+    }
   }
   // 8-16 <-> 8-16
   const int max_pixel_value_source = (1 << source_bit_depth) - 1;
@@ -544,8 +596,8 @@ double Context::rec_compute()
     }
 
     case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
-      // only exists with one user parameter, plus two silent params
-      last = s.processScale(last, bitdepth, sbitdepth);
+      // only exists with one user parameter, plus three silent params
+      last = s.processScale(last, bitdepth, sbitdepth, luma_chroma == 1);
       break;
 
     // OPERATOR, FUNCTION, TERNARY

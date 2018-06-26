@@ -72,7 +72,7 @@ public:
    typedef double (*Process1)(double x);
    typedef double (*Process2)(double x, double y);
    typedef double (*Process3)(double x, double y, double z);
-   typedef double (*ProcessScale)(double x, int y, int z);
+   typedef double (*ProcessScale)(double x, int y, int z, bool chroma);
    Process0 process0;
    Process1 process1;
    Process2 process2;
