@@ -43,6 +43,42 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       }
    }
 
+   template<bool allow_leftminus1>
+   void internal_merge_luma_420_mpeg2_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+     const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
+   {
+     for (int y = 0; y < nHeight; ++y)
+     {
+       int right = allow_leftminus1 ? pMask[-1] + pMask[-1 + nSrc2Pitch] : pMask[0] + pMask[0 + nSrc2Pitch];
+       for (int x = 0; x < nWidth; ++x)
+       {
+         int left = right;
+         const int mid = pMask[x * 2] + pMask[x * 2 + nSrc2Pitch];
+         right = pMask[x * 2 + 1] + pMask[x * 2 + nSrc2Pitch + 1];
+         // 420: both width and height is halved, mpeg2: 1-2-1 weighted averaging from 6 pixels of full size mask
+         const int nMask = (left + 2 * mid + right + 4) >> 3;
+         if (nMask == 255)
+           pDst[x] = pSrc1[x];
+         else if (nMask != 0)
+           pDst[x] = static_cast<Byte>(((256 - int(nMask)) * pDst[x] + int(nMask) * pSrc1[x] + 128) >> 8);
+         // nMask == 0: keep pDst as is
+       }
+       pDst += nDstPitch;
+       pSrc1 += nSrc1Pitch;
+       pMask += nSrc2Pitch * 2;
+     }
+   }
+
+   void merge_luma_420_mpeg2_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+     const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight) {
+     internal_merge_luma_420_mpeg2_c<false>(pDst, nDstPitch, pSrc1, nSrc1Pitch, pMask, nSrc2Pitch, nWidth, nHeight);
+   }
+
+   void merge_luma_420_mpeg2_allow_leftminus1_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+     const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight) {
+     internal_merge_luma_420_mpeg2_c<true>(pDst, nDstPitch, pSrc1, nSrc1Pitch, pMask, nSrc2Pitch, nWidth, nHeight);
+   }
+
    void merge_luma_422_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
      const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
    {
@@ -192,8 +228,10 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
          auto avg_t2 = _mm_avg_epu8(src2_row1_t2, src2_row2_t2);
          auto shifted_t1 = _mm_srli_si128(avg_t1, 1);
          auto shifted_t2 = _mm_srli_si128(avg_t2, 1);
+         // make average but we don't care for every second one
          avg_t1 = _mm_avg_epu8(avg_t1, shifted_t1);
          avg_t2 = _mm_avg_epu8(avg_t2, shifted_t2);
+         // mask out to have unsigned 16 bit
          auto mask_t1 = _mm_and_si128(avg_t1, v255);
          auto mask_t2 = _mm_and_si128(avg_t2, v255);
 
@@ -207,6 +245,70 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      }
      if (nWidth > wMod16) {
        merge_luma_420_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16 * 2, nSrc2Pitch, nWidth - wMod16, nHeight);
+     }
+   }
+
+   template <MemoryMode mem_mode, CpuFlags flags>
+   void merge_luma_420_mpeg2_sse2_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+     const Byte *pMask, ptrdiff_t nSrc2Pitch, int nWidth, int nHeight)
+   {
+     int wMod16 = (nWidth / 16) * 16;
+     auto pDst_s = pDst;
+     auto pSrc1_s = pSrc1;
+     auto pMask_s = pMask;
+     auto v255 = _mm_set1_epi16(0x00FF);
+     auto v128 = _mm_set1_epi16(0x0080);
+     auto zero = _mm_setzero_si128();
+#pragma warning(disable: 4309)
+     auto maxMaskFF = _mm_set1_epi8(0xFF);
+#pragma warning(default: 4309)
+     for (int j = 0; j < nHeight; ++j) {
+       // prepare "right_hi": we need only pixel column #0 as the rightmost word (14-15th byte)
+       auto row1 = simd_load_si128<mem_mode>(pMask + 0 * 2);
+       auto row2 = simd_load_si128<mem_mode>(pMask + nSrc2Pitch + 0 * 2);
+       __m128i right_lo, right_hi;
+#pragma warning(disable: 4309)
+       auto evenmask = _mm_set1_epi16(0x00FF);
+#pragma warning(default: 4309)
+       right_hi = _mm_add_epi16(_mm_and_si128(_mm_srli_si128(row1, 14), evenmask), _mm_and_si128(_mm_srli_si128(row2, 14), evenmask));
+
+       for (int i = 0; i < wMod16; i += 16) {
+         // preparing mask
+         auto row1_lo = simd_load_si128<mem_mode>(pMask + i * 2);
+         auto row1_hi = simd_load_si128<mem_mode>(pMask + i * 2 + 16);
+         auto row2_lo = simd_load_si128<mem_mode>(pMask + nSrc2Pitch + i * 2);
+         auto row2_hi = simd_load_si128<mem_mode>(pMask + nSrc2Pitch + i * 2 + 16);
+
+         auto mid_lo = _mm_add_epi16(_mm_and_si128(row1_lo, evenmask), _mm_and_si128(row2_lo, evenmask));
+         auto mid_hi = _mm_add_epi16(_mm_and_si128(row1_hi, evenmask), _mm_and_si128(row2_hi, evenmask));
+
+         auto old_right_hi = right_hi;
+
+         right_lo = _mm_add_epi16(_mm_srli_epi16(row1_lo, 8), _mm_srli_epi16(row2_lo, 8));
+         right_hi = _mm_add_epi16(_mm_srli_epi16(row1_hi, 8), _mm_srli_epi16(row2_hi, 8));
+
+         // left: (current_right_lo_right_hi << 1 word) or prev_right_hi (1 word)
+         auto left_hi = _mm_or_si128(_mm_slli_si128(right_hi, 2), _mm_srli_si128(right_lo, 14)); // 32 byte srli across 128bit registers
+         auto left_lo = _mm_or_si128(_mm_slli_si128(right_lo, 2), _mm_srli_si128(old_right_hi, 14)); // shift in from previous right_hi
+
+         // mask: (left + mid*2 + right) / 8. Left, mid and right are already sums of two pixels
+         auto four = _mm_set1_epi16(4); // rounder
+         auto mask_lo = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_add_epi16(_mm_slli_epi16(mid_lo, 1), left_lo), right_lo), four), 3);
+         auto mask_hi = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_add_epi16(_mm_slli_epi16(mid_hi, 1), left_hi), right_hi), four), 3);
+
+         auto result = merge_sse2_core<mem_mode, flags>(pDst + i, pSrc1 + i, mask_lo, mask_hi, v128, zero, maxMaskFF);
+
+         simd_store_si128<mem_mode>(pDst + i, result);
+       }
+       pDst += nDstPitch;
+       pSrc1 += nSrc1Pitch;
+       pMask += nSrc2Pitch * 2;
+     }
+     if (nWidth > wMod16) {
+       if (wMod16 != 0) // indexing leftmost - 1 is allowed
+         merge_luma_420_mpeg2_allow_leftminus1_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16 * 2, nSrc2Pitch, nWidth - wMod16, nHeight);
+       else
+         merge_luma_420_mpeg2_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + wMod16 * 2, nSrc2Pitch, nWidth - wMod16, nHeight);
      }
    }
 
@@ -298,6 +400,8 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
    Processor *merge_asse2 = merge_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
    Processor *merge_luma_420_sse2 = merge_luma_420_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
    Processor *merge_luma_420_asse2 = merge_luma_420_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
+   Processor *merge_luma_420_mpeg2_sse2 = merge_luma_420_mpeg2_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
+   Processor *merge_luma_420_mpeg2_asse2 = merge_luma_420_mpeg2_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
    Processor *merge_luma_422_sse2 = merge_luma_422_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
    Processor *merge_luma_422_asse2 = merge_luma_422_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE2>;
    Processor *merge_luma_411_sse2 = merge_luma_411_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE2>;
@@ -307,6 +411,8 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
    Processor *merge_asse4 = merge_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
    Processor *merge_luma_420_sse4 = merge_luma_420_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
    Processor *merge_luma_420_asse4 = merge_luma_420_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_420_mpeg2_sse4 = merge_luma_420_mpeg2_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
+   Processor *merge_luma_420_mpeg2_asse4 = merge_luma_420_mpeg2_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
    Processor *merge_luma_422_sse4 = merge_luma_422_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;
    Processor *merge_luma_422_asse4 = merge_luma_422_sse2_t<MemoryMode::SSE2_ALIGNED, CPU_SSE4_1>;
    Processor *merge_luma_411_sse4 = merge_luma_411_sse2_t<MemoryMode::SSE2_UNALIGNED, CPU_SSE4_1>;

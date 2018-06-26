@@ -303,6 +303,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      _mm256_zeroupper();
    }
 
+   // no MPEG2 option here in 8bit AVX2
    Processor *merge_avx2 = merge_avx2_t<MemoryMode::SSE2_UNALIGNED>;
    Processor *merge_luma_420_avx2 = merge_luma_420_avx2_t<MemoryMode::SSE2_UNALIGNED>;
    Processor *merge_luma_422_avx2 = merge_luma_422_avx2_t<MemoryMode::SSE2_UNALIGNED>;

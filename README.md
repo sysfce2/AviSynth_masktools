@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.15 (20180615)**
+**Masktools2 v2.2.15 (20180625)**
 
 mod by pinterf
 
@@ -29,6 +29,7 @@ Differences to Masktools 2.0b1
 - YV411 (8 bit 4:1:1) support
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
+- mt_merge new parameter hint when luma=true and 4:2:0: 'cplace' (2.2.15-). Possible values "mpeg1" (default) or "mpeg2"
 - mt_merge to discard U and V automatically when input is greyscale
 - some filters got AVX (float) and AVX2 (integer) support:
   mt_merge: 8-16 bit: AVX2, float:AVX
@@ -313,7 +314,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (20180615)
+**v2.2.15 (20180625)
+- mt_merge new parameter hint for chroma placement when luma=true and 4:2:0
+  String 'cplace': possible values "mpeg1" (default) or "mpeg2"
 - 32 bit float U and V chroma channels are now zero based (+/-0.5 for full scale). Was: 0..1, same as luma
   (Following the change in Avisynth+ over r2664: use this plugin with r2996 or newer)
   Affected predefined expression constants when plane is U or V: 
