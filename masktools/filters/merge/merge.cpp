@@ -319,7 +319,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
 #pragma warning(disable: 4309)
        auto evenmask = _mm_set1_epi16(0x00FF);
 #pragma warning(default: 4309)
-       right_hi = _mm_add_epi16(_mm_and_si128(_mm_srli_si128(row1, 14), evenmask), _mm_and_si128(_mm_srli_si128(row2, 14), evenmask));
+       right_hi = _mm_add_epi16(_mm_slli_si128(_mm_and_si128(row1, evenmask), 14), _mm_slli_si128(_mm_and_si128(row2, evenmask), 14));
 
        for (int i = 0; i < wMod16; i += 16) {
          // preparing mask
@@ -422,7 +422,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
 #pragma warning(disable: 4309)
        auto evenmask = _mm_set1_epi16(0x00FF);
 #pragma warning(default: 4309)
-       right_hi = _mm_and_si128(_mm_srli_si128(row1, 14), evenmask);
+       right_hi = _mm_slli_si128(_mm_and_si128(row1, evenmask), 14);
        for (int i = 0; i < wMod16; i += 16) {
          _mm_prefetch(reinterpret_cast<const char*>(pMask) + i * 2 + 64, _MM_HINT_T0);
          // preparing mask

@@ -490,14 +490,14 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
 #pragma warning(disable: 4309)
         auto evenmask = _mm_set1_epi32(0x0000FFFF);
 #pragma warning(default: 4309)
-        right_hi = _mm_add_epi32(_mm_and_si128(_mm_srli_si128(row1, 12), evenmask), _mm_and_si128(_mm_srli_si128(row2, 12), evenmask));
+        right_hi = _mm_add_epi32(_mm_slli_si128(_mm_and_si128(row1, evenmask), 12), _mm_slli_si128(_mm_and_si128(row2, evenmask), 12));
       } else if (mode == MASK422_MPEG2) {
         // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
         auto row1 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + 0));
 #pragma warning(disable: 4309)
         auto evenmask = _mm_set1_epi32(0x0000FFFF);
 #pragma warning(default: 4309)
-        right_hi = _mm_and_si128(_mm_srli_si128(row1, 12), evenmask);
+        right_hi = _mm_slli_si128(_mm_and_si128(row1, evenmask), 12);
       }
 
       for ( int i = 0; i < wMod16; i+=16 ) {
