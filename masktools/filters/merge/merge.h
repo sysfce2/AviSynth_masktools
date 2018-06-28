@@ -480,7 +480,7 @@ public:
       add_defaults( signature );
 
       signature.add(Parameter(false, "stacked", false));
-      signature.add(Parameter(String("mpeg1"), "cplace", false));
+      signature.add(Parameter(String("mpeg2"), "cplace", false));
       return signature;
    }
 };
