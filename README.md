@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.15 (20180627)**
+**Masktools2 v2.2.15 (20180628)**
 
 mod by pinterf
 
@@ -29,7 +29,7 @@ Differences to Masktools 2.0b1
 - YV411 (8 bit 4:1:1) support
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
-- mt_merge new parameter hint when luma=true and 4:2:0/4:2:2 'cplace' (2.2.15-). Possible values "mpeg1" (default, faster) or "mpeg2"
+- mt_merge new parameter hint when luma=true and 4:2:0/4:2:2 'cplace' (2.2.15-). Possible values "mpeg1" or "mpeg2" (default)
 - mt_merge to discard U and V automatically when input is greyscale
 - some filters got AVX (float) and AVX2 (integer) support:
   mt_merge: 8-16 bit: AVX2, float:AVX
@@ -314,11 +314,12 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (20180627)
+**v2.2.15 (20180628)
 - mt_merge new parameter hint for chroma placement when luma=true and 4:2:0/4:2:2
-  String 'cplace': possible values "mpeg1" (default) or "mpeg2"
+  String 'cplace': possible values "mpeg1" or "mpeg2" (default)
   Parameter is effective only for 420 and 422 formats, otherwise ignored.
   Default "mpeg1" is using fast 2x2 pixel (1x2 for 4:2:2) averaging when converting a 4:4:4 mask to a 4:2:0 or 4:2:2 format (old behaviour)
+  420 schema:
    +------+------+
    | 0.25 | 0.25 |
    |------+------|
@@ -326,6 +327,7 @@ Changelog
    +------+------+
 
   "mpeg2" is using 2x3 (1x3 for 4:2:2) pixel weighted averaging when converting a 4:4:4 mask to a 4:2:0 or 4:2:2 format
+  420 schema:
    ------+------+-------+
    0.125 | 0.25 | 0.125 |
    ------|------+-------|
