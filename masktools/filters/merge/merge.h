@@ -55,7 +55,9 @@ extern Processor *merge_luma_411_avx2;
 
 extern Processor16 *merge16_c_stacked;
 extern Processor16 *merge16_luma_420_c_stacked;
+extern Processor16 *merge16_luma_420_mpeg2_c_stacked;
 extern Processor16 *merge16_luma_422_c_stacked;
+extern Processor16 *merge16_luma_422_mpeg2_c_stacked;
 
 extern Processor16 *merge16_sse2_stacked;
 extern Processor16 *merge16_sse4_1_stacked;
@@ -63,10 +65,16 @@ extern Processor16 *merge16_sse4_1_stacked;
 extern Processor16 *merge16_luma_420_sse2_stacked;
 extern Processor16 *merge16_luma_420_ssse3_stacked;
 extern Processor16 *merge16_luma_420_sse4_1_stacked;
+extern Processor16 *merge16_luma_420_mpeg2_sse2_stacked;
+extern Processor16 *merge16_luma_420_mpeg2_ssse3_stacked;
+extern Processor16 *merge16_luma_420_mpeg2_sse4_1_stacked;
 
 extern Processor16 *merge16_luma_422_sse2_stacked;
 extern Processor16 *merge16_luma_422_ssse3_stacked;
 extern Processor16 *merge16_luma_422_sse4_1_stacked;
+extern Processor16 *merge16_luma_422_mpeg2_sse2_stacked;
+extern Processor16 *merge16_luma_422_mpeg2_ssse3_stacked;
+extern Processor16 *merge16_luma_422_mpeg2_sse4_1_stacked;
 
 
 #define MAKE_16BIT_EXTERNS(bits_per_pixel) \
@@ -265,11 +273,6 @@ public:
             return;
         }
 
-        if (isStacked && isMpeg2) {
-          error = "mpeg2 is not supported for stacked 16 bit clips";
-          return;
-        }
-
         /* if "luma" is set, we force the chroma processing. Much more handy */
         operators[1] = operators[2] = PROCESS;
         /* no need to change U/V default processing, because of in place filter */
@@ -285,16 +288,32 @@ public:
 
           /* add the chroma processors16 */
           if (is420) {
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            if (isMpeg2) {
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            }
+            else {
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            }
           }
           else if (is422) { // 422
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
-            chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            if (isMpeg2) {
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_mpeg2_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_mpeg2_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_mpeg2_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_mpeg2_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            }
+            else {
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_c_stacked, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_sse2_stacked, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_ssse3_stacked, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2));
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_422_sse4_1_stacked, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+            }
           }
         }
         else {

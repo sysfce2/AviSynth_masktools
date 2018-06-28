@@ -194,13 +194,30 @@ MT_FORCEINLINE static Word get_mask_420_stacked_c(const Byte *pMsb, const Byte *
         ((int(get_value_stacked_c(pMsb, pLsb, x+1)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x+1) + 1) >> 1) + 1) >> 1;
 }
 
-MT_FORCEINLINE static Word get_mask_422_stacked_c(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x) {
+MT_FORCEINLINE static Word get_mask_420_mpeg2_stacked_c(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x, int &right) {
   x = x * 2;
-  return int((get_value_stacked_c(pMsb, pLsb, x)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x) + 1) >> 1;
+  const int left = right;
+  const int mid = (get_value_stacked_c(pMsb, pLsb, x)) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x);
+  right = get_value_stacked_c(pMsb, pLsb, x + 1) + get_value_stacked_c(pMsb + pitch, pLsb + pitch, x + 1);
+  return (Word)((left + 2 * mid + right + 4) >> 3);
 }
 
-template<MaskMode mode>
-void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+MT_FORCEINLINE static Word get_mask_422_stacked_c(const Byte *pMsb, const Byte *pLsb, int x) {
+  x = x * 2;
+  return int((get_value_stacked_c(pMsb, pLsb, x)) + get_value_stacked_c(pMsb, pLsb, x + 1) + 1) >> 1;
+}
+
+MT_FORCEINLINE static Word get_mask_422_mpeg2_stacked_c(const Byte *pMsb, const Byte *pLsb, int x, int &right) {
+  x = x * 2;
+  const int left = right;
+  const int mid = (get_value_stacked_c(pMsb, pLsb, x));
+  right = get_value_stacked_c(pMsb, pLsb, x + 1);
+  return (Word)((left + 2 * mid + right + 2) >> 2);
+}
+
+
+template<MaskMode mode, bool allow_leftminus1>
+void internal_merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                  const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
 {
     auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
@@ -209,18 +226,31 @@ void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptr
 
     for ( int y = 0; y < nHeight / 2; ++y )
     {
+        int right;
+        if (mode == MASK420_MPEG2)
+          right = allow_leftminus1 ?
+          get_value_stacked_c(pMask, pMaskLsb, -1) + get_value_stacked_c(pMask + nMaskPitch, pMaskLsb + nMaskPitch, -1) :
+          get_value_stacked_c(pMask, pMaskLsb, 0) + get_value_stacked_c(pMask + nMaskPitch, pMaskLsb + nMaskPitch, 0);
+        else if (mode == MASK422_MPEG2)
+          right = allow_leftminus1 ?
+          get_value_stacked_c(pMask, pMaskLsb, -1) :
+          get_value_stacked_c(pMask, pMaskLsb, 0);
+
         for ( int x = 0; x < nWidth; ++x ) {
             Word dst = get_value_stacked_c(pDst, pDstLsb, x);
             Word src = get_value_stacked_c(pSrc1, pSrc1Lsb, x);
             Word mask;
 
-            if (mode == MASK420) {
+            if (mode == MASK420)
               mask = get_mask_420_stacked_c(pMask, pMaskLsb, nMaskPitch, x);
-            } else if (mode == MASK422) {
-              mask = get_mask_422_stacked_c(pMask, pMaskLsb, nMaskPitch, x);
-            } else {
+            else if (mode == MASK420_MPEG2)
+              mask = get_mask_420_mpeg2_stacked_c(pMask, pMaskLsb, nMaskPitch, x, right);
+            else if (mode == MASK422)
+              mask = get_mask_422_stacked_c(pMask, pMaskLsb, x);
+            else if (mode == MASK422_MPEG2)
+              mask = get_mask_422_mpeg2_stacked_c(pMask, pMaskLsb, x, right);
+            else
               mask = get_value_stacked_c(pMask, pMaskLsb, x);
-            }
 
             Word output = merge16_core_c<16>(dst, src, mask);
 
@@ -242,6 +272,20 @@ void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptr
     }
 }
 
+template<MaskMode mode>
+void merge16_t_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+  const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
+{
+  internal_merge16_t_stacked_c<mode, false>(pDst, nDstPitch, pSrc1, nSrc1Pitch, pMask, nMaskPitch, nWidth, nHeight, nOrigHeight);
+}
+
+template<MaskMode mode>
+void merge16_t_stacked_allow_leftminus1_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+  const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
+{
+  internal_merge16_t_stacked_c<mode, true>(pDst, nDstPitch, pSrc1, nSrc1Pitch, pMask, nMaskPitch, nWidth, nHeight, nOrigHeight);
+}
+
 template <CpuFlags flags>
 MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x) {
     x = x*2;
@@ -255,6 +299,18 @@ MT_FORCEINLINE static __m128i get_mask_420_stacked_simd(const Byte *pMsb, const 
 }
 
 template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_mask_420_mpeg2_stacked_simd(const Byte *pMsb, const Byte *pLsb, ptrdiff_t pitch, int x, __m128i &right_hi) {
+  x = x * 2;
+
+  auto row1_lo = read_word_stacked_simd(pMsb, pLsb, x);
+  auto row1_hi = read_word_stacked_simd(pMsb, pLsb, x + 8);
+  auto row2_lo = read_word_stacked_simd(pMsb + pitch, pLsb + pitch, x);
+  auto row2_hi = read_word_stacked_simd(pMsb + pitch, pLsb + pitch, x + 8);
+
+  return get_single_mask_value_420_mpeg2<flags>(row1_lo, row1_hi, row2_lo, row2_hi, right_hi);
+}
+
+template <CpuFlags flags>
 MT_FORCEINLINE static __m128i get_mask_422_stacked_simd(const Byte *pMsb, const Byte *pLsb, int x) {
   x = x * 2;
 
@@ -264,61 +320,101 @@ MT_FORCEINLINE static __m128i get_mask_422_stacked_simd(const Byte *pMsb, const 
   return get_single_mask_value_422<flags>(row1_lo, row1_hi);
 }
 
-template <CpuFlags flags, MaskMode mode, Processor16 merge_c>
+template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_mask_422_mpeg2_stacked_simd(const Byte *pMsb, const Byte *pLsb, int x, __m128i &right_hi) {
+  x = x * 2;
+
+  auto row1_lo = read_word_stacked_simd(pMsb, pLsb, x);
+  auto row1_hi = read_word_stacked_simd(pMsb, pLsb, x + 8);
+
+  return get_single_mask_value_422_mpeg2<flags>(row1_lo, row1_hi, right_hi);
+}
+
+template <CpuFlags flags, MaskMode mode, Processor16 merge_c, Processor16 merge_allow_leftminus1_c>
 void merge16_t_stacked_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
-                                                   const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
+  const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
 {
-    int wMod8 = (nWidth / 8) * 8;
-    auto pDst_s = pDst;
-    auto pSrc1_s = pSrc1;
-    auto pMask_s = pMask;
+  int wMod8 = (nWidth / 8) * 8;
+  auto pDst_s = pDst;
+  auto pSrc1_s = pSrc1;
+  auto pMask_s = pMask;
 
-    auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
-    auto pSrc1Lsb = pSrc1 + nSrc1Pitch * nOrigHeight / 2;
-    auto pMaskLsb = pMask + nMaskPitch * nOrigHeight / (mode == MASK420 || mode == MASK420_MPEG2 ? 1 : 2); // though mpeg2 not supported for stacked
+  auto pDstLsb = pDst + nDstPitch * nOrigHeight / 2;
+  auto pSrc1Lsb = pSrc1 + nSrc1Pitch * nOrigHeight / 2;
+  auto pMaskLsb = pMask + nMaskPitch * nOrigHeight / (mode == MASK420 || mode == MASK420_MPEG2 ? 1 : 2); // though mpeg2 not supported for stacked
 
-    auto zero = _mm_setzero_si128();
-    #pragma warning(disable: 4309)
-    auto ffff = _mm_set1_epi16(0xFFFF); // max_pixel_value
-    #pragma warning(default: 4309)
-    auto ff = _mm_set1_epi16(0x00FF);
+  auto zero = _mm_setzero_si128();
+#pragma warning(disable: 4309)
+  auto ffff = _mm_set1_epi16(0xFFFF); // max_pixel_value
+#pragma warning(default: 4309)
+  auto ff = _mm_set1_epi16(0x00FF);
 
-    for ( int j = 0; j < nHeight / 2; ++j ) {
-        for ( int i = 0; i < wMod8; i+=8 ) {
-            auto dst = read_word_stacked_simd(pDst, pDstLsb, i);
-            auto src = read_word_stacked_simd(pSrc1, pSrc1Lsb, i);
-            __m128i mask;
+  for (int j = 0; j < nHeight / 2; ++j) {
 
-            if (mode == MASK420) {
-                mask = get_mask_420_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i);
-            } else if (mode == MASK422) {
-                mask = get_mask_422_stacked_simd<flags>(pMask, pMaskLsb, i);
-            } else {
-                mask = read_word_stacked_simd(pMask, pMaskLsb, i);
-            }
+    // mpeg2:
+    __m128i right_hi;
+    if (mode == MASK420_MPEG2) {
+      // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
+      auto row1 = read_word_stacked_simd(pMask, pMaskLsb, 0);
+      auto row2 = read_word_stacked_simd(pMask + nMaskPitch, pMaskLsb + nMaskPitch, 0);
 
-            auto result = merge_core_simd<flags, 16>(dst, src, mask, ffff, zero);
-
-            write_word_stacked_simd(pDst, pDstLsb, i, result, ff, zero);
-        }
-
-        pDst += nDstPitch;
-        pDstLsb += nDstPitch;
-        pSrc1 += nSrc1Pitch;
-        pSrc1Lsb += nSrc1Pitch;
-
-        if (mode == MASK420 || mode == MASK420_MPEG2) {
-            pMask += nMaskPitch * 2;
-            pMaskLsb += nMaskPitch * 2;
-        } else {
-            pMask += nMaskPitch;
-            pMaskLsb += nMaskPitch;
-        }
+#pragma warning(disable: 4309)
+      auto evenmask = _mm_set1_epi32(0x0000FFFF);
+#pragma warning(default: 4309)
+      right_hi = _mm_add_epi32(_mm_slli_si128(_mm_and_si128(row1, evenmask), 12), _mm_slli_si128(_mm_and_si128(row2, evenmask), 12));
+    }
+    else if (mode == MASK422_MPEG2) {
+      // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
+      auto row1 = read_word_stacked_simd(pMask, pMaskLsb, 0);
+#pragma warning(disable: 4309)
+      auto evenmask = _mm_set1_epi32(0x0000FFFF);
+#pragma warning(default: 4309)
+      right_hi = _mm_slli_si128(_mm_and_si128(row1, evenmask), 12);
     }
 
-    if (nWidth > wMod8) {
-        merge_c(pDst_s + wMod8, nDstPitch, pSrc1_s + wMod8, nSrc1Pitch, pMask_s + wMod8, nMaskPitch, nWidth-wMod8, nHeight, nOrigHeight);
+    for (int i = 0; i < wMod8; i += 8) {
+      auto dst = read_word_stacked_simd(pDst, pDstLsb, i);
+      auto src = read_word_stacked_simd(pSrc1, pSrc1Lsb, i);
+      __m128i mask;
+
+      if (mode == MASK420)
+        mask = get_mask_420_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i);
+      else if (mode == MASK420_MPEG2)
+        mask = get_mask_420_mpeg2_stacked_simd<flags>(pMask, pMaskLsb, nMaskPitch, i, right_hi);
+      else if (mode == MASK422)
+        mask = get_mask_422_stacked_simd<flags>(pMask, pMaskLsb, i);
+      else if (mode == MASK422_MPEG2)
+        mask = get_mask_422_mpeg2_stacked_simd<flags>(pMask, pMaskLsb, i, right_hi);
+      else
+        mask = read_word_stacked_simd(pMask, pMaskLsb, i);
+
+      auto result = merge_core_simd<flags, 16>(dst, src, mask, ffff, zero);
+
+      write_word_stacked_simd(pDst, pDstLsb, i, result, ff, zero);
     }
+
+    pDst += nDstPitch;
+    pDstLsb += nDstPitch;
+    pSrc1 += nSrc1Pitch;
+    pSrc1Lsb += nSrc1Pitch;
+
+    if (mode == MASK420 || mode == MASK420_MPEG2) {
+      pMask += nMaskPitch * 2;
+      pMaskLsb += nMaskPitch * 2;
+    }
+    else {
+      pMask += nMaskPitch;
+      pMaskLsb += nMaskPitch;
+    }
+  }
+
+  if (nWidth > wMod8) {
+    const int maskShift = (mode == MASK420 || mode == MASK420_MPEG2 || mode == MASK422 || mode == MASK422_MPEG2) ? wMod8 * 2 : wMod8;
+    if (wMod8 != 0 && (mode == MASK420_MPEG2 || mode == MASK422_MPEG2)) // indexing leftmost - 1 is allowed
+      merge_allow_leftminus1_c(pDst_s + wMod8, nDstPitch, pSrc1_s + wMod8, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth - wMod8), nHeight, nOrigHeight);
+    else
+      merge_c(pDst_s + wMod8, nDstPitch, pSrc1_s + wMod8, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth - wMod8), nHeight, nOrigHeight);
+  }
 }
 
 /* Native */
@@ -543,19 +639,26 @@ void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_
 /* Stacked, always 16 bit */
 Processor16 *merge16_c_stacked = &merge16_t_stacked_c<MASK444>;
 Processor16 *merge16_luma_420_c_stacked = &merge16_t_stacked_c<MASK420>;
+Processor16 *merge16_luma_420_mpeg2_c_stacked = &merge16_t_stacked_c<MASK420_MPEG2>;
 Processor16 *merge16_luma_422_c_stacked = &merge16_t_stacked_c<MASK422>;
+Processor16 *merge16_luma_422_mpeg2_c_stacked = &merge16_t_stacked_c<MASK422_MPEG2>;
 
-Processor16 *merge16_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK444, merge16_t_stacked_c<MASK444>>;
-Processor16 *merge16_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK444, merge16_t_stacked_c<MASK444>>;
+Processor16 *merge16_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK444, merge16_t_stacked_c<MASK444>, merge16_t_stacked_c<MASK444>>;
+Processor16 *merge16_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK444, merge16_t_stacked_c<MASK444>, merge16_t_stacked_c<MASK444>>;
 
-Processor16 *merge16_luma_420_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK420, merge16_t_stacked_c<MASK420>>;
-Processor16 *merge16_luma_420_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK420, merge16_t_stacked_c<MASK420>>;
-Processor16 *merge16_luma_420_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK420, merge16_t_stacked_c<MASK420>>;
-// no mpeg2 option
+Processor16 *merge16_luma_420_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK420, merge16_t_stacked_c<MASK420>, merge16_t_stacked_c<MASK420>>;
+Processor16 *merge16_luma_420_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK420, merge16_t_stacked_c<MASK420>, merge16_t_stacked_c<MASK420>>;
+Processor16 *merge16_luma_420_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK420, merge16_t_stacked_c<MASK420>, merge16_t_stacked_c<MASK420>>;
+Processor16 *merge16_luma_420_mpeg2_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK420_MPEG2, merge16_t_stacked_c<MASK420_MPEG2>, merge16_t_stacked_allow_leftminus1_c<MASK420_MPEG2>>;
+Processor16 *merge16_luma_420_mpeg2_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK420_MPEG2, merge16_t_stacked_c<MASK420_MPEG2>, merge16_t_stacked_allow_leftminus1_c<MASK420_MPEG2>>;
+Processor16 *merge16_luma_420_mpeg2_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK420_MPEG2, merge16_t_stacked_c<MASK420_MPEG2>, merge16_t_stacked_allow_leftminus1_c<MASK420_MPEG2>>;
 
-Processor16 *merge16_luma_422_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK422, merge16_t_stacked_c<MASK422>>;
-Processor16 *merge16_luma_422_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK422, merge16_t_stacked_c<MASK422>>;
-Processor16 *merge16_luma_422_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK422, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK422, merge16_t_stacked_c<MASK422>, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK422, merge16_t_stacked_c<MASK422>, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK422, merge16_t_stacked_c<MASK422>, merge16_t_stacked_c<MASK422>>;
+Processor16 *merge16_luma_422_mpeg2_sse2_stacked = merge16_t_stacked_simd<CPU_SSE2, MASK422_MPEG2, merge16_t_stacked_c<MASK422_MPEG2>, merge16_t_stacked_allow_leftminus1_c<MASK422_MPEG2>>;
+Processor16 *merge16_luma_422_mpeg2_ssse3_stacked = merge16_t_stacked_simd<CPU_SSSE3, MASK422_MPEG2, merge16_t_stacked_c<MASK422_MPEG2>, merge16_t_stacked_allow_leftminus1_c<MASK422_MPEG2>>;
+Processor16 *merge16_luma_422_mpeg2_sse4_1_stacked = merge16_t_stacked_simd<CPU_SSE4_1, MASK422_MPEG2, merge16_t_stacked_c<MASK422_MPEG2>, merge16_t_stacked_allow_leftminus1_c<MASK422_MPEG2>>;
 
 /* Native */
 // specialize them
