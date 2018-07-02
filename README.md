@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.15 (20180628)**
+**Masktools2 v2.2.16 (20180702)**
 
 mod by pinterf
 
@@ -18,7 +18,7 @@ Differences to Masktools 2.0b1
 - Avisynth+ high bit depth support (incl. planar RGB, color spaces with alpha plane are supported from v2.2.7)
   All filters are now supporting 10, 12, 14, 16 bits and float
   Note: From v2.2.15 the 32 bit float U and V chroma channels are 0 centered instead of 0.5, supporting the change in Avisynth+ in May 2018. This change affects lut functions and mt_diff.
-  (The last Avisynth+ version that matches masktools 2.2.14 is Avs+ r2664)
+  (The last Avisynth+ version that matches masktools 2.2.14 is Avs+ r2664, use r2724 or newer!)
   Threshold and sc_value parameters are scaled automatically to the current bit depth (v2.2.5-) from a default 8-bit value.
   Y,U,V,A (and parameters chroma/alpha) negative (memset) values are scaled automatically to the current bit depth (v2.2.7-, chroma/alpha v.2.2.8) from a default 8-bit value.
   Default range of such parameters can be overridden to 8-16 bits or float.
@@ -314,7 +314,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.15 (20180628)
+**v2.2.16 (20180702)
 - mt_merge new parameter hint for chroma placement when luma=true and 4:2:0/4:2:2
   String 'cplace': possible values "mpeg1" or "mpeg2" (default)
   Parameter is effective only for 420 and 422 formats, otherwise ignored.
@@ -335,7 +335,7 @@ Changelog
    ------+------+-------+
 
 - 32 bit float U and V chroma channels are now zero based (+/-0.5 for full scale). Was: 0..1, same as luma
-  (Following the change in Avisynth+ over r2664: use this plugin with r2996 or newer)
+  Since internal format changed, use Avisynth+ r2724 or newer for this masktools2 2.2.16.
   Affected predefined expression constants when plane is U or V: 
   cmin and cmax (limited range (16-128)/255 and (240-128)/255 instead of 16/255.0 and 240/255.0
   range_max: 0.5 instead of 1.0
@@ -356,6 +356,8 @@ Changelog
     2: call Expr, when masktools would do its slow realtime calc (see 'realtime' column in the table above)
 
   Extends and replaces experimental clamp_xxxx keywords.
+
+**v2.2.15 (skipped, test versions)
 
 **v2.2.14 (20180225)
 - Fix: mt_convolution invalid instruction on processors below SSE4.1
