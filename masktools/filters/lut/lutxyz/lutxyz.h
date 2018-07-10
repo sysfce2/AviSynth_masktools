@@ -113,13 +113,15 @@ public:
       // This part is duplicated in lut, lutxy, lutxyz, lutxyza
       use_expr = parameters["use_expr"].toInt();
       bool use_external_expr = false;
-      if (use_expr < 0 || use_expr>2) {
+      if (use_expr < 0 || use_expr > 3) {
         error = "invalid value for parameter 'use_expr'";
         return;
       }
       if (use_expr == 1 && bits_per_pixel > 8) // mode 1: use Expr when over 8 bits or lutxyza
         use_external_expr = true;
       if (use_expr == 2 && realtime) // mode 2: use Expr when masktools would use its own slow calculation
+        use_external_expr = true;
+      if (use_expr == 3) // mode 3: use Expr always
         use_external_expr = true;
       if (use_external_expr) {
         if (nXOffset != 0 || nYOffset != 0) {
