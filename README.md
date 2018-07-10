@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.16 (20180702)**
+**Masktools2 v2.2.17 (20180710)**
 
 mod by pinterf
 
@@ -230,8 +230,9 @@ Example #3 (new, with constants)
   0: uses lut and internal realtime calculation
   1: Expr, when bit depth>=10 or lutxyza
   2: When masktools would use realtime calc,  Passes the expressions, scale_inputs and clamp_float parameter to the "Expr" filter in Avisynth+
+  3: Expr, always passed (from 2.2.17)
 
-  For modes 1 and 2: passes the expression strings, scale_inputs and clamp_float parameters to the "Expr" filter in Avisynth+
+  For modes 1, 2 and 3: passes the expression strings, scale_inputs and clamp_float parameters to the "Expr" filter in Avisynth+
 
   Note #1: Avisynth+ internal precision is 32bit float, masktools2 is double (usually no difference can be seen)
   Note #2: Some keywords (e.g. bit shift) are not available on Avisynth+
@@ -314,6 +315,12 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.17 (20180710)
+- mt_convolution: check plane dimensions to exceed convolution horizontal/vertical size
+- lut functions: plane order to RGBA from BGRA like in Expr.
+  expr parameters y-u-v-a naming matches now to r-g-b-a)
+- for luts: use_expr=3: always send expression(s) to Expr
+
 **v2.2.16 (20180702)
 - mt_merge new parameter hint for chroma placement when luma=true and 4:2:0/4:2:2
   String 'cplace': possible values "mpeg1" or "mpeg2" (default)
