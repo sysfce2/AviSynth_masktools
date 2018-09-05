@@ -5,6 +5,8 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
 
 /* Common */
 
+// no MASK420_MPEG2 and MASK422_MPEG2 support in AVX2
+
 enum MaskMode {
     MASK420,
     MASK422,
@@ -132,7 +134,7 @@ MT_FORCEINLINE static Word get_mask_422_c(const Byte *ptr, int x) {
 }
 
 template<MaskMode mode, int bits_per_pixel>
-void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+static void merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                          const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int /*nOrigHeight*/)
 {
     for ( int y = 0; y < nHeight; ++y )
@@ -187,7 +189,7 @@ MT_FORCEINLINE static __m256i get_mask_422_simd(const Byte *ptr, int x) {
 }
 
 template <MaskMode mode, Processor16 merge_c, int bits_per_pixel>
-void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
+static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch,
                             const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight)
 {
     nWidth *= 2; // really rowsize: width * sizeof(uint16), see also division at C trailer
