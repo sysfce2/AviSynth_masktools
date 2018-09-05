@@ -57,11 +57,17 @@ static void adddiff_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, pt
     }
 }
 
-void adddiff32_c(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height)
+void adddiff32_c(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height, bool chroma)
 {
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+  UNUSED(chroma);
+  const float middle_value = 0.5f; // also for chroma
+#else
+  const float middle_value = chroma ? 0.0f : 0.5f;
+#endif
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
-      reinterpret_cast<Float *>(pDst)[x] = reinterpret_cast<Float *>(pDst)[x] + reinterpret_cast<const Float *>(pSrc)[x] - 0.5f; // to work like "x y + 128 -"
+      reinterpret_cast<Float *>(pDst)[x] = reinterpret_cast<Float *>(pDst)[x] + reinterpret_cast<const Float *>(pSrc)[x] - middle_value; // to work like "x y + 128 -"
     }
     pDst += dst_pitch;
     pSrc += src_pitch;
@@ -70,14 +76,18 @@ void adddiff32_c(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t sr
 
 
 template<MemoryMode mem_mode>
-static void adddiff32_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height)
+static void adddiff32_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, ptrdiff_t src_pitch, int width, int height, bool chroma)
 {
   width *= sizeof(Float);
 
   int mod16_width = (width / 16) * 16;
   auto pDst2 = pDst;
   auto pSrc2 = pSrc;
-  auto vHalf = _mm_set1_ps(0.5f); 
+#ifdef FLOAT_CHROMA_IS_HALF_CENTERED
+  const auto vHalf = _mm_set1_ps(0.5f);  // also for chroma
+#else
+  const auto vHalf = _mm_set1_ps(chroma ? 0.0f : 0.5f);
+#endif
 
   for (int j = 0; j < height; ++j) {
     for (int i = 0; i < mod16_width; i += 16) {
@@ -96,7 +106,7 @@ static void adddiff32_sse2_t(Byte *pDst, ptrdiff_t dst_pitch, const Byte *pSrc, 
   }
 
   if (width > mod16_width) {
-    adddiff32_c(pDst2 + mod16_width, dst_pitch, pSrc2 + mod16_width, src_pitch, (width - mod16_width) / sizeof(Float), height);
+    adddiff32_c(pDst2 + mod16_width, dst_pitch, pSrc2 + mod16_width, src_pitch, (width - mod16_width) / sizeof(Float), height, chroma);
   }
 }
 
