@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.17 (20180710)**
+**Masktools2 v2.2.18 (20180905)**
 
 mod by pinterf
 
@@ -315,10 +315,14 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.18 (20180905)
+- mt_merge: fix right side artifacts for non-mod16 width, AVX2 and luma=false (regression in 2.2.16)
+- mt_adddiff: fix 32 bit chroma (still used 0.5 centered chroma instead of 0.0)
+
 **v2.2.17 (20180710)
 - mt_convolution: check plane dimensions to exceed convolution horizontal/vertical size
 - lut functions: plane order to RGBA from BGRA like in Expr.
-  expr parameters y-u-v-a naming matches now to r-g-b-a)
+  expr parameters y-u-v-a naming matches now to r-g-b-a
 - for luts: use_expr=3: always send expression(s) to Expr
 
 **v2.2.16 (20180702)
