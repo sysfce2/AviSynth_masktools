@@ -42,7 +42,7 @@
 // alignment. They should always request the exact alignment value they need.
 // This is to make sure that plugins work over the widest range of AviSynth
 // builds possible.
-#define FRAME_ALIGN 32
+#define FRAME_ALIGN 64
 
 #if   defined(_M_AMD64) || defined(__x86_64)
 #   define X86_64
@@ -62,7 +62,17 @@
 #   error Unsupported compiler.
 #endif
 
-#if   defined(GCC)
+#if !defined(CLANG) && defined(__clang__)
+ // MSVC is defined when LLVM build in VS
+#   define CLANG
+#endif
+
+#if defined(CLANG)
+#undef __forceinline
+#define __forceinline __attribute__((always_inline))
+#endif
+
+#if    defined(GCC)
 #   undef __forceinline
 #   define __forceinline inline
 #endif
