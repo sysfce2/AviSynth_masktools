@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.18 (20180905)**
+**Masktools2 v2.2.19 (20190426-not released)**
 
 mod by pinterf
 
@@ -8,7 +8,7 @@ Change log at the end of this document
 
 Differences to Masktools 2.0b1
 
-- project moved to Visual Studio 2017, requires Visual Studio redistributables
+- project moved to Visual Studio 2019, requires Visual Studio redistributables
 - add back "none" and "ignore" for values to "chroma" parameter (2.2.9-)
 - mt_merge at 8 bit clips: keep exact pixel values when mask is 0 or 255 (v2.2.7-)
 - Fix: mt_merge (and probably other multi-clip filters) may result in corrupted results 
@@ -315,6 +315,12 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.19 (20190426)
+- Fix: mt_infix to recognize ymin, ymax, abs, atan, etc... tokens beginning with 'a' and 'y' were not converted
+- Move project to VS2019 v142 toolset, xp builds still at v141_xp
+- update current Avisynth+ headers
+- ??? not released
+
 **v2.2.18 (20180905)
 - mt_merge: fix right side artifacts for non-mod16 width, AVX2 and luma=false (regression in 2.2.16)
 - mt_adddiff: fix 32 bit chroma (still used 0.5 centered chroma instead of 0.0)
