@@ -319,6 +319,7 @@ Changelog
 - Fix: mt_infix to recognize ymin, ymax, abs, atan, etc... tokens beginning with 'a' and 'y' were not converted
 - Move project to VS2019 v142 toolset, xp builds still at v141_xp
 - update current Avisynth+ headers
+- update source to use boost 1.70 lib v142 for non-xp builds
 - ??? not released
 
 **v2.2.18 (20180905)
