@@ -213,15 +213,15 @@
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.1\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.2\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.1\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
@@ -229,15 +229,15 @@
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.1\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.2\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.1\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
@@ -245,23 +245,23 @@
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.1\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.2\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.1\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.2\;$(WindowsSdk_LibraryPath_x64)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.1\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
@@ -269,15 +269,15 @@
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.1\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.2\;$(WindowsSdk_LibraryPath_x64)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.1\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
@@ -285,24 +285,24 @@
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.1\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.2\;$(WindowsSdk_LibraryPath_x64)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.1\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;$(WindowsSdk_71A_LibraryPath_x86)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);c:\Soft\Boost\lib32-msvc-14.2\;$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86;</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">
     <OutDir>$(Platform)\Build\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\Temp\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\Github\masktools\masktools\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(WindowsSdk_71A_IncludePath)</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.1\;$(WindowsSdk_71A_LibraryPath_x64)</LibraryPath>
+    <IncludePath>..\avsheaders\;C:\Soft\Boost;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64;c:\Soft\Boost\lib64-msvc-14.2\;$(WindowsSdk_LibraryPath_x64)</LibraryPath>
     <TargetName>$(ProjectName)2</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">
