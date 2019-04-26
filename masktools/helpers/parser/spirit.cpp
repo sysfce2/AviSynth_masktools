@@ -97,11 +97,6 @@ public:
          /* variables and numbers are processed in the same way */
          factor = strict_real_p[AddDouble(self.rpn)] | int_p[AddInteger(self.rpn)] | ('(' >> termter >> ')') | 
            ( 
-             ch_p('x')[AddNamedSymbol("x", self.rpn)] |
-             ch_p('y')[AddNamedSymbol("y", self.rpn)] |
-             ch_p('z')[AddNamedSymbol("z", self.rpn)] |
-             // v2.2.4
-             ch_p('a')[AddNamedSymbol("a", self.rpn)] | 
              str_p("bitdepth")[AddNamedSymbol("bitdepth", self.rpn)] |
              str_p("sbitdepth")[AddNamedSymbol("sbitdepth", self.rpn)] |
              str_p("range_half")[AddNamedSymbol("range_half", self.rpn)] |
@@ -114,7 +109,14 @@ public:
              str_p("cmax")[AddNamedSymbol("cmax", self.rpn)] |
              // ---
              str_p("pi")[AddNamedSymbol("pi", self.rpn)]
-           ) | term0;
+           ) | term0 | 
+           // v2.2.19 put them at the end, in order not to find it instead of token names beginning with 'a', 'y' like abs, atan, ymin, etc...
+           ch_p('x')[AddNamedSymbol("x", self.rpn)] |
+           ch_p('y')[AddNamedSymbol("y", self.rpn)] |
+           ch_p('z')[AddNamedSymbol("z", self.rpn)] |
+           // v2.2.4
+           ch_p("a")[AddNamedSymbol("a", self.rpn)] 
+           ;
 
          /* functions */
          term0 = /* one operand functions/operators should appear as fn_name(x), e.g. #F(100) */
