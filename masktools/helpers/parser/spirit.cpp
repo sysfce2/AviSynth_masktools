@@ -5,18 +5,22 @@
 #ifdef MT_HAVE_BOOST_SPIRIT
 // Hint:
 // http://www.boost.org/doc/libs/1_48_0/libs/spirit/doc/html/spirit/what_s_new/spirit_1_x.html
-// 1.) download full boost e.g.: boost_1_66_0.7z
+// 1.) download full boost e.g.: boost_1_70_0.7z
 //     http://www.boost.org/users/download/
 //     Extract to e.g. c:\soft\boost, or to the place what is set in VC++ Directories|Include project properties
-// 2.) Build, install from the above, or use prebuilt windows binaries: vc14.1 for VS2017 both 64 and 32 bit
+// 2.) Build, install from the above, or use prebuilt windows binaries: 
+//     vs14.2 for VS2019 both 64 and 32 bit
+//     (for vc14.1 for VS2017 both 64 and 32 bit: replace v142 with v141 in the samples below)
 //     https://sourceforge.net/projects/boost/files/boost-binaries
+//     choose: boost_1_70_0-unsupported-bin-msvc-all-32-64.7z
+//     unzip the necessary libs from inside the 7z archive
 //     Set library paths for x64 and x32 in VC++ Directories | Library directories project properties
-//     <yourboostdir>\lib32-msvc-14.1\  or <yourboostdir>\lib64-msvc-14.1\
-//     Needed libs (name-kind-platform-version):
-//      libboost_date_time-vc141-mt-x64-1_66.lib
-//      libboost_thread-vc141-mt-x64-1_66.lib
-//      libboost_chrono-vc141-mt-x64-1_66.lib
-//      libboost_system-vc141-mt-x64-1_66.lib
+//     <yourboostdir>\lib32-msvc-14.2\  or <yourboostdir>\lib64-msvc-14.2\
+//     Needed libs (name-kind-platform-version) when you don't want to keep all of them:
+//      libboost_date_time-vc142-mt-x64-1_70.lib
+//      libboost_thread-vc142-mt-x64-1_70.lib
+//      libboost_chrono-vc142-mt-x64-1_70.lib
+//      libboost_system-vc142-mt-x64-1_70.lib
 //     and ..x32.. respectively
 //     or choose the static/nonstatic/debug versions of them
 #include <boost/spirit/home/classic.hpp>
@@ -158,9 +162,9 @@ public:
             (">" >> term4)[AddNamedSymbol(">", self.rpn)]);
          /* logic */
          term6 = term5 >> *( ("!&" >> term5)[AddNamedSymbol("!&", self.rpn)] |
-            ('|' >> term5)[AddNamedSymbol("|", self.rpn)] |
+            ("|" >> term5)[AddNamedSymbol("|", self.rpn)] |
             ("&" >> term5)[AddNamedSymbol("&", self.rpn)] |
-            ('°' >> term5)[AddNamedSymbol("°", self.rpn)] |
+            ("°" >> term5)[AddNamedSymbol("°", self.rpn)] |
             // addons from 2.2.4
             ("@" >> term5)[AddNamedSymbol("@", self.rpn)] |
 
