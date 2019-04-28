@@ -21,10 +21,10 @@ static double inferiorStrict  (double x, double y) { return x < y ? 1 : -1; }
 static double superior        (double x, double y) { return x >= y ? 1 : -1; }
 static double superiorStrict  (double x, double y) { return x > y ? 1 : -1; }
 // bool
-static double and             (double x, double y) { return x > 0 && y > 0 ? 1 : -1; }
-static double or              (double x, double y) { return x > 0 || y > 0 ? 1 : -1; }
+static double _and             (double x, double y) { return x > 0 && y > 0 ? 1 : -1; }
+static double _or              (double x, double y) { return x > 0 || y > 0 ? 1 : -1; }
 static double andNot          (double x, double y) { return x > 0 && y <= 0 ? 1 : -1; }
-static double xor             (double x, double y) { return (x > 0 && y <= 0) || (x <= 0 && y > 0)? 1 : -1; }
+static double _xor             (double x, double y) { return (x > 0 && y <= 0) || (x <= 0 && y > 0)? 1 : -1; }
 // Unsigned Bit arithmetic
 static double andUB           (double x, double y) { return double(clip<Uint64, double>(x) & clip<Uint64, double>(y)); }
 static double orUB            (double x, double y) { return double(clip<Uint64, double>(x) | clip<Uint64, double>(y)); }
@@ -162,10 +162,10 @@ Symbol Symbol::Inferior       ("<=", OPERATOR, inferior);
 Symbol Symbol::InferiorStrict ("<" , OPERATOR, inferiorStrict);
 Symbol Symbol::Superior       (">=", OPERATOR, superior);
 Symbol Symbol::SuperiorStrict (">" , OPERATOR, superiorStrict);
-Symbol Symbol::And            ("&" , OPERATOR, and);
-Symbol Symbol::Or             ("|" , OPERATOR, or);
+Symbol Symbol::And            ("&" , OPERATOR, _and);
+Symbol Symbol::Or             ("|" , OPERATOR, _or);
 Symbol Symbol::AndNot         ("&!", OPERATOR, andNot);
-Symbol Symbol::Xor            ("\xB0" , "@", OPERATOR, xor); // degree-sign 0xB0, has codepage problems, kept only for compatibility
+Symbol Symbol::Xor            ("\xB0" , "@", OPERATOR, _xor); // degree-sign 0xB0, has codepage problems, kept only for compatibility
 Symbol Symbol::AndUB          ("&u" , OPERATOR, andUB);
 Symbol Symbol::OrUB           ("|u" , OPERATOR, orUB);
 Symbol Symbol::XorUB          ("\xB0u" , "@u", OPERATOR, xorUB); // degree-sign 0xB0, has codepage problems, kept only for compatibility
