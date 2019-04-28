@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common", "..\..\common\build\common.vcxproj", "{DBFBE277-5B8D-4258-B522-13146FD1E722}"
 EndProject
@@ -16,6 +16,8 @@ Global
 		release-boost|x64 = release-boost|x64
 		release-boost-dualsign|Win32 = release-boost-dualsign|Win32
 		release-boost-dualsign|x64 = release-boost-dualsign|x64
+		release-LLVM-boost|Win32 = release-LLVM-boost|Win32
+		release-LLVM-boost|x64 = release-LLVM-boost|x64
 		release-no-boost|Win32 = release-no-boost|Win32
 		release-no-boost|x64 = release-no-boost|x64
 		release-no-boost-dualsign|Win32 = release-no-boost-dualsign|Win32
@@ -38,6 +40,10 @@ Global
 		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-boost-dualsign|Win32.Build.0 = release-boost-dualsign|Win32
 		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-boost-dualsign|x64.ActiveCfg = release-boost-dualsign|x64
 		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-boost-dualsign|x64.Build.0 = release-boost-dualsign|x64
+		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-LLVM-boost|Win32.ActiveCfg = release-LLVM-boost|Win32
+		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-LLVM-boost|Win32.Build.0 = release-LLVM-boost|Win32
+		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-LLVM-boost|x64.ActiveCfg = release-LLVM-boost|x64
+		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-LLVM-boost|x64.Build.0 = release-LLVM-boost|x64
 		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-no-boost|Win32.ActiveCfg = release-no-boost|Win32
 		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-no-boost|Win32.Build.0 = release-no-boost|Win32
 		{DBFBE277-5B8D-4258-B522-13146FD1E722}.release-no-boost|x64.ActiveCfg = release-no-boost|x64
@@ -62,6 +68,10 @@ Global
 		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-boost-dualsign|Win32.Build.0 = release-boost-dualsign|Win32
 		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-boost-dualsign|x64.ActiveCfg = release-boost-dualsign|x64
 		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-boost-dualsign|x64.Build.0 = release-boost-dualsign|x64
+		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-LLVM-boost|Win32.ActiveCfg = release-LLVM-boost|Win32
+		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-LLVM-boost|Win32.Build.0 = release-LLVM-boost|Win32
+		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-LLVM-boost|x64.ActiveCfg = release-LLVM-boost|x64
+		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-LLVM-boost|x64.Build.0 = release-LLVM-boost|x64
 		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-no-boost|Win32.ActiveCfg = release-no-boost|Win32
 		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-no-boost|Win32.Build.0 = release-no-boost|Win32
 		{185396D8-57BD-4DDF-8CD3-26035EA50DB9}.release-no-boost|x64.ActiveCfg = release-no-boost|x64
