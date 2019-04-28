@@ -164,13 +164,13 @@ public:
          term6 = term5 >> *( ("!&" >> term5)[AddNamedSymbol("!&", self.rpn)] |
             ("|" >> term5)[AddNamedSymbol("|", self.rpn)] |
             ("&" >> term5)[AddNamedSymbol("&", self.rpn)] |
-            ("\xB0" >> term5)[AddNamedSymbol("°", self.rpn)] | // degree-sign 0xB0, has codepage problems, kept only for compatibility
+            ("\xB0" >> term5)[AddNamedSymbol("\xB0", self.rpn)] | // degree-sign 0xB0, has codepage problems, kept only for compatibility
             // addons from 2.2.4
             ("@" >> term5)[AddNamedSymbol("@", self.rpn)] |
 
             ("&u" >> term5)[AddNamedSymbol("&u", self.rpn)] |
             ("|u" >> term5)[AddNamedSymbol("|u", self.rpn)] |
-            ("\xB0u" >> term5)[AddNamedSymbol("°u", self.rpn)] | // degree-sign 0xB0, has codepage problems, kept only for compatibility
+            ("\xB0u" >> term5)[AddNamedSymbol("\xB0u", self.rpn)] | // degree-sign 0xB0, has codepage problems, kept only for compatibility
             ("@u" >> term5)[AddNamedSymbol("@u", self.rpn)] |
 
             (">>" >> term5)[AddNamedSymbol(">>", self.rpn)] |
@@ -180,7 +180,7 @@ public:
   
             ("&s" >> term5)[AddNamedSymbol("&s", self.rpn)] |
             ("|s" >> term5)[AddNamedSymbol("|s", self.rpn)] |
-            ("\xB0s" >> term5)[AddNamedSymbol("°s", self.rpn)] | // degree-sign 0xB0, has codepage problems, kept only for compatibility
+            ("\xB0s" >> term5)[AddNamedSymbol("\xB0s", self.rpn)] | // degree-sign 0xB0, has codepage problems, kept only for compatibility
             ("@s" >> term5)[AddNamedSymbol("@s", self.rpn)] |
 
             (">>s" >> term5)[AddNamedSymbol(">>s", self.rpn)] |
