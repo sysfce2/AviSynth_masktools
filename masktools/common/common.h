@@ -10,4 +10,4 @@
 #define MT_FORCEINLINE __forceinline
 #endif
 
-#endif __Mt_COMMON_H__
+#endif // __Mt_COMMON_H__

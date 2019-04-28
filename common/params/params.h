@@ -112,6 +112,7 @@ class Signature {
 
 public:
 
+    Signature(const char * _name) : name(_name) { }
     Signature(const String &_name) : name(_name) { }
     void add(const Parameter &parameter) { parameters.push_back(parameter); }
 

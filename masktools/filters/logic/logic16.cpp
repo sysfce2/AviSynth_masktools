@@ -69,7 +69,10 @@ static void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, 
 /* sse2 */
 
 template<int bits_per_pixel>
-static MT_FORCEINLINE __m128i add16_sse2(__m128i a, __m128i b) 
+#ifdef __clang__
+__attribute__((__target__("sse4.1")))
+#endif
+static MT_FORCEINLINE __m128i add16_sse2(__m128i a, __m128i b)
 { 
 #pragma warning(disable: 4310)
   return bits_per_pixel==16 ? _mm_adds_epu16(a, b) : _mm_min_epu16(_mm_adds_epu16(a, b),_mm_set1_epi16((short)((1 << bits_per_pixel) - 1)));
@@ -95,12 +98,18 @@ static MT_FORCEINLINE __m128i xor16_sse2(const __m128i &a, const __m128i &b, con
 }
 
 template <decltype(nop16_sse2) opa, decltype(nop16_sse2) opb>
-static MT_FORCEINLINE __m128i min_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) { 
+#ifdef __clang__
+__attribute__((__target__("sse4.1")))
+#endif
+static MT_FORCEINLINE __m128i min_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) {
     return _mm_min_epu16(opa(a, th1), opb(b, th2)); // !!min_epu16: SSE4
 }
 
 template <decltype(nop16_sse2) opa, decltype(nop16_sse2) opb>
-static MT_FORCEINLINE __m128i max_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) { 
+#ifdef __clang__
+__attribute__((__target__("sse4.1")))
+#endif
+static MT_FORCEINLINE __m128i max_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) {
     return _mm_max_epu16(opa(a, th1), opb(b, th2)); // !!max_epu16: SSE4
 }
 

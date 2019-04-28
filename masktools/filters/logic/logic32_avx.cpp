@@ -7,17 +7,17 @@ static MT_FORCEINLINE Float add(Float a, Float b) { return a + b; }
 static MT_FORCEINLINE Float sub(Float a, Float b) { return a - b; }
 static MT_FORCEINLINE Float nop(Float a, Float b) { UNUSED(b); return a; }
 
-#define CAST_U32(x) (*reinterpret_cast<unsigned char *>(&x))
+#define CAST_U32(x) (*reinterpret_cast<uint32_t *>(&x))
 
 static MT_FORCEINLINE float cast_to_float(uint32_t x)
 {
   uint32_t tmp = x; return *reinterpret_cast<float *>(&tmp);
 }
 // not much sense on float, but for the sake of generality
-static MT_FORCEINLINE Float and(Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) & CAST_U32(b)); }
-static MT_FORCEINLINE Float or (Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) | CAST_U32(b)); }
+static MT_FORCEINLINE Float _and(Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) & CAST_U32(b)); }
+static MT_FORCEINLINE Float _or (Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) | CAST_U32(b)); }
 static MT_FORCEINLINE Float andn(Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) & ~CAST_U32(b)); }
-static MT_FORCEINLINE Float xor(Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) ^ CAST_U32(b)); }
+static MT_FORCEINLINE Float _xor(Float a, Float b, Float th1, Float th2) { UNUSED(th1); UNUSED(th2); return cast_to_float(CAST_U32(a) ^ CAST_U32(b)); }
 
 template <decltype(add) opa, decltype(add) opb>
 static MT_FORCEINLINE Float min_t(Float a, Float b, Float th1, Float th2) { 
@@ -29,7 +29,7 @@ static MT_FORCEINLINE Float max_t(Float a, Float b, Float th1, Float th2) {
     return max<Float>(opa(a, th1), opb(b, th2)); 
 }
 
-template <decltype(and) op>
+template <decltype(_and) op>
 static void logic_t(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Float nThresholdDestination, Float nThresholdSource)
 {
    nDstPitch /= sizeof(float);
@@ -76,7 +76,7 @@ static MT_FORCEINLINE __m256 max_t_avx(const __m256 &a, const __m256 &b, const _
 }
 
 
-template<MemoryMode mem_mode, decltype(and_avx_op) op, decltype(and) op_c>
+template<MemoryMode mem_mode, decltype(and_avx_op) op, decltype(_and) op_c>
     void logic_t_avx(Float *pDst8, ptrdiff_t nDstPitch, const Float *pSrc8, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Float nThresholdDestination, Float nThresholdSource)
 {
     uint8_t *pDst = reinterpret_cast<uint8_t *>(pDst8);
@@ -116,10 +116,10 @@ template<MemoryMode mem_mode, decltype(and_avx_op) op, decltype(and) op_c>
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic {
 
 #define DEFINE_AVX_VERSIONS(name, mem_mode) \
-Processor32 *and_##name  = &logic_t_avx<mem_mode, and_avx_op, and>; \
-Processor32 *or_##name   = &logic_t_avx<mem_mode, or_avx_op, or>; \
+Processor32 *and_##name  = &logic_t_avx<mem_mode, and_avx_op, _and>; \
+Processor32 *or_##name   = &logic_t_avx<mem_mode, or_avx_op, _or>; \
 Processor32 *andn_##name = &logic_t_avx<mem_mode, andn_avx_op, andn>; \
-Processor32 *xor_##name  = &logic_t_avx<mem_mode, xor_avx_op, xor>;
+Processor32 *xor_##name  = &logic_t_avx<mem_mode, xor_avx_op, _xor>;
 
 DEFINE_AVX_VERSIONS(32_avx, MemoryMode::SSE2_UNALIGNED)
 DEFINE_AVX_VERSIONS(32_aavx, MemoryMode::SSE2_ALIGNED)

@@ -2,7 +2,15 @@
 #define __Mt_SIMD_H__
 
 #include <emmintrin.h>
+#include <smmintrin.h>
 #include <immintrin.h>
+
+#ifdef __clang__
+// in clang immintrin.h only inlcudes them if the whole module is targeted as avx/avx2
+#include <avxintrin.h>
+#include <avx2intrin.h>
+#endif
+
 #include "common.h"
 
 namespace Filtering {
@@ -96,6 +104,9 @@ static MT_FORCEINLINE void simd_store_ps(T *ptr, __m128 value) {
 }
 
 template<MemoryMode mem_mode, typename T>
+#ifdef __clang__
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i simd256_load_si256(const T* ptr) {
 #ifdef USE_MOVPS
   if (mem_mode == MemoryMode::SSE2_ALIGNED) {
@@ -115,6 +126,9 @@ static MT_FORCEINLINE __m256i simd256_load_si256(const T* ptr) {
 }
 
 template<MemoryMode mem_mode, typename T>
+#ifdef __clang__
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 simd256_load_ps(const T* ptr) {
 #ifdef USE_MOVPS
   if (mem_mode == MemoryMode::SSE2_ALIGNED) {
@@ -322,6 +336,9 @@ static MT_FORCEINLINE __m128 load32_one_to_right(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
+#ifdef __clang__
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
   if (border_mode == Border::Left) {
     auto lo128 = load32_one_to_left<border_mode, mem_mode>(ptr); // really left!
@@ -334,6 +351,9 @@ static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
+#ifdef __clang__
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256 load32_one_to_right_si256(const Byte *ptr) {
   if (border_mode == Border::Right) {
     auto lo128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr+4);
@@ -361,7 +381,10 @@ static MT_FORCEINLINE __m128i simd_blend_epi8(__m128i const &selector, __m128i c
   }
 }
 
-static MT_FORCEINLINE __m256i simd256_blend_epi8(__m256i const &selector, __m256i const &a, __m256i const &b) {
+#ifdef __clang__
+__attribute__((__target__("avx2")))
+#endif
+static MT_FORCEINLINE __m256i simd256_blend_epi8(const __m256i &selector, const __m256i &a, const __m256i &b) {
   return _mm256_blendv_epi8(b, a, selector);
 }
 
@@ -390,11 +413,17 @@ static MT_FORCEINLINE __m128 simd_blendv_ps(__m128 x, __m128 y, __m128 mask)
   }
 }
 
+#ifdef __clang__
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 simd256_blendv_ps(__m256 x, __m256 y, __m256 mask)
 {
   return _mm256_blendv_ps(x, y, mask);
 }
 
+#ifdef __clang__
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i simd256_blendv_epi8(__m256i x, __m256i y, __m256i mask)
 {
   return _mm256_blendv_epi8(x, y, mask);
@@ -410,6 +439,9 @@ static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i
     return _mm_or_si128(result, high);
 }
 
+#ifdef __clang__
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i threshold_avx2(const __m256i &value, const __m256i &lowThresh, const __m256i &highThresh, const __m256i &v128) {
   auto sat = _mm256_sub_epi8(value, v128);
   auto low = _mm256_cmpgt_epi8(sat, lowThresh);
@@ -432,6 +464,9 @@ static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m12
 
 //  thresholds are decreased by half range in order to do signed comparison
 template<int bits_per_pixel>
+#ifdef __clang__
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i threshold16_avx2(const __m256i &value, const __m256i &lowThresh, const __m256i &highThresh, const __m256i &vHalf, const __m256i &maxMask) {
   auto sat = _mm256_sub_epi16(value, vHalf);
   auto low = _mm256_cmpgt_epi16(sat, lowThresh);
@@ -455,10 +490,16 @@ static MT_FORCEINLINE __m128 threshold32_sse2(const __m128 &value, const __m128 
   return result;
 }
 
+#ifdef __clang__
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 _mm256_cmpgt_ps(__m256 a, __m256 b) {
   return _mm256_cmp_ps(a, b, _CMP_NLE_US); // NLE = GT
 }
 
+#ifdef __clang__
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 threshold32_avx(const __m256 &value, const __m256 &lowThresh, const __m256 &highThresh) {
   // create final mask 0.0 or 1.0 or x if between
   // value <= low ? 0.0f : value > high ? 1.0 : x
@@ -642,4 +683,4 @@ MT_FORCEINLINE __m256i _MM256_SRLI_SI256(__m256i a)
 
 }
 
-#endif __Mt_SIMD_H__
+#endif // __Mt_SIMD_H__

@@ -7,10 +7,10 @@ static MT_FORCEINLINE Byte add(Byte a, Byte b) { return clip<Byte, int>(a + (int
 static MT_FORCEINLINE Byte sub(Byte a, Byte b) { return clip<Byte, int>(a - (int)b); }
 static MT_FORCEINLINE Byte nop(Byte a, Byte b) { UNUSED(b); return a; }
 
-static MT_FORCEINLINE Byte and(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a & b; }
-static MT_FORCEINLINE Byte or(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a | b; }
+static MT_FORCEINLINE Byte _and(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a & b; }
+static MT_FORCEINLINE Byte _or(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a | b; }
 static MT_FORCEINLINE Byte andn(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a & ~b; }
-static MT_FORCEINLINE Byte xor(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a ^ b; }
+static MT_FORCEINLINE Byte _xor(Byte a, Byte b, Byte th1, Byte th2) { UNUSED(th1); UNUSED(th2); return a ^ b; }
 
 template <decltype(add) opa, decltype(add) opb>
 static MT_FORCEINLINE Byte min_t(Byte a, Byte b, Byte th1, Byte th2) { 
@@ -22,7 +22,7 @@ static MT_FORCEINLINE Byte max_t(Byte a, Byte b, Byte th1, Byte th2) {
     return max<Byte>(opa(a, th1), opb(b, th2)); 
 }
 
-template <decltype(and) op>
+template <decltype(_and) op>
 void logic_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Byte nThresholdDestination, Byte nThresholdSource)
 {
    for ( int y = 0; y < nHeight; y++ )
@@ -67,7 +67,7 @@ static MT_FORCEINLINE __m128i max_t_sse2(const __m128i &a, const __m128i &b, con
 }
 
 
-template<MemoryMode mem_mode, decltype(and_sse2_op) op, decltype(and) op_c>
+template<MemoryMode mem_mode, decltype(and_sse2_op) op, decltype(_and) op_c>
     void logic_t_sse2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nWidth, int nHeight, Byte nThresholdDestination, Byte nThresholdSource)
 {
     int wMod32 = (nWidth / 32) * 32;
@@ -105,10 +105,10 @@ template<MemoryMode mem_mode, decltype(and_sse2_op) op, decltype(and) op_c>
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Logic {
 
-Processor *and_c  = &logic_t<and>;
-Processor *or_c   = &logic_t<or>;
+Processor *and_c  = &logic_t<_and>;
+Processor *or_c   = &logic_t<_or>;
 Processor *andn_c = &logic_t<andn>;
-Processor *xor_c  = &logic_t<xor>;
+Processor *xor_c  = &logic_t<_xor>;
 
 #define DEFINE_C_VERSIONS(mode) \
     Processor *mode##_c         = &logic_t<mode##_t<nop, nop>>;   \
@@ -126,10 +126,10 @@ DEFINE_C_VERSIONS(max);
 
 
 #define DEFINE_SSE2_VERSIONS(name, mem_mode) \
-Processor *and_##name  = &logic_t_sse2<mem_mode, and_sse2_op, and>; \
-Processor *or_##name   = &logic_t_sse2<mem_mode, or_sse2_op, or>; \
+Processor *and_##name  = &logic_t_sse2<mem_mode, and_sse2_op, _and>; \
+Processor *or_##name   = &logic_t_sse2<mem_mode, or_sse2_op, _or>; \
 Processor *andn_##name = &logic_t_sse2<mem_mode, andn_sse2_op, andn>; \
-Processor *xor_##name  = &logic_t_sse2<mem_mode, xor_sse2_op, xor>;
+Processor *xor_##name  = &logic_t_sse2<mem_mode, xor_sse2_op, _xor>;
 
 DEFINE_SSE2_VERSIONS(sse2, MemoryMode::SSE2_UNALIGNED)
 DEFINE_SSE2_VERSIONS(asse2, MemoryMode::SSE2_ALIGNED)
