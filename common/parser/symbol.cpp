@@ -165,16 +165,16 @@ Symbol Symbol::SuperiorStrict (">" , OPERATOR, superiorStrict);
 Symbol Symbol::And            ("&" , OPERATOR, and);
 Symbol Symbol::Or             ("|" , OPERATOR, or);
 Symbol Symbol::AndNot         ("&!", OPERATOR, andNot);
-Symbol Symbol::Xor            ("°" , "@", OPERATOR, xor);
+Symbol Symbol::Xor            ("\xB0" , "@", OPERATOR, xor); // degree-sign 0xB0, has codepage problems, kept only for compatibility
 Symbol Symbol::AndUB          ("&u" , OPERATOR, andUB);
 Symbol Symbol::OrUB           ("|u" , OPERATOR, orUB);
-Symbol Symbol::XorUB          ("°u" , "@u", OPERATOR, xorUB);
+Symbol Symbol::XorUB          ("\xB0u" , "@u", OPERATOR, xorUB); // degree-sign 0xB0, has codepage problems, kept only for compatibility
 Symbol Symbol::NegateUB       ("~u" , FUNCTION, negateUB);
 Symbol Symbol::PosShiftUB     ("<<", "<<u", OPERATOR, posshiftUB);
 Symbol Symbol::NegShiftUB     (">>", ">>u", OPERATOR, negshiftUB);
 Symbol Symbol::AndSB          ("&s" , OPERATOR, andSB);
 Symbol Symbol::OrSB           ("|s" , OPERATOR, orSB);
-Symbol Symbol::XorSB          ("°s" , "@s", OPERATOR, xorSB);
+Symbol Symbol::XorSB          ("\xB0s" , "@s", OPERATOR, xorSB); // degree-sign 0xB0, has codepage problems, kept only for compatibility
 Symbol Symbol::NegateSB       ("~s" , FUNCTION, negateSB);
 Symbol Symbol::PosShiftSB     ("<<s", OPERATOR, posshiftSB);
 Symbol Symbol::NegShiftSB     (">>s", OPERATOR, negshiftSB);
