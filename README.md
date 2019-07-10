@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.19 (20190426-not released)**
+**Masktools2 v2.2.19 (20190710-not released)**
 
 mod by pinterf
 
@@ -315,7 +315,8 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.19 (20190426)
+**v2.2.19 (20190710)
+- Fix: mt_infix to recognize scaleb and scalef
 - Fix: mt_infix to recognize ymin, ymax, abs, atan, etc... tokens beginning with 'a' and 'y' were not converted
 - Move project to VS2019 v142 toolset, xp builds still at v141_xp
 - update current Avisynth+ headers
