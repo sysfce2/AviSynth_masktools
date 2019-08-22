@@ -49,6 +49,9 @@ public:
      VARIABLE_RANGE_HALF,
      VARIABLE_RANGE_MIN,
      VARIABLE_RANGE_MAX,
+	 VARIABLE_YRANGE_HALF,
+	 VARIABLE_YRANGE_MIN,
+	 VARIABLE_YRANGE_MAX,
      VARIABLE_RANGE_SIZE,
      VARIABLE_YMIN,
      VARIABLE_YMAX,
@@ -150,6 +153,9 @@ public:
    static Symbol RANGE_HALF;
    static Symbol RANGE_MIN;
    static Symbol RANGE_MAX;
+   static Symbol YRANGE_HALF;
+   static Symbol YRANGE_MIN;
+   static Symbol YRANGE_MAX;
    static Symbol RANGE_SIZE;
    static Symbol YMIN;
    static Symbol YMAX;
@@ -214,6 +220,9 @@ class Context {
    double a_range_half[9];
    double a_range_min[9];
    double a_range_max[9];
+   double a_yrange_half[9];
+   double a_yrange_min[9];
+   double a_yrange_max[9];
    double a_range_size[9];
    double a_ymin[9];
    double a_ymax[9];

@@ -122,7 +122,7 @@ Parser::Parser Parser::getDefaultParser()
    parser.addSymbol(Symbol::SetFloatToClampUseI8Range).addSymbol(Symbol::SetFloatToClampUseI10Range).addSymbol(Symbol::SetFloatToClampUseI12Range).addSymbol(Symbol::SetFloatToClampUseI14Range);
    parser.addSymbol(Symbol::SetFloatToClampUseI16Range).addSymbol(Symbol::SetFloatToClampUseF32Range).addSymbol(Symbol::SetFloatToClampUseF32Range_2);
    /* special bit-depth adaptive constants */
-   parser.addSymbol(Symbol::RANGE_HALF).addSymbol(Symbol::RANGE_MIN).addSymbol(Symbol::RANGE_MAX).addSymbol(Symbol::RANGE_SIZE);
+   parser.addSymbol(Symbol::RANGE_HALF).addSymbol(Symbol::RANGE_MIN).addSymbol(Symbol::RANGE_MAX).addSymbol(Symbol::YRANGE_HALF).addSymbol(Symbol::YRANGE_MIN).addSymbol(Symbol::YRANGE_MAX).addSymbol(Symbol::RANGE_SIZE);
    parser.addSymbol(Symbol::YMIN).addSymbol(Symbol::YMAX);
    parser.addSymbol(Symbol::CMIN).addSymbol(Symbol::CMAX);
 
