@@ -220,9 +220,6 @@ class Context {
    double a_range_half[9];
    double a_range_min[9];
    double a_range_max[9];
-   double a_yrange_half[9];
-   double a_yrange_min[9];
-   double a_yrange_max[9];
    double a_range_size[9];
    double a_ymin[9];
    double a_ymax[9];
