@@ -124,8 +124,8 @@ Example #3 (new, with constants)
 
     Parameter "clamp_float"
 
-    True: clamps 32 bit float to valid ranges, which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV channels
-    Default false
+    0: no clamp 1: standard clamp which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV 2: same as 1 but chroma UV clamp same as luma 0..1
+	Default 0
   - new option for Lut expressions: 
 
     parameter "scale_inputs" (default "none")

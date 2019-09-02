@@ -38,7 +38,7 @@ class Lutsx : public MaskTools::Filter
    int bits_per_pixel;
    bool realtime;
    String scale_inputs;
-   bool clamp_float;
+   int clamp_float;
 
    String mode1, mode2;
 
@@ -56,7 +56,7 @@ class Lutsx : public MaskTools::Filter
       }
    }
 
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, String scale_inputs, bool clamp_float) {
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, String scale_inputs, int clamp_float) {
        Parser::Context ctx(expr, scale_inputs, clamp_float);
        Byte *lut = new Byte[256 * 256 * 256];
 
@@ -112,7 +112,7 @@ public:
      scale_inputs = parameters["scale_inputs"].toString();
      if (!checkValidScaleInputs(scale_inputs, error))
        return; // error message filled
-     clamp_float = parameters["clamp_float"].toBool();
+     clamp_float = parameters["clamp_float"].toInt();
 
      if (bits_per_pixel > 8)
        realtime = true;
@@ -228,7 +228,7 @@ public:
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("y"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(0, "clamp_float", false));
       return signature;
    }
 };

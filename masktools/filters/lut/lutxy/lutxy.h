@@ -36,7 +36,7 @@ class Lutxy : public MaskTools::Filter
 
    Lut luts[4+1];
    
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, bool clamp_float) {
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, int clamp_float) {
      Parser::Context ctx(expr, scale_inputs, clamp_float);
      int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
      size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
@@ -84,7 +84,7 @@ class Lutxy : public MaskTools::Filter
    int bits_per_pixel;
    bool realtime;
    String scale_inputs;
-   bool clamp_float;
+   int clamp_float;
    int use_expr;
 
 protected:
@@ -129,7 +129,7 @@ public:
       scale_inputs = parameters["scale_inputs"].toString();
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
-      clamp_float = parameters["clamp_float"].toBool();
+      clamp_float = parameters["clamp_float"].toInt();
 
       // 14, 16 bit and float: default realtime, 
       // hardcore users on x64 with 8GB memory and plenty of time can override 16 bit lutxy with realtime=false :)
@@ -326,7 +326,7 @@ public:
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("x"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(0, "clamp_float", false));
       signature.add(Parameter(0, "use_expr", false));
       return signature;
    }

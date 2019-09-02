@@ -28,7 +28,7 @@ class Lutxyza : public MaskTools::Filter
 
    Lut luts[4+1];
 
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, bool clamp_float) {
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, int clamp_float) {
        Parser::Context ctx(expr, scale_inputs, clamp_float);
        size_t bufsize = ((size_t)1 << bits_per_pixel);
        bufsize = bufsize * bufsize*bufsize*bufsize;
@@ -59,7 +59,7 @@ class Lutxyza : public MaskTools::Filter
    int bits_per_pixel;
    bool realtime;
    String scale_inputs;
-   bool clamp_float;
+   int clamp_float;
    int use_expr;
 
 protected:
@@ -113,7 +113,7 @@ public:
       scale_inputs = parameters["scale_inputs"].toString();
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
-      clamp_float = parameters["clamp_float"].toBool();
+      clamp_float = parameters["clamp_float"].toInt();
      
       // once, when a 4 GByte lut memory is nothing, we could allow 8 bit 4D real lut by default :)
       if(bits_per_pixel>8)
@@ -284,7 +284,7 @@ public:
       signature.add(Parameter(true, "realtime", false)); // 4D lut: default realtime calc.
       signature.add(Parameter(String("x"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(0, "clamp_float", false));
       signature.add(Parameter(0, "use_expr", false));
       return signature;
    }

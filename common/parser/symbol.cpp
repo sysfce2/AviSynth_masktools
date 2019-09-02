@@ -400,7 +400,7 @@ bool Context::SetScaleInputs(String scale_inputs)
 }
 
 
-Context::Context(const std::deque<Symbol> &expression, String scale_inputs, bool param_clamp_float) : Context(expression)
+Context::Context(const std::deque<Symbol> &expression, String scale_inputs, int param_clamp_float) : Context(expression)
 {
   clamp_float = param_clamp_float; // SetScaleInputs can override to true
   SetScaleInputs(scale_inputs);
