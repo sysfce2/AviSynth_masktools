@@ -93,8 +93,11 @@ Differences to Masktools 2.0b1
     - bitdepth: automatic silent parameter of the lut expression (clip bit depth)
     - sbitdepth: automatic silent parameter of the lut expression (bit depth of values to scale)
     - range_half --> autoscaled 128 or 0.5 for float luma/rgb, 0.0 for float chroma
+    - yrange_half --> autoscaled 128 or 0.5 for float
     - range_min --> 0 for 8-16 bits and non-UV 32bit, or -0.5 for float UV chroma (new from 2.2.15)
+    - yrange_min --> 0 for 8-16 bits and 32bit
     - range_max --> 255/1023/4095/16383/65535 or 1.0 for float luma or 0.5 for float chroma
+    - yrange_max --> 255/1023/4095/16383/65535 or 1.0 for float luma and float chroma
     - range_size --> 256/1024...65536
     - ymin, ymax, cmin, cmax --> 16/235 and 16/240 autoscaled. For zero based float: (16-128)/255.0 and (240-128)/255.0
       
@@ -122,7 +125,7 @@ Example #3 (new, with constants)
     Parameter "clamp_float"
 
     True: clamps 32 bit float to valid ranges, which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV channels
-    Default false, ignored (treated as true) when scale_inputs scales float
+    Default false
   - new option for Lut expressions: 
 
     parameter "scale_inputs" (default "none")

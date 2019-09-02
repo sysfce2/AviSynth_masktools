@@ -394,9 +394,6 @@ bool Context::SetScaleInputs(String scale_inputs)
   else {
     return true; // error
   }
-  // silently set to true when float scaling is on
-  if(scale_float)
-    clamp_float = true;
 
   calc_helpers();
   return false;
@@ -546,12 +543,12 @@ double Context::rec_compute()
     case Symbol::VARIABLE_BITDEPTH: { last = bitdepth; break; } // bit-depth for autoscale
     case Symbol::VARIABLE_SCRIPT_BITDEPTH: { last = (double)sbitdepth; break; } // source bit depth for autoscale
 
-    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float
+    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float chroma
     case Symbol::VARIABLE_RANGE_MIN: { last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0 or -0.5
     case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth-8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float, 0.5 float chroma)
-	case Symbol::VARIABLE_YRANGE_HALF: { last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; }
-	case Symbol::VARIABLE_YRANGE_MIN: { last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; }
-	case Symbol::VARIABLE_YRANGE_MAX: { last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; }
+	case Symbol::VARIABLE_YRANGE_HALF: { last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; }  // 0.5 for float chroma
+	case Symbol::VARIABLE_YRANGE_MIN: { last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0
+	case Symbol::VARIABLE_YRANGE_MAX: { last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
     case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth-8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: { last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
     case Symbol::VARIABLE_YMAX: { last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
@@ -581,10 +578,10 @@ double Context::rec_compute()
 
       case Symbol::VARIABLE_RANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // or 0.0 for float in the future?
       case Symbol::VARIABLE_RANGE_MIN: { exprstack[p++] = last; last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; } // min_pixel_value. 0 or -0.5f
-      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
-	  case Symbol::VARIABLE_YRANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; }
-	  case Symbol::VARIABLE_YRANGE_MIN: { exprstack[p++] = last; last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; }
-	  case Symbol::VARIABLE_YRANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; }
+      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (0.5 for float)
+	  case Symbol::VARIABLE_YRANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; } // 0.5
+	  case Symbol::VARIABLE_YRANGE_MIN: { exprstack[p++] = last; last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; } // min_pixel_value. 0
+	  case Symbol::VARIABLE_YRANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
       case Symbol::VARIABLE_RANGE_SIZE: { exprstack[p++] = last; last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth - 8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
       case Symbol::VARIABLE_YMIN: { exprstack[p++] = last; last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
       case Symbol::VARIABLE_YMAX: { exprstack[p++] = last; last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled

@@ -556,11 +556,11 @@ public:
        const double converted_input_y = float_input_scalefactor * (_y - chroma_center_f) + chroma_center_i;
        result = (float)((compute_2(converted_input_x, converted_input_y, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+       result = clamp_float ? max(min(result, chroma_hi_f), chroma_lo_f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_2(float_input_scalefactor*_x, float_input_scalefactor*_y, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+       result = clamp_float ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
@@ -595,11 +595,11 @@ public:
        const double converted_input_z = float_input_scalefactor * (_z - chroma_center_f) + chroma_center_i;
        result = (float)((compute_3(converted_input_x, converted_input_y, converted_input_z, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+       result = clamp_float ? max(min(result, chroma_hi_f), chroma_lo_f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_3(float_input_scalefactor*_x, float_input_scalefactor*_y, float_input_scalefactor*_z, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+       result = clamp_float ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
@@ -629,11 +629,11 @@ public:
        const double converted_input_a = float_input_scalefactor * (_a - chroma_center_f) + chroma_center_i;
        result = (float)((compute_4(converted_input_x, converted_input_y, converted_input_z, converted_input_a, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+       result = clamp_float ? max(min(result, chroma_hi_f), chroma_lo_f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_4(float_input_scalefactor*_x, float_input_scalefactor*_y, float_input_scalefactor*_z, float_input_scalefactor*_a, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+       result = clamp_float ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
