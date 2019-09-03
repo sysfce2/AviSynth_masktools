@@ -362,34 +362,47 @@ bool Context::SetScaleInputs(String scale_inputs)
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = false;
+	shift_float = false;
   } else if (scale_inputs == "intf") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = false;
+	shift_float = false;
+  }
+  else if (scale_inputs == "floatUV") {
+	  scale_int = false;
+	  scale_float = false;
+	  shift_float = true;
   }
   else if (scale_inputs == "float") {
     fullrange_autoscale = false;
     scale_int = false;
     scale_float = true;
+	shift_float = false;
   }
   else if (scale_inputs == "floatf") {
     fullrange_autoscale = true;
     scale_int = false;
     scale_float = true;
+	shift_float = false;
   }
   else if (scale_inputs == "all") {
     fullrange_autoscale = false;
     scale_int = true;
     scale_float = true;
+	shift_float = false;
+	shift_float = false;
   }
   else if (scale_inputs == "allf") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = true;
+	shift_float = false;
   }
   else if (scale_inputs == "none") {
     scale_int = false;
     scale_float = false;
+	shift_float = false;
   }
   else {
     return true; // error
@@ -420,6 +433,7 @@ Context::Context(const std::deque<Symbol> &expression)
    fullrange_autoscale = false;
    scale_int = false;
    scale_float = false;
+   shift_float = false;
 
    auto it = expression.begin();
 
@@ -448,6 +462,7 @@ Context::Context(const std::deque<Symbol> &expression)
          //default_float_autoscale_bitdepth = -(int)it->dValue;
          scale_int = false;
          scale_float = true;
+		 shift_float = false;
          sbitdepth = -(int)it->dValue;
        }
      }
