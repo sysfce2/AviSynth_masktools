@@ -61,10 +61,10 @@ protected:
    // general helper function
    static bool checkValidScaleInputs(String scale_inputs, String &error) {
      if (scale_inputs != "int" && scale_inputs != "intf" &&
-       scale_inputs != "float" && scale_inputs != "floatf" &&
+		 scale_inputs != "floatUV" && scale_inputs != "float" && scale_inputs != "float" && scale_inputs != "floatf" &&
        scale_inputs != "all" && scale_inputs != "allf" &&
        scale_inputs != "none") {
-       error = "invalid parameter: scale_inputs. Use int, intf, float, floatf, all, allf or none";
+       error = "invalid parameter: scale_inputs. Use int, intf, floatUV, float, floatf, all, allf or none";
        return false;
      }
      return true;
@@ -198,7 +198,7 @@ public:
     // v2.2.15 Save parameters of lut functions, used when calling external "Expr":
     bool expr_need_process[4];
     String expr_scale_inputs;
-    bool expr_clamp_float;
+    int expr_clamp_float;
     String expr_list[4];
 
     Filter(const Parameters &parameters, FilterProcessingType processingType, CpuFlags _flags) :

@@ -49,6 +49,9 @@ public:
      VARIABLE_RANGE_HALF,
      VARIABLE_RANGE_MIN,
      VARIABLE_RANGE_MAX,
+	 VARIABLE_YRANGE_HALF,
+	 VARIABLE_YRANGE_MIN,
+	 VARIABLE_YRANGE_MAX,
      VARIABLE_RANGE_SIZE,
      VARIABLE_YMIN,
      VARIABLE_YMAX,
@@ -150,6 +153,9 @@ public:
    static Symbol RANGE_HALF;
    static Symbol RANGE_MIN;
    static Symbol RANGE_MAX;
+   static Symbol YRANGE_HALF;
+   static Symbol YRANGE_MIN;
+   static Symbol YRANGE_MAX;
    static Symbol RANGE_SIZE;
    static Symbol YMIN;
    static Symbol YMAX;
@@ -245,7 +251,8 @@ class Context {
    bool fullrange_autoscale; // when autoscaling, conversion is limited or full-range-style
    bool scale_int;
    bool scale_float;
-   bool clamp_float;
+   bool shift_float;
+   int clamp_float;
    float chroma_center_i;
    float chroma_center_f;
    float chroma_lo_f;
@@ -261,7 +268,7 @@ class Context {
 public:
    
    Context(const std::deque<Symbol> &expression);
-   Context(const std::deque<Symbol> &expression, String scale_inputs, bool param_clamp_float);
+   Context(const std::deque<Symbol> &expression, String scale_inputs, int param_clamp_float);
 
    ~Context();
 
@@ -495,18 +502,18 @@ public:
    {
      float result;
      if (!scale_float || sbitdepth == 32) {
-       if (clamp_float) {
+       if (clamp_float > 0) {
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
          return max(min((float)((compute_1(_x, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return max(min((float)((compute_1(_x, 32, _chroma))), chroma_hi_f), chroma_lo_f);
+           return shift_float ? max(min((float)((compute_1(_x + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_1(_x, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_1(_x, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return (float)(compute_1(_x, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_1(_x + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_1(_x, 32, _chroma));
      }
 
      // When lut expression writers have problems with writing proper one-size-fits-all general expressions special float input:
@@ -518,11 +525,11 @@ public:
        const double converted_input_x = float_input_scalefactor * (_x - chroma_center_f) + chroma_center_i;
        result = (float)((compute_1(converted_input_x, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+	   result = clamp_float == 1 ? max(min(result, chroma_hi_f), chroma_lo_f) : clamp_float == 2 ? max(min(result, 1.0f), 0.0f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_1(float_input_scalefactor*_x, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+	   result = clamp_float > 0 ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
@@ -531,18 +538,18 @@ public:
    {
      float result;
      if (!scale_float || sbitdepth == 32) {
-       if (clamp_float) {
+       if (clamp_float > 0) {
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
          return max(min((float)((compute_2(_x, _y, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return max(min((float)((compute_2(_x, _y, 32, _chroma))), chroma_hi_f), chroma_lo_f);
+           return shift_float ? max(min((float)((compute_2(_x + (float)0.5, _y + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_2(_x, _y, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_2(_x, _y, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return (float)(compute_2(_x, _y, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_2(_x + (float)0.5, _y + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_2(_x, _y, 32, _chroma));
      }
 
      if (_chroma) {
@@ -550,11 +557,11 @@ public:
        const double converted_input_y = float_input_scalefactor * (_y - chroma_center_f) + chroma_center_i;
        result = (float)((compute_2(converted_input_x, converted_input_y, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+       result = clamp_float==1 ? max(min(result, chroma_hi_f), chroma_lo_f) : clamp_float == 2 ? max(min(result, 1.0f), 0.0f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_2(float_input_scalefactor*_x, float_input_scalefactor*_y, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+       result = clamp_float > 0 ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
@@ -569,18 +576,18 @@ public:
    {
      float result;
      if (!scale_float || sbitdepth == 32) {
-       if (clamp_float) {
+       if (clamp_float > 0) {
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
          return max(min((float)((compute_3(_x, _y, _z, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return max(min((float)((compute_3(_x, _y, _z, 32, _chroma))), chroma_hi_f), chroma_lo_f);
+           return shift_float ? max(min((float)((compute_3(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_3(_x, _y, _z, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_3(_x, _y, _z, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return (float)(compute_3(_x, _y, _z, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_3(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_3(_x, _y, _z, 32, _chroma));
      }
 
      if (_chroma) {
@@ -589,11 +596,11 @@ public:
        const double converted_input_z = float_input_scalefactor * (_z - chroma_center_f) + chroma_center_i;
        result = (float)((compute_3(converted_input_x, converted_input_y, converted_input_z, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+       result = clamp_float == 1 ? max(min(result, chroma_hi_f), chroma_lo_f) : clamp_float == 2 ? max(min(result, 1.0f), 0.0f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_3(float_input_scalefactor*_x, float_input_scalefactor*_y, float_input_scalefactor*_z, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+       result = clamp_float > 0 ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
@@ -602,18 +609,18 @@ public:
    {
      float result;
      if (!scale_float || sbitdepth == 32) {
-       if (clamp_float) {
+       if (clamp_float > 0) {
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
          return max(min((float)((compute_4(_x, _y, _z, _a, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return max(min((float)((compute_4(_x, _y, _z, _a, 32, _chroma))), chroma_hi_f), chroma_lo_f);
+           return shift_float ? max(min((float)((compute_4(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, _a + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_4(_x, _y, _z, _a, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_4(_x, _y, _z, _a, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return (float)(compute_4(_x, _y, _z, _a, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_4(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, _a + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_4(_x, _y, _z, _a, 32, _chroma));
      }
 
      if (_chroma) {
@@ -623,11 +630,11 @@ public:
        const double converted_input_a = float_input_scalefactor * (_a - chroma_center_f) + chroma_center_i;
        result = (float)((compute_4(converted_input_x, converted_input_y, converted_input_z, converted_input_a, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-       result = max(min(result, chroma_hi_f), chroma_lo_f);
+       result = clamp_float == 1 ? max(min(result, chroma_hi_f), chroma_lo_f) : clamp_float == 2 ? max(min(result, 1.0f), 0.0f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_4(float_input_scalefactor*_x, float_input_scalefactor*_y, float_input_scalefactor*_z, float_input_scalefactor*_a, sbitdepth, _chroma)));
-       result = max(min(result, 1.0f), 0.0f);
+       result = clamp_float > 0 ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }

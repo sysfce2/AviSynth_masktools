@@ -190,8 +190,11 @@ Symbol Symbol::BITDEPTH       ("bitdepth" , VARIABLE, VARIABLE_BITDEPTH);
 Symbol Symbol::SCRIPT_BITDEPTH("sbitdepth", VARIABLE, VARIABLE_SCRIPT_BITDEPTH);
 // bit-depth adaptive constants, since v2.2.1
 Symbol Symbol::RANGE_HALF     ("range_half", VARIABLE, VARIABLE_RANGE_HALF); // 128  scaled
+Symbol Symbol::YRANGE_HALF    ("yrange_half", VARIABLE, VARIABLE_YRANGE_HALF);
 Symbol Symbol::RANGE_MIN      ("range_min", VARIABLE, VARIABLE_RANGE_MIN);   // 0, or -0.5 for 32 bit float chroma
+Symbol Symbol::YRANGE_MIN	  ("yrange_min", VARIABLE, VARIABLE_YRANGE_MIN);
 Symbol Symbol::RANGE_MAX      ("range_max", VARIABLE, VARIABLE_RANGE_MAX);   // 255, 4095, .. 65535
+Symbol Symbol::YRANGE_MAX	  ("yrange_max", VARIABLE, VARIABLE_YRANGE_MAX);
 Symbol Symbol::RANGE_SIZE     ("range_size", VARIABLE, VARIABLE_RANGE_SIZE); // 256, 1024, 4096, 16384, 65536
 Symbol Symbol::YMIN           ("ymin", VARIABLE, VARIABLE_YMIN); // 16 scaled
 Symbol Symbol::YMAX           ("ymax", VARIABLE, VARIABLE_YMAX); // 235 or scaled
@@ -359,48 +362,58 @@ bool Context::SetScaleInputs(String scale_inputs)
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = false;
+	shift_float = false;
   } else if (scale_inputs == "intf") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = false;
+	shift_float = false;
+  }
+  else if (scale_inputs == "floatUV") {
+	  scale_int = false;
+	  scale_float = false;
+	  shift_float = true;
   }
   else if (scale_inputs == "float") {
     fullrange_autoscale = false;
     scale_int = false;
     scale_float = true;
+	shift_float = false;
   }
   else if (scale_inputs == "floatf") {
     fullrange_autoscale = true;
     scale_int = false;
     scale_float = true;
+	shift_float = false;
   }
   else if (scale_inputs == "all") {
     fullrange_autoscale = false;
     scale_int = true;
     scale_float = true;
+	shift_float = false;
+	shift_float = false;
   }
   else if (scale_inputs == "allf") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = true;
+	shift_float = false;
   }
   else if (scale_inputs == "none") {
     scale_int = false;
     scale_float = false;
+	shift_float = false;
   }
   else {
     return true; // error
   }
-  // silently set to true when float scaling is on
-  if(scale_float)
-    clamp_float = true;
 
   calc_helpers();
   return false;
 }
 
 
-Context::Context(const std::deque<Symbol> &expression, String scale_inputs, bool param_clamp_float) : Context(expression)
+Context::Context(const std::deque<Symbol> &expression, String scale_inputs, int param_clamp_float) : Context(expression)
 {
   clamp_float = param_clamp_float; // SetScaleInputs can override to true
   SetScaleInputs(scale_inputs);
@@ -420,6 +433,7 @@ Context::Context(const std::deque<Symbol> &expression)
    fullrange_autoscale = false;
    scale_int = false;
    scale_float = false;
+   shift_float = false;
 
    auto it = expression.begin();
 
@@ -448,6 +462,7 @@ Context::Context(const std::deque<Symbol> &expression)
          //default_float_autoscale_bitdepth = -(int)it->dValue;
          scale_int = false;
          scale_float = true;
+		 shift_float = false;
          sbitdepth = -(int)it->dValue;
        }
      }
@@ -543,9 +558,12 @@ double Context::rec_compute()
     case Symbol::VARIABLE_BITDEPTH: { last = bitdepth; break; } // bit-depth for autoscale
     case Symbol::VARIABLE_SCRIPT_BITDEPTH: { last = (double)sbitdepth; break; } // source bit depth for autoscale
 
-    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float
+    case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float chroma
     case Symbol::VARIABLE_RANGE_MIN: { last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0 or -0.5
     case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth-8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float, 0.5 float chroma)
+	case Symbol::VARIABLE_YRANGE_HALF: { last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; }  // 0.5 for float chroma
+	case Symbol::VARIABLE_YRANGE_MIN: { last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0
+	case Symbol::VARIABLE_YRANGE_MAX: { last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
     case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth-8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: { last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
     case Symbol::VARIABLE_YMAX: { last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
@@ -575,7 +593,10 @@ double Context::rec_compute()
 
       case Symbol::VARIABLE_RANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // or 0.0 for float in the future?
       case Symbol::VARIABLE_RANGE_MIN: { exprstack[p++] = last; last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; } // min_pixel_value. 0 or -0.5f
-      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+      case Symbol::VARIABLE_RANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (0.5 for float)
+	  case Symbol::VARIABLE_YRANGE_HALF: { exprstack[p++] = last; last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; } // 0.5
+	  case Symbol::VARIABLE_YRANGE_MIN: { exprstack[p++] = last; last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; } // min_pixel_value. 0
+	  case Symbol::VARIABLE_YRANGE_MAX: { exprstack[p++] = last; last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; } // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
       case Symbol::VARIABLE_RANGE_SIZE: { exprstack[p++] = last; last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth - 8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
       case Symbol::VARIABLE_YMIN: { exprstack[p++] = last; last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
       case Symbol::VARIABLE_YMAX: { exprstack[p++] = last; last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
@@ -653,6 +674,9 @@ double Context::rec_compute_old()
     case Symbol::VARIABLE_RANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8)); // or 0.0 for float in the future?
     case Symbol::VARIABLE_RANGE_MIN: return bitdepth == 32 ? 0.0 : 0; // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
     case Symbol::VARIABLE_RANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1); // max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
+	case Symbol::VARIABLE_YRANGE_HALF: return bitdepth == 32 ? 0.5 : (128 << (bitdepth - 8));
+	case Symbol::VARIABLE_YRANGE_MIN: return bitdepth == 32 ? 0.0 : 0;
+	case Symbol::VARIABLE_YRANGE_MAX: return bitdepth == 32 ? 1.0 : ((1 << bitdepth) - 1);
     case Symbol::VARIABLE_RANGE_SIZE: return bitdepth == 32 ? 1.0 : (1 << bitdepth); // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: return bitdepth == 32 ? 16.0 / 255 : (16 << (bitdepth - 8));    // 16 scaled
     case Symbol::VARIABLE_YMAX: return bitdepth == 32 ? 235.0 / 255 : (235 << (bitdepth - 8));  // 235 scaled
@@ -775,6 +799,9 @@ String Context::rec_infix()
       case Symbol::VARIABLE_RANGE_HALF:
       case Symbol::VARIABLE_RANGE_MIN:
       case Symbol::VARIABLE_RANGE_MAX:
+	  case Symbol::VARIABLE_YRANGE_HALF:
+	  case Symbol::VARIABLE_YRANGE_MIN:
+	  case Symbol::VARIABLE_YRANGE_MAX:
       case Symbol::VARIABLE_RANGE_SIZE:
       case Symbol::VARIABLE_YMIN:
       case Symbol::VARIABLE_YMAX:

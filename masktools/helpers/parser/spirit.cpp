@@ -106,6 +106,9 @@ public:
              str_p("range_half")[AddNamedSymbol("range_half", self.rpn)] |
              str_p("range_min")[AddNamedSymbol("range_min", self.rpn)] |
              str_p("range_max")[AddNamedSymbol("range_max", self.rpn)] |
+			 str_p("yrange_half")[AddNamedSymbol("yrange_half", self.rpn)] |
+			 str_p("yrange_min")[AddNamedSymbol("yrange_min", self.rpn)] |
+			 str_p("yrange_max")[AddNamedSymbol("yrange_max", self.rpn)] |
              str_p("range_size")[AddNamedSymbol("range_size", self.rpn)] |
              str_p("ymin")[AddNamedSymbol("ymin", self.rpn)] |
              str_p("ymax")[AddNamedSymbol("ymax", self.rpn)] |

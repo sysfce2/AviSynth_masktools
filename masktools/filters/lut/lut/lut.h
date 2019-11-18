@@ -40,7 +40,7 @@ class Lut : public MaskTools::Filter
    bool isStacked;
    bool realtime;
    String scale_inputs;
-   bool clamp_float;
+   int clamp_float;
    int use_expr;
 
 protected:
@@ -94,7 +94,7 @@ public:
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
 
-      clamp_float = parameters["clamp_float"].toBool();
+      clamp_float = parameters["clamp_float"].toInt();
 
       if (bits_per_pixel == 32) { // no lookup for float
         realtime = true;
@@ -281,7 +281,7 @@ public:
       signature.add(Parameter(false, "stacked", false));
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(0, "clamp_float", false));
       signature.add(Parameter(0, "use_expr", false));
       return signature;
    }
