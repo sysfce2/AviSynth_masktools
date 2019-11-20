@@ -76,6 +76,8 @@ public:
         int param_length = realInputConfigSize + planecount + 1 + 1;
 
         // c+s+[format]s[optAvx2]b[optSingleMode]b[optSSE2]b[scale_inputs]s[clamp_float]i
+        // Incompatibility note: Avisynth+ 3.4 treates clamp_float as bool, matching masktools <= 2.2.19.
+        // In masktools 2.2.20 this parameter type was changed to integer
         const char *arg_names[4 + 4 + 2]; // worst case
         for (int i = 0; i < param_length - 2; i++)
           arg_names[i] = nullptr;

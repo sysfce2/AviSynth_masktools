@@ -49,9 +49,9 @@ public:
      VARIABLE_RANGE_HALF,
      VARIABLE_RANGE_MIN,
      VARIABLE_RANGE_MAX,
-	 VARIABLE_YRANGE_HALF,
-	 VARIABLE_YRANGE_MIN,
-	 VARIABLE_YRANGE_MAX,
+     VARIABLE_YRANGE_HALF,
+     VARIABLE_YRANGE_MIN,
+     VARIABLE_YRANGE_MAX,
      VARIABLE_RANGE_SIZE,
      VARIABLE_YMIN,
      VARIABLE_YMAX,
@@ -248,10 +248,12 @@ class Context {
    // 0: none
    // 8, 10, 12, 14, 16: scale input this range before Expr, convert back after expr
    // int all_autoscale_bitdepth; this is sbitdepth
+   // Since U and V range in 32 bit float mode is -0.5 .. 0.5, "floatUV" mode is pre-shifting the input to the 0.5 centered range before applying the expression
+   // then the result is shifted back to the original -0.5..0.5 range
    bool fullrange_autoscale; // when autoscaling, conversion is limited or full-range-style
    bool scale_int;
    bool scale_float;
-   bool shift_float;
+   bool shift_float; // special internal flag since v2.2.20: set when scale_inputs is "floatUV"
    int clamp_float;
    float chroma_center_i;
    float chroma_center_f;
@@ -507,13 +509,13 @@ public:
          return max(min((float)((compute_1(_x, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return shift_float ? max(min((float)((compute_1(_x + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_1(_x, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
+           return shift_float ? max(min((float)((compute_1(_x + 0.5f, 32, _chroma) - 0.5f)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_1(_x, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_1(_x, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return shift_float && _chroma ? (float)(compute_1(_x + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_1(_x, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_1(_x + 0.5f, 32, _chroma) - 0.5f) : (float)(compute_1(_x, 32, _chroma));
      }
 
      // When lut expression writers have problems with writing proper one-size-fits-all general expressions special float input:
@@ -525,11 +527,11 @@ public:
        const double converted_input_x = float_input_scalefactor * (_x - chroma_center_f) + chroma_center_i;
        result = (float)((compute_1(converted_input_x, sbitdepth, _chroma)));
        result = float_input_invscalefactor * (result - chroma_center_i) + chroma_center_f;
-	   result = clamp_float == 1 ? max(min(result, chroma_hi_f), chroma_lo_f) : clamp_float == 2 ? max(min(result, 1.0f), 0.0f) : result;
+       result = clamp_float == 1 ? max(min(result, chroma_hi_f), chroma_lo_f) : clamp_float == 2 ? max(min(result, 1.0f), 0.0f) : result;
      }
      else {
        result = (float)(float_input_invscalefactor*(compute_1(float_input_scalefactor*_x, sbitdepth, _chroma)));
-	   result = clamp_float > 0 ? max(min(result, 1.0f), 0.0f) : result;
+       result = clamp_float > 0 ? max(min(result, 1.0f), 0.0f) : result;
      }
      return result;
    }
@@ -543,13 +545,13 @@ public:
          return max(min((float)((compute_2(_x, _y, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return shift_float ? max(min((float)((compute_2(_x + (float)0.5, _y + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_2(_x, _y, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
+           return shift_float ? max(min((float)((compute_2(_x + 0.5f, _y + 0.5f, 32, _chroma) - 0.5f)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_2(_x, _y, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_2(_x, _y, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return shift_float && _chroma ? (float)(compute_2(_x + (float)0.5, _y + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_2(_x, _y, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_2(_x + 0.5f, _y + 0.5f, 32, _chroma) - 0.5f) : (float)(compute_2(_x, _y, 32, _chroma));
      }
 
      if (_chroma) {
@@ -581,13 +583,13 @@ public:
          return max(min((float)((compute_3(_x, _y, _z, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return shift_float ? max(min((float)((compute_3(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_3(_x, _y, _z, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
+           return shift_float ? max(min((float)((compute_3(_x + 0.5f, _y + 0.5f, _z + 0.5f, 32, _chroma) - 0.5f)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_3(_x, _y, _z, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_3(_x, _y, _z, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return shift_float && _chroma ? (float)(compute_3(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_3(_x, _y, _z, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_3(_x + 0.5f, _y + 0.5f, _z + 0.5f, 32, _chroma) - 0.5f) : (float)(compute_3(_x, _y, _z, 32, _chroma));
      }
 
      if (_chroma) {
@@ -614,13 +616,13 @@ public:
          return max(min((float)((compute_4(_x, _y, _z, _a, 32, chroma))), 1.0f), 0.0f);
 #else
          if (_chroma)
-           return shift_float ? max(min((float)((compute_4(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, _a + (float)0.5, 32, _chroma) - (float)0.5)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_4(_x, _y, _z, _a, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
+           return shift_float ? max(min((float)((compute_4(_x + 0.5f, _y + 0.5f, _z + 0.5f, _a + 0.5f, 32, _chroma) - 0.5f)), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f) : max(min((float)((compute_4(_x, _y, _z, _a, 32, _chroma))), clamp_float == 1 ? chroma_hi_f : 1.0f), clamp_float == 1 ? chroma_lo_f : 0.0f);
          else
            return max(min((float)((compute_4(_x, _y, _z, _a, 32, _chroma))), 1.0f), 0.0f);
 #endif
        }
        else
-         return shift_float && _chroma ? (float)(compute_4(_x + (float)0.5, _y + (float)0.5, _z + (float)0.5, _a + (float)0.5, 32, _chroma) - (float)0.5) : (float)(compute_4(_x, _y, _z, _a, 32, _chroma));
+         return shift_float && _chroma ? (float)(compute_4(_x + 0.5f, _y + 0.5f, _z + 0.5f, _a + 0.5f, 32, _chroma) - 0.5f) : (float)(compute_4(_x, _y, _z, _a, 32, _chroma));
      }
 
      if (_chroma) {
