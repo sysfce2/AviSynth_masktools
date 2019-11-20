@@ -93,11 +93,11 @@ Differences to Masktools 2.0b1
     - bitdepth: automatic silent parameter of the lut expression (clip bit depth)
     - sbitdepth: automatic silent parameter of the lut expression (bit depth of values to scale)
     - range_half --> autoscaled 128 or 0.5 for float luma/rgb, 0.0 for float chroma
-    - yrange_half --> autoscaled 128 or 0.5 for float
+    - yrange_half --> autoscaled 128 or 0.5 for float (new since v2.2.20)
     - range_min --> 0 for 8-16 bits and non-UV 32bit, or -0.5 for float UV chroma (new from 2.2.15)
-    - yrange_min --> 0 for 8-16 bits and 32bit
+    - yrange_min --> 0 for 8-16 bits and 32bit (new since v2.2.20)
     - range_max --> 255/1023/4095/16383/65535 or 1.0 for float luma or 0.5 for float chroma
-    - yrange_max --> 255/1023/4095/16383/65535 or 1.0 for float luma and float chroma
+    - yrange_max --> 255/1023/4095/16383/65535 or 1.0 for float luma and float chroma (new since v2.2.20)
     - range_size --> 256/1024...65536
     - ymin, ymax, cmin, cmax --> 16/235 and 16/240 autoscaled. For zero based float: (16-128)/255.0 and (240-128)/255.0
       
@@ -124,8 +124,12 @@ Example #3 (new, with constants)
 
     Parameter "clamp_float"
 
-    0: no clamp 1: standard clamp which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV 2: same as 1 but chroma UV clamp same as luma 0..1
-	Default 0
+    0: no clamp (pre v2.2.20 false) 
+    1: standard clamp which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV (pre v2.2.20 true) 
+    2: same as 1 but chroma UV clamp same as luma 0..1
+	  Default 0
+    (type was changed from bool to int in v2.2.20)
+    
   - new option for Lut expressions: 
 
     parameter "scale_inputs" (default "none")
@@ -142,6 +146,9 @@ Example #3 (new, with constants)
     - "int" : scales limited range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
     - "intf": scales full range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
     - "float" or "floatf" : only scales 32 bit float format to 8 bit range (or bit depth specified by 'i8'..'i16')
+    - "floatUV" : when scaling 32 bit float format to 8 bit range (or bit depth specified by 'i8'..'i16'), always treats input as chroma. 
+      Shifts the input up by 0.5 before processing it in the expression, thus values from the -0.5..0.5 (zero centered) range are converted to the 0.5 (128) centered one.
+      Result which has 0..1.0 range is then shifted back to the original -0.5..0.5 range. (since 2.2.20)
     - "all": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses limited_range logic (mul/div by two's power)
     - "allf": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses full scale logic (stretch)
     - "none": no magic
@@ -318,13 +325,20 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.19 (20190710)
+**v2.2.20 (20191120)
+- new predefined constants: yrange_min, yrange_half, yrange_max
+  Unlike range_min, range_half, range_max the y-prefixed versions do not depend on whether the currently
+  processed plane is luma(Y) or chroma(U/V). They are always giving the values of luma plane.
+- Parameter "clamp_float" type changed from bool to int, valid parameters 0,1 and 2
+  Note when use_Expr=true: this parameter is incompatible with Avisynth+ parameter.
+- Parameter "scale_inputs" can now have "floatUV"
+
+**v2.2.19 (20190710 - not released)
 - Fix: mt_infix to recognize scaleb and scalef
 - Fix: mt_infix to recognize ymin, ymax, abs, atan, etc... tokens beginning with 'a' and 'y' were not converted
 - Move project to VS2019 v142 toolset, xp builds still at v141_xp
 - update current Avisynth+ headers
 - update source to use boost 1.70 lib v142 for non-xp builds
-- ??? not released
 
 **v2.2.18 (20180905)
 - mt_merge: fix right side artifacts for non-mod16 width, AVX2 and luma=false (regression in 2.2.16)
