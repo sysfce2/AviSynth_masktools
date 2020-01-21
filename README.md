@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.19 (20190710-not released)**
+**Masktools2 v2.2.20 (20200121-not released)**
 
 mod by pinterf
 
@@ -325,13 +325,14 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.20 (20191120)
+**v2.2.20 (20200121) (under construction: clamp_float)
 - new predefined constants: yrange_min, yrange_half, yrange_max
   Unlike range_min, range_half, range_max the y-prefixed versions do not depend on whether the currently
   processed plane is luma(Y) or chroma(U/V). They are always giving the values of luma plane.
 - Parameter "clamp_float" type changed from bool to int, valid parameters 0,1 and 2
   Note when use_Expr=true: this parameter is incompatible with Avisynth+ parameter.
 - Parameter "scale_inputs" can now have "floatUV"
+- Fix: mt_motion mask contained out-of range pixels for 10-14 bit inputs
 
 **v2.2.19 (20190710 - not released)
 - Fix: mt_infix to recognize scaleb and scalef
