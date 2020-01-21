@@ -13,9 +13,18 @@ extern Processor *mask_c;
 extern Processor *mask_sse2;
 extern Processor *mask_asse2;
 
-extern Processor16 *mask10_16_c;
-extern Processor16 *mask10_16_sse2;
-extern Processor16 *mask10_16_asse2;
+extern Processor16* mask10_c;
+extern Processor16* mask12_c;
+extern Processor16* mask14_c;
+extern Processor16* mask16_c;
+extern Processor16* mask10_sse2;
+extern Processor16* mask12_sse2;
+extern Processor16* mask14_sse2;
+extern Processor16* mask16_sse2;
+extern Processor16* mask10_asse2;
+extern Processor16* mask12_asse2;
+extern Processor16* mask14_asse2;
+extern Processor16* mask16_asse2;
 
 extern Processor32 *mask32_c;
 extern Processor32 *mask32_sse2;
@@ -187,12 +196,21 @@ public:
       processors.push_back(Filtering::Processor<Processor>(mask_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
       break;
     case 10:
+      processors16.push_back(Filtering::Processor<Processor16>(mask10_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(mask10_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      processors16.push_back(Filtering::Processor<Processor16>(mask10_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
     case 12:
+      processors16.push_back(Filtering::Processor<Processor16>(mask12_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(mask12_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      processors16.push_back(Filtering::Processor<Processor16>(mask12_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
     case 14:
+      processors16.push_back(Filtering::Processor<Processor16>(mask14_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(mask14_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      processors16.push_back(Filtering::Processor<Processor16>(mask14_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
     case 16:
-      processors16.push_back(Filtering::Processor<Processor16>(mask10_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
-      processors16.push_back(Filtering::Processor<Processor16>(mask10_16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
-      processors16.push_back(Filtering::Processor<Processor16>(mask10_16_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+      processors16.push_back(Filtering::Processor<Processor16>(mask16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(mask16_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+      processors16.push_back(Filtering::Processor<Processor16>(mask16_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
       break;
     case 32:
       processors32.push_back(Filtering::Processor<Processor32>(mask32_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));

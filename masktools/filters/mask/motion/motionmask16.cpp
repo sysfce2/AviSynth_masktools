@@ -19,12 +19,13 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
     return nSad;
   }
 
+  template<int bits_per_pixel>
   static void mask16_c_op(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nLowThreshold, int nHighThreshold, int nWidth, int nHeight)
   {
     for (int y = 0; y < nHeight; y++)
     {
       for (int x = 0; x < nWidth; x++) {
-        reinterpret_cast<Word *>(pDst)[x] = threshold<Word, int>(abs<int>(reinterpret_cast<Word *>(pDst)[x] - reinterpret_cast<const Word *>(pSrc)[x]), nLowThreshold, nHighThreshold);
+        reinterpret_cast<Word *>(pDst)[x] = threshold16<bits_per_pixel>(abs<int>(reinterpret_cast<Word *>(pDst)[x] - reinterpret_cast<const Word *>(pSrc)[x]), nLowThreshold, nHighThreshold);
       }
       pDst += nDstPitch;
       pSrc += nSrcPitch;
@@ -121,10 +122,10 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
   }
 #endif
 
-template <decltype(sad16_c_op) sad, decltype(mask16_c_op) mask>
+template <decltype(sad16_c_op) sad, decltype(mask16_c_op<10>) mask>
 bool mask16_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcPitch, int nLowThreshold, int nHighThreshold, int nMotionThreshold, int nSceneChange, int nSceneChangeValue, int nWidth, int nHeight)
 {
-    bool scenechange = nSceneChange >= 2 ? nSceneChange == 3 : sad(pDst, nDstPitch, pSrc, nSrcPitch, nWidth, nHeight) > (unsigned int)(nMotionThreshold * nWidth * nHeight);
+    bool scenechange = nSceneChange >= 2 ? nSceneChange == 3 : sad(pDst, nDstPitch, pSrc, nSrcPitch, nWidth, nHeight) > (uint64_t)nMotionThreshold * nWidth * nHeight;
 
     if (scenechange) {
         Functions::memset_plane_16((Byte *)pDst, nDstPitch, nWidth, nHeight, static_cast<Word>(nSceneChangeValue));
@@ -135,8 +136,17 @@ bool mask16_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrdiff_t nSrcP
 }
 
 
-Processor16 *mask10_16_c = &mask16_t<sad16_c_op, mask16_c_op>;
-Processor16 *mask10_16_sse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_UNALIGNED>, mask16_c_op /* mask16_sse2_op<MemoryMode::SSE2_UNALIGNED>*/>;
-Processor16 *mask10_16_asse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_ALIGNED>, mask16_c_op /*mask16_sse2_op<MemoryMode::SSE2_ALIGNED>*/>;
+Processor16* mask10_c = &mask16_t<sad16_c_op, mask16_c_op<10>>;
+Processor16* mask12_c = &mask16_t<sad16_c_op, mask16_c_op<12>>;
+Processor16* mask14_c = &mask16_t<sad16_c_op, mask16_c_op<14>>;
+Processor16* mask16_c = &mask16_t<sad16_c_op, mask16_c_op<16>>;
+Processor16* mask10_sse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_UNALIGNED>, mask16_c_op<10> /* mask16_sse2_op<MemoryMode::SSE2_UNALIGNED>*/>;
+Processor16* mask12_sse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_UNALIGNED>, mask16_c_op<12> /* mask16_sse2_op<MemoryMode::SSE2_UNALIGNED>*/>;
+Processor16* mask14_sse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_UNALIGNED>, mask16_c_op<14> /* mask16_sse2_op<MemoryMode::SSE2_UNALIGNED>*/>;
+Processor16* mask16_sse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_UNALIGNED>, mask16_c_op<16> /* mask16_sse2_op<MemoryMode::SSE2_UNALIGNED>*/>;
+Processor16* mask10_asse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_ALIGNED>, mask16_c_op<10> /*mask16_sse2_op<MemoryMode::SSE2_ALIGNED>*/>;
+Processor16* mask12_asse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_ALIGNED>, mask16_c_op<12> /*mask16_sse2_op<MemoryMode::SSE2_ALIGNED>*/>;
+Processor16* mask14_asse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_ALIGNED>, mask16_c_op<14> /*mask16_sse2_op<MemoryMode::SSE2_ALIGNED>*/>;
+Processor16* mask16_asse2 = &mask16_t<sad16_sse2_op<MemoryMode::SSE2_ALIGNED>, mask16_c_op<16> /*mask16_sse2_op<MemoryMode::SSE2_ALIGNED>*/>;
 
 } } } } }
