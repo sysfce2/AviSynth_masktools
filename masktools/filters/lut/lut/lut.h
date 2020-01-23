@@ -263,7 +263,7 @@ public:
      }
    }
 
-   InputConfiguration &input_configuration() const { return InPlaceOneFrame(); }
+   InputConfiguration &input_configuration() const override { return InPlaceOneFrame(); }
 
    static Signature filter_signature()
    {

@@ -78,8 +78,7 @@ class Lutxy : public MaskTools::Filter
 
    Processor *processor;
    Processor16 *processor16;
-   ProcessorCtx *processorCtx;
-   ProcessorCtx *processorCtx16;
+   ProcessorCtx *processorCtx; // for all 8-16
    ProcessorCtx32 *processorCtx32;
    int bits_per_pixel;
    bool realtime;
@@ -308,7 +307,7 @@ public:
      }
    }
 
-   InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
+   InputConfiguration &input_configuration() const override { return InPlaceTwoFrame(); }
 
    static Signature filter_signature()
    {

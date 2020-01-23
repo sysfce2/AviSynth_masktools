@@ -47,7 +47,7 @@ public:
     }
   }
 
-  static Signature Inflate::filter_signature()
+  static Signature filter_signature()
   {
     Signature signature = "mt_inflate";
 

@@ -358,6 +358,7 @@ public:
                 case COPY_SECOND: operators[i] = COPY; break;
                 case COPY_THIRD: operators[i] = COPY_SECOND; break;
                 case COPY_FOURTH: operators[i] = COPY_THIRD; break;
+                default: break;
                 }
             }
         }

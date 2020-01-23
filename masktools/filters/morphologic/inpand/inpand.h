@@ -157,7 +157,7 @@ public:
     }
   }
 
-  static Signature Inpand::filter_signature()
+  static Signature filter_signature()
   {
     Signature signature = "mt_inpand";
 

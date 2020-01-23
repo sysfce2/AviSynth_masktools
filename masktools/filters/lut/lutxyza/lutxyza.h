@@ -53,8 +53,7 @@ class Lutxyza : public MaskTools::Filter
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
 
    Processor *processor;
-   ProcessorCtx *processorCtx;
-   ProcessorCtx *processorCtx16;
+   ProcessorCtx *processorCtx; // for all 8-16 
    ProcessorCtx32 *processorCtx32;
    int bits_per_pixel;
    bool realtime;
@@ -264,7 +263,7 @@ public:
        }
    }
 
-   InputConfiguration &input_configuration() const { return InPlaceFourFrame(); }
+   InputConfiguration &input_configuration() const override { return InPlaceFourFrame(); }
 
    static Signature filter_signature()
    {

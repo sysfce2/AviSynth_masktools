@@ -158,7 +158,7 @@ public:
     }
   }
 
-  static Signature Expand::filter_signature()
+  static Signature filter_signature()
   {
     Signature signature = "mt_expand";
 

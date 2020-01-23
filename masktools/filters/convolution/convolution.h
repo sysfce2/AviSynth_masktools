@@ -206,7 +206,7 @@ public:
          delete[] f_vertical;
    }
 
-   InputConfiguration &input_configuration() const { return OneFrame(); }
+   InputConfiguration &input_configuration() const override { return OneFrame(); }
 
    static Signature filter_signature()
    {

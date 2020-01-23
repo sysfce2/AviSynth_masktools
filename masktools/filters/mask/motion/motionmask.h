@@ -220,7 +220,7 @@ public:
     }
   }
 
-   InputConfiguration &input_configuration() const { return InPlaceTemporalOneFrame(); }
+   InputConfiguration &input_configuration() const override { return InPlaceTemporalOneFrame(); }
 
    static Signature filter_signature()
    {

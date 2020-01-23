@@ -51,7 +51,7 @@ public:
         _aligned_free(stack);
     }
 
-    InputConfiguration &input_configuration() const { return TwoFrame(); }
+    InputConfiguration &input_configuration() const override { return TwoFrame(); }
 
     static Signature filter_signature()
     {

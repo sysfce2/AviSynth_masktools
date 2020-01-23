@@ -123,7 +123,7 @@ public:
        }
    }
 
-   InputConfiguration &input_configuration() const { 
+   InputConfiguration &input_configuration() const override { 
        for (int i = 0; i < 4; i++) {
            if (operators[i] == COPY) {
                return OneFrame();

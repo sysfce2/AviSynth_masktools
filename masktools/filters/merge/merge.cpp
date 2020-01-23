@@ -305,7 +305,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto pDst_s = pDst;
      auto pSrc1_s = pSrc1;
      auto pMask_s = pMask;
-     auto v255 = _mm_set1_epi16(0x00FF);
      auto v128 = _mm_set1_epi16(0x0080);
      auto zero = _mm_setzero_si128();
 #pragma warning(disable: 4309)
@@ -410,7 +409,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      auto pSrc1_s = pSrc1;
      auto pMask_s = pMask;
 #pragma warning(disable: 4309)
-     auto v255 = _mm_set1_epi16((short)0x00FF);
      auto v128 = _mm_set1_epi16((short)0x0080);
      auto maxMaskFF = _mm_set1_epi8(0xFF);
 #pragma warning(default: 4309)

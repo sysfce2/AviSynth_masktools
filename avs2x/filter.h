@@ -33,7 +33,7 @@ class Filter : public GenericVideoFilter
       return new Filter<T>(args[0].AsClip(), GetParameters(args, T::filter_signature(), env), env);
     }
 public:
-    Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), GenericVideoFilter(child), signature(T::filter_signature())
+    Filter(::PClip child, const Parameters &parameters, IScriptEnvironment *env) : GenericVideoFilter(child), _filter(parameters, AvsToInternalCpuFlags(env->GetCPUFlags())), signature(T::filter_signature())
     {
         inputConfigSize = _filter.input_configuration().size();
         // This is a warning left here intentionally, why multithreading and threadSafeInit- for winXp causes big troubles sometimes.
@@ -59,7 +59,7 @@ public:
         }
     }
 
-    PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment *env)
+    PVideoFrame __stdcall GetFrame(int n, IScriptEnvironment *env) override
     {
 
       // v2.2.15-

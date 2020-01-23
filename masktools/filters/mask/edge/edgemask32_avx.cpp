@@ -325,8 +325,6 @@ static MT_FORCEINLINE void process_line_cartoon_avx(Byte *pDst, const Byte *pSrc
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
 static MT_FORCEINLINE void process_line_prewitt_avx(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m256 &lowThresh, const __m256 &highThresh, int width) {
     UNUSED(matrix);
-    auto v128 = _mm256_set1_epi8(Byte(0x80));
-    auto zero = _mm256_setzero_ps();
 
     for (int x = 0; x < width; x+=32) {
         auto up_left = load32_one_to_left_si256<borderMode, mem_mode>(pSrcp+x);

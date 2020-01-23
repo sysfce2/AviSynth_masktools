@@ -47,7 +47,7 @@ public:
     }
   }
 
-  static Signature Deflate::filter_signature()
+  static Signature filter_signature()
   {
     Signature signature = "mt_deflate";
 

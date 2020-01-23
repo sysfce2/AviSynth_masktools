@@ -152,7 +152,7 @@ public:
         }
     }
 
-    InputConfiguration &input_configuration() const { return InPlaceThreeFrame(); }
+    InputConfiguration &input_configuration() const override { return InPlaceThreeFrame(); }
 
     static Signature filter_signature()
     {

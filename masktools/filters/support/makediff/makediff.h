@@ -121,7 +121,7 @@ public:
       }
     }
 
-    InputConfiguration &input_configuration() const { return InPlaceTwoFrame(); }
+    InputConfiguration &input_configuration() const override { return InPlaceTwoFrame(); }
 
     static Signature filter_signature()
     {

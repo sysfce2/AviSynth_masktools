@@ -79,7 +79,6 @@ static void custom_realtime_uint16_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte
   nSrc1Pitch /= sizeof(uint16_t);
   nSrc2Pitch /= sizeof(uint16_t);
   nDstPitch /= sizeof(uint16_t);
-  const uint16_t max_pixel_value = (1 << bits_per_pixel) - 1;
   for (int j = 0; j < nHeight; j++)
   {
     for (int i = 0; i < nWidth; i++)

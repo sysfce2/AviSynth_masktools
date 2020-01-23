@@ -84,7 +84,7 @@ public:
       coordinates_list = NULL;
    }
 
-   InputConfiguration &input_configuration() const { return OneFrame(); }
+   InputConfiguration &input_configuration() const override { return OneFrame(); }
 };
 
 } } } } // namespace Morphologic, Filters, MaskTools, Filtering
