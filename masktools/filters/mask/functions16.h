@@ -65,7 +65,6 @@ void generic16_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nS
    pDst[nWidth-1] = op(pSrcp[nWidth-2], pSrcp[nWidth-1], pSrcp[nWidth-1], pSrc[nWidth-2], pSrc[nWidth-1], pSrc[nWidth-1], pSrc[nWidth-2], pSrc[nWidth-1], pSrc[nWidth-1], matrix, thresholds.min(nWidth-1), thresholds.max(nWidth-1));
 }
 
-// todo bitdepth template
 template<int bits_per_pixel, ProcessLineSse2 process_line_left, ProcessLineSse2 process_line, ProcessLineSse2 process_line_right>
 void generic16_sse2(Word *pDst0, ptrdiff_t nDstPitch, const Word *pSrc0, ptrdiff_t nSrcPitch, const Short matrix[10], int nLowThreshold, int nHighThreshold, int nWidth, int nHeight) {
     Byte *pDst = reinterpret_cast<Byte *>(pDst0);
