@@ -158,6 +158,7 @@ static MT_FORCEINLINE void process_line_convolution_avx(Byte *pDst, const Byte *
         acc = _mm256_add_ps(acc, _mm256_mul_ps(down_right, coef8));
 
         acc = simd256_abs_ps(acc);
+        acc = _mm256_mul_ps(acc, divisor);
 
         auto result = threshold32_avx(acc, lowThresh, highThresh);
 

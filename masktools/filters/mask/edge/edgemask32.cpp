@@ -121,7 +121,6 @@ void mask32_t(Float *pDst, ptrdiff_t nDstPitch, const Float *pSrc, ptrdiff_t nSr
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
 static MT_FORCEINLINE void process_line_convolution_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(pSrcp);
-    auto zero = _mm_setzero_ps();
     auto coef0 = _mm_set1_ps(matrix[0]);
     auto coef1 = _mm_set1_ps(matrix[1]);
     auto coef2 = _mm_set1_ps(matrix[2]);
@@ -158,6 +157,7 @@ static MT_FORCEINLINE void process_line_convolution_sse2(Byte *pDst, const Byte 
         acc = _mm_add_ps(acc, _mm_mul_ps(down_right, coef8));
 
         acc = simd_abs_ps(acc);
+        acc = _mm_mul_ps(acc, divisor);
 
         auto result = threshold32_sse2<flags>(acc, lowThresh, highThresh);
 
@@ -324,8 +324,6 @@ static MT_FORCEINLINE void process_line_cartoon_sse2(Byte *pDst, const Byte *pSr
 template<CpuFlags flags, Border borderMode, MemoryMode mem_mode>
 static MT_FORCEINLINE void process_line_prewitt_sse2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const Float matrix[10], const __m128 &lowThresh, const __m128 &highThresh, int width) {
     UNUSED(matrix);
-    auto v128 = _mm_set1_epi8(Byte(0x80));
-    auto zero = _mm_setzero_ps();
 
     for (int x = 0; x < width; x+=16) {
         auto up_left = load32_one_to_left<borderMode, mem_mode>(pSrcp+x);
