@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.20 (20200121-not released)**
+**Masktools2 v2.2.20 (20200123-not released)**
 
 mod by pinterf
 
@@ -325,7 +325,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.20 (20200121) (under construction: clamp_float)
+**v2.2.20 (20200123) (under construction: clamp_float)
 - new predefined constants: yrange_min, yrange_half, yrange_max
   Unlike range_min, range_half, range_max the y-prefixed versions do not depend on whether the currently
   processed plane is luma(Y) or chroma(U/V). They are always giving the values of luma plane.
@@ -333,6 +333,14 @@ Changelog
   Note when use_Expr=true: this parameter is incompatible with Avisynth+ parameter.
 - Parameter "scale_inputs" can now have "floatUV"
 - Fix: mt_motion mask contained out-of range pixels for 10-14 bit inputs
+- Fix: mt_edge convolution mode incorrect result on 10-32 bits when normalizer weight is not power of 2
+  e.g. mode = "1 2 1 0 0 0 -1 -2 -1 15.0" (normalizer: 10th parameter or maximum of (sum_positive/sum_negative))
+  Note: when processing chroma (u=3,v=3) on 32 bit float clip will result 0..1.0 ranged masks in chroma planes as well.
+- Source: 
+  - add LLVM-clangCl to VC project configuration (built-in clang support in VS2019)
+  - fix LLVM build for VS2019
+  - silence many warnings
+  - project configurations: use current SDK version 10.0.18362.0
 
 **v2.2.19 (20190710 - not released)
 - Fix: mt_infix to recognize scaleb and scalef
