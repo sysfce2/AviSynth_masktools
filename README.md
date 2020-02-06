@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.20 (20200123-not released)**
+**Masktools2 v2.2.20 (20200206)**
 
 mod by pinterf
 
@@ -124,19 +124,29 @@ Example #3 (new, with constants)
 
     Parameter "clamp_float"
 
-    0: no clamp (pre v2.2.20 false) 
-    1: standard clamp which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV (pre v2.2.20 true) 
-    2: same as 1 but chroma UV clamp same as luma 0..1
-	  Default 0
-    (type was changed from bool to int in v2.2.20)
+    32 bit float video is always a bit different, as ususally no clamping is applied to valid ranges 
+    This parameter along with clamp_float_UV changes this behaviour.
     
+    false: no clamp
+    true: standard clamp which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV 
+          chroma clamping can be set to 0..1 by using clamp_float_UV since v2.2.20
+	  Default: false
+    
+  - new option for Lut expressions: 
+
+    Parameter "clamp_float_UV" (since v2.2.20)
+
+    false: standard clamp which is 0..1 for Luma or for RGB color space and -0.5..0.5 for YUV chroma UV
+    true: chroma UV clamp same as luma 0..1, used in conjunction with expressions written for integer (positive only) U/V values in mind.
+	  Default: false
+
   - new option for Lut expressions: 
 
     parameter "scale_inputs" (default "none")
 
     Autoscale any input (x,y,z,a) bit depths to 8-16 bit for internal expression use, the conversion method
     is either full range or limited YUV range.
-    Experimental, extends and replaces clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16, clamp_f_f32 or clamp_f
+    (Replaces clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16, clamp_f_f32 or clamp_f keywords)
     
     Feature is available from v2.2.15
 
@@ -146,9 +156,10 @@ Example #3 (new, with constants)
     - "int" : scales limited range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
     - "intf": scales full range videos, only integer formats (8-16bits) to 8 (or bit depth specified by 'i8'..'i16')
     - "float" or "floatf" : only scales 32 bit float format to 8 bit range (or bit depth specified by 'i8'..'i16')
-    - "floatUV" : when scaling 32 bit float format to 8 bit range (or bit depth specified by 'i8'..'i16'), always treats input as chroma. 
-      Shifts the input up by 0.5 before processing it in the expression, thus values from the -0.5..0.5 (zero centered) range are converted to the 0.5 (128) centered one.
-      Result which has 0..1.0 range is then shifted back to the original -0.5..0.5 range. (since 2.2.20)
+    - "floatUV" : affects the chroma plane expressions of 32 bit float formats. 
+      Shifts the input up by 0.5 before processing it in the expression, thus values from -0.5..0.5 (zero centered) range are converted to the 0..1 (0.5 centered) one.
+      Since the expression result internally has 0..1.0 range, this then is shifted back to the original -0.5..0.5 range. (since 2.2.20)
+      Note: predefined constants such as cmin, cmax, range_min, range_max and range_half will be shifted as well, e.g. the expression will see range_half = 0.5
     - "all": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses limited_range logic (mul/div by two's power)
     - "allf": scales videos to 8 (or bit depth specified by 'i8'..'i16') - conversion uses full scale logic (stretch)
     - "none": no magic
@@ -158,7 +169,8 @@ Example #3 (new, with constants)
     By default the internal conversion target is 8 bits, so old expressions written for 8 bit videos will probably work.
     This internal working bit-depth can be overwritten by the i8, i10, i12, i14, i16 specifiers.
 
-    When using autoscale mode, scaleb and scalef keywords are meaningless, because there is nothing to scale.
+    When using autoscale mode, scaleb and scalef keywords are meaningless for 8-16 bits, because there is nothing to scale.
+    32 bit (float) values will be scaled however when "float", "floatUV", "all", "allf" is specified.
 
     How it works:
     - This option scales (x,y,z,a) 8-32 bit inputs to a common bit depth value, which bit depth is 8 by default and can be 
@@ -196,8 +208,9 @@ Example #3 (new, with constants)
     One cannot specify different conversion methods for converting before and after the expression.
     Neither can you specify different methods for different input clips (e.g. x is full, y is limited is not supported).
  
-  - (obsolate) new expression syntax for lut-type filters: auto scale modifiers for float clips (test for real.finder):
-    !!! Test only, will be removed in later editions, in v2.2.15 there are "scale_inputs" and "clamp_float" parameters! (also experimental)
+  - (obsolate feature) 
+    New expression syntax for lut-type filters: auto scale modifiers for float clips:
+    !!! Note: these can be removed in later editions, pls. use "scale_inputs" and "clamp_float" parameters instead (since v2.2.15)
     Keyword at the beginning of the expression:
     - clamp_f_i8, clamp_f_i10, clamp_f_i12, clamp_f_i14 or clamp_f_i16 for scaling and clamping
     - clamp_f_f32 or clamp_f: for clamping the result to 0..1 (floats are not clamped by default!)
@@ -239,10 +252,12 @@ Example #3 (new, with constants)
   Possible values:
   0: uses lut and internal realtime calculation
   1: Expr, when bit depth>=10 or lutxyza
-  2: When masktools would use realtime calc,  Passes the expressions, scale_inputs and clamp_float parameter to the "Expr" filter in Avisynth+
+  2: When masktools would use realtime calc, passes the expressions and parameters to the "Expr" filter in Avisynth+
   3: Expr, always passed (from 2.2.17)
 
-  For modes 1, 2 and 3: passes the expression strings, scale_inputs and clamp_float parameters to the "Expr" filter in Avisynth+
+  For modes 1, 2 and 3: Passes the expressions, "scale_inputs", "clamp_float" and "clamp_float_UV" parameter to the "Expr" filter in Avisynth+
+  Note: clamp_float_UV is valid parameter only from Avisynth+ 3.5, and for compatiblity reasons is passed only when it's true, so when it differs 
+        from the default value.
 
   Note #1: Avisynth+ internal precision is 32bit float, masktools2 is double (usually no difference can be seen)
   Note #2: Some keywords (e.g. bit shift) are not available on Avisynth+
@@ -325,13 +340,13 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.20 (20200123) (under construction: clamp_float)
-- new predefined constants: yrange_min, yrange_half, yrange_max
+**v2.2.20 (20200206)
+- mt_lutspa: add parameters "scale_inputs", "clamp_float" and "clamp_float_UV"
+- new predefined constants in expressions: yrange_min, yrange_half, yrange_max
   Unlike range_min, range_half, range_max the y-prefixed versions do not depend on whether the currently
-  processed plane is luma(Y) or chroma(U/V). They are always giving the values of luma plane.
-- Parameter "clamp_float" type changed from bool to int, valid parameters 0,1 and 2
-  Note when use_Expr=true: this parameter is incompatible with Avisynth+ parameter.
-- Parameter "scale_inputs" can now have "floatUV"
+  processed plane is luma(Y) or chroma(U/V). They are always returning the values of Y plane.
+- new parameter to lut functions: Boolean "clamp_float_UV": default false, as an addition to clamp_float (since v2.2.20).
+- New: Parameter "scale_inputs" can now be set to "floatUV" (chroma pre-shift by 0.5 for 32 bit float pixels)
 - Fix: mt_motion mask contained out-of range pixels for 10-14 bit inputs
 - Fix: mt_edge convolution mode incorrect result on 10-32 bits when normalizer weight is not power of 2
   e.g. mode = "1 2 1 0 0 0 -1 -2 -1 15.0" (normalizer: 10th parameter or maximum of (sum_positive/sum_negative))
@@ -391,7 +406,7 @@ Changelog
   expression use. The primary reason of this feature is the "easy" usage of formerly written 8 bit optimized expressions.
 
   New parameters for lut functions: 
-    String "scale_inputs": "all","allf","int","intf","float","floatf","none", default "none"
+    String "scale_inputs": "all","allf","int","intf","float","floatUV","floatf","none", default "none"
   and 
     Boolean "clamp_float": default false, but treated as always true (and thus ignored) when scale_inputs involves a float autoscale.
   and 
