@@ -38,7 +38,7 @@ class Lutsx : public MaskTools::Filter
    int bits_per_pixel;
    bool realtime;
    String scale_inputs;
-   int clamp_float;
+   int clamp_float_i;
 
    String mode1, mode2;
 
@@ -76,7 +76,7 @@ protected:
         UNUSED(n);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float_i);
 
           if (bits_per_pixel <= 16) {
             processorsCtx.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
@@ -112,7 +112,9 @@ public:
      scale_inputs = parameters["scale_inputs"].toString();
      if (!checkValidScaleInputs(scale_inputs, error))
        return; // error message filled
-     clamp_float = parameters["clamp_float"].toInt();
+     bool clamp_float = parameters["clamp_float"].toBool();
+     bool clamp_float_UV = parameters["clamp_float_UV"].toBool();
+     clamp_float_i = clamp_float ? (clamp_float_UV ? 2 : 1) : 0;
 
      if (bits_per_pixel > 8)
        realtime = true;
@@ -228,7 +230,8 @@ public:
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("y"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(0, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float_UV", false));
       return signature;
    }
 };

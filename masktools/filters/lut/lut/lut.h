@@ -40,7 +40,7 @@ class Lut : public MaskTools::Filter
    bool isStacked;
    bool realtime;
    String scale_inputs;
-   int clamp_float;
+   int clamp_float_i;
    int use_expr;
 
 protected:
@@ -51,7 +51,7 @@ protected:
         UNUSED(frames);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float_i);
           if(bits_per_pixel <= 16)
             processorCtx(dst.data(), dst.pitch(), dst.width(), dst.height(), ctx);
           else {
@@ -94,7 +94,9 @@ public:
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
 
-      clamp_float = parameters["clamp_float"].toInt();
+      bool clamp_float = parameters["clamp_float"].toBool();
+      bool clamp_float_UV = parameters["clamp_float_UV"].toBool();
+      clamp_float_i = clamp_float ? (clamp_float_UV ? 2 : 1) : 0;
 
       if (bits_per_pixel == 32) { // no lookup for float
         realtime = true;
@@ -130,6 +132,7 @@ public:
         }
 
         expr_clamp_float = clamp_float;
+        expr_clamp_float_UV = clamp_float_UV;
         // expr_need_process[4] and expr_list[4] is defined in filter level
         expr_scale_inputs = scale_inputs; // copy parameter
                                           // we pass whole frame for Expr, set expression for all planes
@@ -187,7 +190,7 @@ public:
           else
             parser.parse(parameters["expr"].toString(), " ");
 
-          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
+          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float_i);
 
           if (!ctx.check())
           {
@@ -281,8 +284,9 @@ public:
       signature.add(Parameter(false, "stacked", false));
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(0, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float", false));
       signature.add(Parameter(0, "use_expr", false));
+      signature.add(Parameter(false, "clamp_float_UV", false));
       return signature;
    }
 };

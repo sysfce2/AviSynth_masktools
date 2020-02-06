@@ -83,7 +83,7 @@ class Lutxy : public MaskTools::Filter
    int bits_per_pixel;
    bool realtime;
    String scale_inputs;
-   int clamp_float;
+   int clamp_float_i;
    int use_expr;
 
 protected:
@@ -93,7 +93,7 @@ protected:
         UNUSED(constraints);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float_i);
           if (bits_per_pixel <= 16)
             processorCtx(dst.data(), dst.pitch(), frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(), dst.width(), dst.height(), ctx);
           else {
@@ -128,7 +128,9 @@ public:
       scale_inputs = parameters["scale_inputs"].toString();
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
-      clamp_float = parameters["clamp_float"].toInt();
+      bool clamp_float = parameters["clamp_float"].toBool();
+      bool clamp_float_UV = parameters["clamp_float_UV"].toBool();
+      clamp_float_i = clamp_float ? (clamp_float_UV ? 2 : 1) : 0;
 
       // 14, 16 bit and float: default realtime, 
       // hardcore users on x64 with 8GB memory and plenty of time can override 16 bit lutxy with realtime=false :)
@@ -175,6 +177,7 @@ public:
         }
 
         expr_clamp_float = clamp_float;
+        expr_clamp_float_UV = clamp_float_UV;
         // expr_need_process[4] and expr_list[4] is defined in filter level
         expr_scale_inputs = scale_inputs; // copy parameter
         // we pass whole frame for Expr, set expression for all planes
@@ -325,8 +328,9 @@ public:
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("x"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(0, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float", false));
       signature.add(Parameter(0, "use_expr", false));
+      signature.add(Parameter(false, "clamp_float_UV", false));
       return signature;
    }
 };

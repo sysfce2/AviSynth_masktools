@@ -73,16 +73,26 @@ public:
 
         // lut, lutxy, lutxyz, lutxyza: InPlaceTwoFrame: size is less by one, first clip is explicit
         int realInputConfigSize = inputConfigSize + 1;
-        int param_length = realInputConfigSize + planecount + 1 + 1;
 
-        // c+s+[format]s[optAvx2]b[optSingleMode]b[optSSE2]b[scale_inputs]s[clamp_float]i
-        // Incompatibility note: Avisynth+ 3.4 treates clamp_float as bool, matching masktools <= 2.2.19.
-        // In masktools 2.2.20 this parameter type was changed to integer
-        const char *arg_names[4 + 4 + 2]; // worst case
-        for (int i = 0; i < param_length - 2; i++)
+        // Expr in Avs+3.4  : c+s+[format]s[optAvx2]b[optSingleMode]b[optSSE2]b[scale_inputs]s[clamp_float]b
+        // Expr in Avs+3.4.1: c+s+[format]s[optAvx2]b[optSingleMode]b[optSSE2]b[scale_inputs]s[clamp_float]b[clamp_float_UV]b
+        // Incompatibility note: Avisynth+ 3.4 and masktools <= 2.2.19 has no clamp_float_UV
+
+        int extra_param_count;
+        if (_filter.expr_clamp_float_UV)
+          extra_param_count = 3; // scale_inputs, clamp_float, clamp_float_UV
+        else
+          extra_param_count = 2; // scale_inputs, clamp_float
+
+        int param_length = realInputConfigSize + planecount + extra_param_count;
+
+        const char *arg_names[4 + 4 + 3]; // worst case
+        for (int i = 0; i < param_length - extra_param_count; i++)
           arg_names[i] = nullptr;
-        arg_names[param_length - 2] = (const char *)"scale_inputs";
-        arg_names[param_length - 1] = (const char *)"clamp_float";
+        arg_names[param_length - extra_param_count + 0] = (const char *)"scale_inputs";
+        arg_names[param_length - extra_param_count + 1] = (const char *)"clamp_float";
+        if (_filter.expr_clamp_float_UV) // only pass when not default false
+          arg_names[param_length - extra_param_count + 2] = (const char*)"clamp_float_UV";
 
         std::vector<AVSValue> new_args(param_length, AVSValue());
 
@@ -91,8 +101,10 @@ public:
         for (int i = 0; i < planecount; i++)
           new_args[i + realInputConfigSize] = _filter.expr_list[i].c_str();
 
-        new_args[param_length - 2] = _filter.expr_scale_inputs.c_str();
-        new_args[param_length - 1] = _filter.expr_clamp_float;
+        new_args[param_length - extra_param_count + 0] = _filter.expr_scale_inputs.c_str();
+        new_args[param_length - extra_param_count + 1] = _filter.expr_clamp_float;
+        if (_filter.expr_clamp_float_UV) // only pass when not default false
+          new_args[param_length - extra_param_count + 2] = _filter.expr_clamp_float_UV;
 
         AVSValue clip_out = env->Invoke("Expr", AVSValue(new_args.data(), param_length), arg_names);
         PVideoFrame dst = clip_out.AsClip()->GetFrame(n, env);

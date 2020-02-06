@@ -57,7 +57,7 @@ static double mtfloor           (double x) { return floor(x); }
 static double mtceil            (double x) { return ceil(x); }
 static double mttrunc           (double x) { return double(Int64(x)); }
 // bit depth conversion helpers. x:value on 8 bit scale y: target bit depth 8-32 z:base bit depth
-static double upscaleByShift(double x, int y, int z, bool chroma)
+static double upscaleByShift(double x, int y, int z, bool chroma, bool shift_float)
 {
   const int target_bit_depth = y;
   const int source_bit_depth = z;
@@ -71,7 +71,9 @@ static double upscaleByShift(double x, int y, int z, bool chroma)
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
       return (x - src_middle_chroma) / max_pixel_value_source + 0.5;
 #else
-      return (x - src_middle_chroma) / max_pixel_value_source;
+      double result = (x - src_middle_chroma) / max_pixel_value_source;
+      if (shift_float) result += 0.5; // "floatUV"
+      return result;
 #endif
     }
     else {
@@ -103,7 +105,7 @@ static double upscaleByShift(double x, int y, int z, bool chroma)
     return double(x / (1 << (source_bit_depth - target_bit_depth))); // downscale: div by 2^N bits
 }
 
-static double upscaleByStretch(double x, int y, int z, bool chroma) // e.g. 8->10 bit rgb: x/255*1023
+static double upscaleByStretch(double x, int y, int z, bool chroma, bool shift_float) // e.g. 8->10 bit rgb: x/255*1023
 {
   const int target_bit_depth = y;
   const int source_bit_depth = z;
@@ -117,7 +119,9 @@ static double upscaleByStretch(double x, int y, int z, bool chroma) // e.g. 8->1
 #ifdef FLOAT_CHROMA_IS_HALF_CENTERED
       return (x - src_middle_chroma) / max_pixel_value_source + 0.5;
 #else
-      return (x - src_middle_chroma) / max_pixel_value_source;
+      double result = (x - src_middle_chroma) / max_pixel_value_source;
+      if (shift_float) result += 0.5; // "floatUV"
+      return result;
 #endif
     }
     else {
@@ -358,65 +362,73 @@ void Context::calc_helpers()
 bool Context::SetScaleInputs(String scale_inputs)
 {
   // v2.2.15-
+  shift_float = false;
+
   if (scale_inputs == "int") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = false;
-    shift_float = false;
   } else if (scale_inputs == "intf") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = false;
-    shift_float = false;
   }
   else if (scale_inputs == "floatUV") { 
     // v2.2.20
+    // On chroma planes: when (!scale_float || sbitdepth == 32) then this option 
+    // pre-shifts chroma pixels by +0.5 before applying the expression, then the result is shifted back by -0.5
+    // Thus chroma expressions, which rely on a working range of 0..1.0 will work transparently 
     fullrange_autoscale = false;
     scale_int = false;
-    scale_float = false;
-    shift_float = true;
+    scale_float = false; // !!
+    shift_float = true; // !!
   }
   else if (scale_inputs == "float") {
     fullrange_autoscale = false;
     scale_int = false;
     scale_float = true;
-    shift_float = false;
   }
   else if (scale_inputs == "floatf") {
     fullrange_autoscale = true;
     scale_int = false;
     scale_float = true;
-    shift_float = false;
   }
   else if (scale_inputs == "all") {
     fullrange_autoscale = false;
     scale_int = true;
     scale_float = true;
-    shift_float = false;
   }
   else if (scale_inputs == "allf") {
     fullrange_autoscale = true;
     scale_int = true;
     scale_float = true;
-    shift_float = false;
   }
   else if (scale_inputs == "none") {
     scale_int = false;
     scale_float = false;
-    shift_float = false;
   }
   else {
     return true; // error
   }
+
+#ifndef FLOAT_CHROMA_IS_HALF_CENTERED
+  if (shift_float) {
+    range_half_f[1] += 0.5; // chroma
+    range_min_f[1] += 0.5;
+    range_max_f[1] += 0.5;
+    cmin_f += 0.5;
+    cmax_f += 0.5;
+  }
+#endif
 
   calc_helpers();
   return false;
 }
 
 
-Context::Context(const std::deque<Symbol> &expression, String scale_inputs, int param_clamp_float) : Context(expression)
+Context::Context(const std::deque<Symbol> &expression, String scale_inputs, int param_clamp_float_i) : Context(expression)
 {
-  clamp_float = param_clamp_float; // SetScaleInputs can override to true
+  clamp_float_i = param_clamp_float_i; // SetScaleInputs can override to true
   SetScaleInputs(scale_inputs);
 }
 
@@ -562,14 +574,14 @@ double Context::rec_compute()
     // these are adaptively returning the range for the actually processed plane, which can be luma or chroma
     case Symbol::VARIABLE_RANGE_HALF: { last = bitdepth == 32 ? range_half_f[luma_chroma] : a_range_half[bitdepth - 8]; break; } // 0.0 for float chroma
     case Symbol::VARIABLE_RANGE_MIN: { last = bitdepth == 32 ? range_min_f[luma_chroma] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0 or -0.5
-    case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth-8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float, 0.5 float chroma
+    case Symbol::VARIABLE_RANGE_MAX: { last = bitdepth == 32 ? range_max_f[luma_chroma] : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float, 0.5 float chroma
 
     // these are always returning the range for Y
     case Symbol::VARIABLE_YRANGE_HALF: { last = bitdepth == 32 ? range_half_f[0] : a_range_half[bitdepth - 8]; break; }  // 0.5 for float chroma
     case Symbol::VARIABLE_YRANGE_MIN: { last = bitdepth == 32 ? range_min_f[0] : a_range_min[bitdepth - 8]; break; }// min_pixel_value. 0
     case Symbol::VARIABLE_YRANGE_MAX: { last = bitdepth == 32 ? range_max_f[0] : a_range_max[bitdepth - 8]; break; }// max_pixel_value. 255, 1023, 4095, 16383, 65535 (1.0 for float)
 
-    case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth-8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
+    case Symbol::VARIABLE_RANGE_SIZE: { last = bitdepth == 32 ? range_size_f : a_range_size[bitdepth - 8]; break; } // 256, 1024, 4096, 16384, 65536 (1.0 for float)
     case Symbol::VARIABLE_YMIN: { last = bitdepth == 32 ? ymin_f : a_ymin[bitdepth - 8]; break;  }   // 16 scaled
     case Symbol::VARIABLE_YMAX: { last = bitdepth == 32 ? ymax_f : a_ymax[bitdepth - 8]; break; } // 235 scaled
     case Symbol::VARIABLE_CMIN: { last = bitdepth == 32 ? cmin_f : a_cmin[bitdepth - 8]; break;  } // 16 scaled
@@ -623,7 +635,7 @@ double Context::rec_compute()
 
     case Symbol::FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM: // silent bit-depth parameter for autoscale
       // only exists with one user parameter, plus three silent params
-      last = s.processScale(last, bitdepth, sbitdepth, luma_chroma == 1);
+      last = s.processScale(last, bitdepth, sbitdepth, luma_chroma == 1, shift_float);
       break;
 
     // OPERATOR, FUNCTION, TERNARY

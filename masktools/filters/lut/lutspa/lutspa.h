@@ -46,6 +46,15 @@ public:
 
       Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y);
 
+      String scale_inputs;
+      int clamp_float_i;
+      scale_inputs = parameters["scale_inputs"].toString();
+      if (!checkValidScaleInputs(scale_inputs, error))
+        return; // error message filled
+      bool clamp_float = parameters["clamp_float"].toBool();
+      bool clamp_float_UV = parameters["clamp_float_UV"].toBool();
+      clamp_float_i = clamp_float ? (clamp_float_UV ? 2 : 1) : 0;
+
       /* compute the luts */
       for ( int i = 0; i < 4; i++ )
       {
@@ -67,7 +76,7 @@ public:
          else
             parser.parse(parameters["expr"].toString(), " ");
 
-         Parser::Context ctx(parser.getExpression());
+         Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float_i);
 
          if ( !ctx.check() )
          {
@@ -145,9 +154,15 @@ public:
       signature.add(Parameter(String("x"), "uExpr", false));
       signature.add(Parameter(String("x"), "vExpr", false));
 
-      return add_defaults( signature );
+      add_defaults( signature );
 
       signature.add(Parameter(String("x"), "aExpr", false));
+      signature.add(Parameter(String("none"), "scale_inputs", false));
+      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float_UV", false));
+
+      return signature;
+
    }
 };
 

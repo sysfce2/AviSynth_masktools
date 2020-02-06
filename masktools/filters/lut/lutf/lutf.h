@@ -82,7 +82,7 @@ class Lutf : public MaskTools::Filter
   int bits_per_pixel;
   bool realtime;
   String scale_inputs;
-  int clamp_float;
+  int clamp_float_i;
 
 protected:
     virtual void process(int n, const Plane<Byte> &dst, int nPlane, const Filtering::Frame<const Byte> frames[4], const Constraint constraints[4]) override
@@ -91,7 +91,7 @@ protected:
         
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float_i);
           if (bits_per_pixel == 8)
             processors.best_processor(constraints[nPlane])(dst.data(), dst.pitch(),
               frames[0].plane(nPlane).data(), frames[0].plane(nPlane).pitch(),
@@ -142,7 +142,9 @@ public:
       scale_inputs = parameters["scale_inputs"].toString();
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
-      clamp_float = parameters["clamp_float"].toInt();
+      bool clamp_float = parameters["clamp_float"].toBool();
+      bool clamp_float_UV = parameters["clamp_float_UV"].toBool();
+      clamp_float_i = clamp_float ? (clamp_float_UV ? 2 : 1) : 0;
 
       // 14, 16 bit and float: default realtime, 
       // hardcore users on x64 with 8GB memory and plenty of time can override 16 bit lutxy with realtime=false :)
@@ -283,7 +285,8 @@ public:
       signature.add(Parameter(false, "realtime", false));
       signature.add(Parameter(String("y"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(0, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float_UV", false));
 
       return signature;
    }

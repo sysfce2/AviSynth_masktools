@@ -58,7 +58,7 @@ class Lutxyza : public MaskTools::Filter
    int bits_per_pixel;
    bool realtime;
    String scale_inputs;
-   int clamp_float;
+   int clamp_float_i;
    int use_expr;
 
 protected:
@@ -68,7 +68,7 @@ protected:
         UNUSED(constraints);
         if (realtime) {
           // thread safety
-          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float);
+          Parser::Context ctx(*parsed_expressions[nPlane], scale_inputs, clamp_float_i);
 
           if (bits_per_pixel <= 16)
             processorCtx(dst.data(), dst.pitch(),
@@ -112,8 +112,10 @@ public:
       scale_inputs = parameters["scale_inputs"].toString();
       if (!checkValidScaleInputs(scale_inputs, error))
         return; // error message filled
-      clamp_float = parameters["clamp_float"].toInt();
-     
+      bool clamp_float = parameters["clamp_float"].toBool();
+      bool clamp_float_UV = parameters["clamp_float_UV"].toBool();
+      clamp_float_i = clamp_float ? (clamp_float_UV ? 2 : 1) : 0;
+
       // once, when a 4 GByte lut memory is nothing, we could allow 8 bit 4D real lut by default :)
       if(bits_per_pixel>8)
         realtime = true;
@@ -148,6 +150,7 @@ public:
         }
 
         expr_clamp_float = clamp_float;
+        expr_clamp_float_UV = clamp_float_UV;
         // expr_need_process[4] and expr_list[4] is defined in filter level
         expr_scale_inputs = scale_inputs; // copy parameter
                                           // we pass whole frame for Expr, set expression for all planes
@@ -283,8 +286,9 @@ public:
       signature.add(Parameter(true, "realtime", false)); // 4D lut: default realtime calc.
       signature.add(Parameter(String("x"), "aExpr", false));
       signature.add(Parameter(String("none"), "scale_inputs", false));
-      signature.add(Parameter(0, "clamp_float", false));
+      signature.add(Parameter(false, "clamp_float", false));
       signature.add(Parameter(0, "use_expr", false));
+      signature.add(Parameter(false, "clamp_float_UV", false));
       return signature;
    }
 };
