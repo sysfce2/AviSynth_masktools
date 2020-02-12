@@ -129,8 +129,10 @@ public:
          term0 = /* one operand functions/operators should appear as fn_name(x), e.g. #F(100) */
                  (str_p("@F") >> '(' >> (termter) >> ')')[AddNamedSymbol("@F", self.rpn)] |  // scaling v2.2.4 v2.2.5: #F #B -> @F @B
                  (str_p("scalef") >> '(' >> (termter) >> ')')[AddNamedSymbol("scalef", self.rpn)] |  // scaling alias for @F
+                 (str_p("yscalef") >> '(' >> (termter) >> ')')[AddNamedSymbol("yscalef", self.rpn)] |  
                  (str_p("@B") >> '(' >> (termter) >> ')')[AddNamedSymbol("@B", self.rpn)] |  // scaling
                  (str_p("scaleb") >> '(' >> (termter) >> ')')[AddNamedSymbol("scaleb", self.rpn)] |  // scaling alias for @B
+                 (str_p("yscaleb") >> '(' >> (termter) >> ')')[AddNamedSymbol("yscaleb", self.rpn)] |  // scaling alias for @B
                  (str_p("~u") >> '(' >> (termter) >> ')')[AddNamedSymbol("~u", self.rpn)] |  // negateUB
                  (str_p("~s") >> '(' >> (termter) >> ')')[AddNamedSymbol("~s", self.rpn)] |  // negateSB
                  (str_p("abs") >> '(' >> (termter) >> ')')[AddNamedSymbol("abs", self.rpn)] |

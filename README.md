@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.20 (20200206)**
+**Masktools2 v2.2.20 (20200210)**
 
 mod by pinterf
 
@@ -59,20 +59,23 @@ Differences to Masktools 2.0b1
 - expression syntax supporting bit depth independent expressions
   - bit-depth aware scale operators
   
-      operator "scaleb" scales from 8 bit to current bit depth using bit-shifts. scaleb alternative: @B (see warning)
+      operator "scaleb" scales from 8 bit to current bit depth using bit-shifts. scaleb alternative: @B (do not use, deprecated)
                Use this for YUV. "235 scaleb" -> always results in max luma
                   
-      operator "scalef" scales from 8 bit to current bit depth using full range stretch. scalef alternative: @F (see warning)
+      operator "scalef" scales from 8 bit to current bit depth using full range stretch. scalef alternative: @F (do not use, deprecated)
                   "255 scalef" results in maximum pixel value of current bit depth.
                   Calculation: x/255*65535 for a 8->16 bit sample (rgb)
 
       Warning: please use scaleb or scalef instead of @B and @F, to match the syntax with avisynth's Expr filter
+
+      Since v2.2.20:
+      "yscalef" and "yscaleb" keywords are similar to "scalef" and "scaleb" but scaling is forced to use rules for Y (non-UV) planes 
             
   - hints for non-8 bit based constants: 
       Added configuration keywords i8, i10, i12, i14, i16 and f32 in order to tell the expression evaluator 
       the bit depth of the values that are to scale by scaleb and scalef operators.
             
-      By default scaleb and scalef scales from 8 bit to the bit depth of the clip.
+      By default scaleb, scalef, yscaleb and yscalef scales from 8 bit to the bit depth of the clip.
       
       i8 .. i16 and f32 sets the default conversion base to 8..16 bits or float, respectively.
 
@@ -169,7 +172,7 @@ Example #3 (new, with constants)
     By default the internal conversion target is 8 bits, so old expressions written for 8 bit videos will probably work.
     This internal working bit-depth can be overwritten by the i8, i10, i12, i14, i16 specifiers.
 
-    When using autoscale mode, scaleb and scalef keywords are meaningless for 8-16 bits, because there is nothing to scale.
+    When using autoscale mode, scaleb, scalef, yscaleb and yscalef keywords are meaningless for 8-16 bits, because there is nothing to scale.
     32 bit (float) values will be scaled however when "float", "floatUV", "all", "allf" is specified.
 
     How it works:
@@ -341,6 +344,7 @@ https://github.com/tp7/masktools/
 
 Changelog
 **v2.2.20 (20200206)
+- new "yscalef" and "yscaleb" keywords similar to "scalef" and "scaleb" but scaling is forced to use rules for Y (non-UV) planes 
 - mt_lutspa: add parameters "scale_inputs", "clamp_float" and "clamp_float_UV"
 - new predefined constants in expressions: yrange_min, yrange_half, yrange_max
   Unlike range_min, range_half, range_max the y-prefixed versions do not depend on whether the currently

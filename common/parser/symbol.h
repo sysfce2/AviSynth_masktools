@@ -99,6 +99,7 @@ public:
    Symbol(String value, String value2, Type type, Process1 process);
    Symbol(String value, String value2, Type type, Process2 process);
    Symbol(String value, String value2, Type type, Process3 process);
+   Symbol(String value, Type type, ProcessScale process);
    Symbol(String value, String value2, Type type, ProcessScale process);
    // variables
    Symbol(String value, Type type, VarType vartype);
@@ -181,6 +182,8 @@ public:
    // auto bit depth conversions
    static Symbol ScaleByShift;
    static Symbol ScaleByStretch;
+   static Symbol ScaleByShiftY;
+   static Symbol ScaleByStretchY;
    // script bit depth setters
    static Symbol SetScriptBitDepthI8;
    static Symbol SetScriptBitDepthI10;

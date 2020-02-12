@@ -113,7 +113,9 @@ Parser::Parser Parser::getDefaultParser()
    /* number */
    parser.addSymbol(Symbol::Pi);
    /* auto bitdepth conversion: BITDEPTH (bitdepth) and two functions */
-   parser.addSymbol(Symbol::BITDEPTH).addSymbol(Symbol::SCRIPT_BITDEPTH).addSymbol(Symbol::ScaleByShift).addSymbol(Symbol::ScaleByStretch);
+   parser.addSymbol(Symbol::BITDEPTH).addSymbol(Symbol::SCRIPT_BITDEPTH);
+   parser.addSymbol(Symbol::ScaleByShift).addSymbol(Symbol::ScaleByStretch);
+   parser.addSymbol(Symbol::ScaleByShiftY).addSymbol(Symbol::ScaleByStretchY);
    /* swap and dup */
    parser.addSymbol(Symbol::Swap).addSymbol(Symbol::Dup);
    /* config commands for setting base bit depth of the script */

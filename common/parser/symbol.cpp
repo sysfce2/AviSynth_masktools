@@ -57,7 +57,7 @@ static double mtfloor           (double x) { return floor(x); }
 static double mtceil            (double x) { return ceil(x); }
 static double mttrunc           (double x) { return double(Int64(x)); }
 // bit depth conversion helpers. x:value on 8 bit scale y: target bit depth 8-32 z:base bit depth
-static double upscaleByShift(double x, int y, int z, bool chroma, bool shift_float)
+static double do_upscaleByShift(double x, int y, int z, bool chroma, bool shift_float)
 {
   const int target_bit_depth = y;
   const int source_bit_depth = z;
@@ -105,7 +105,18 @@ static double upscaleByShift(double x, int y, int z, bool chroma, bool shift_flo
     return double(x / (1 << (source_bit_depth - target_bit_depth))); // downscale: div by 2^N bits
 }
 
-static double upscaleByStretch(double x, int y, int z, bool chroma, bool shift_float) // e.g. 8->10 bit rgb: x/255*1023
+static double upscaleByShift(double x, int y, int z, bool chroma, bool shift_float)
+{
+  return do_upscaleByShift(x, y, z, chroma, shift_float);
+}
+
+static double upscaleByShiftY(double x, int y, int z, bool chroma, bool shift_float)
+{
+  UNUSED(chroma);
+  return do_upscaleByShift(x, y, z, false, shift_float); // force non-chroma
+}
+
+static double do_upscaleByStretch(double x, int y, int z, bool chroma, bool shift_float) // e.g. 8->10 bit rgb: x/255*1023
 {
   const int target_bit_depth = y;
   const int source_bit_depth = z;
@@ -150,6 +161,17 @@ static double upscaleByStretch(double x, int y, int z, bool chroma, bool shift_f
   const int max_pixel_value_source = (1 << source_bit_depth) - 1;
   const int max_pixel_value_target = (1 << target_bit_depth) - 1;
   return double(x * max_pixel_value_target / max_pixel_value_source); // upscale or downscale
+}
+
+static double upscaleByStretch(double x, int y, int z, bool chroma, bool shift_float) // e.g. 8->10 bit rgb: x/255*1023
+{
+  return do_upscaleByStretch(x, y, z, chroma, shift_float);
+}
+
+static double upscaleByStretchY(double x, int y, int z, bool chroma, bool shift_float) // e.g. 8->10 bit rgb: x/255*1023
+{
+  UNUSED(chroma);
+  return do_upscaleByStretch(x, y, z, false, shift_float); // for non-chroma
 }
 
 Symbol Symbol::Addition       ("+" , OPERATOR, addition);
@@ -224,6 +246,8 @@ Symbol Symbol::Trunc          ("trunc", FUNCTION, mttrunc);
 // automatic bit-depth scaling helpers, since v2.2.1
 Symbol Symbol::ScaleByShift   ("scaleb", "@B", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, upscaleByShift); // v 2.2.5: #B, #F -> @B, @F
 Symbol Symbol::ScaleByStretch ("scalef", "@F", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, upscaleByStretch); // with optinal scaleb and scalef aliases
+Symbol Symbol::ScaleByShiftY  ("yscaleb", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, upscaleByShiftY); // v 2.2.5: #B, #F -> @B, @F
+Symbol Symbol::ScaleByStretchY("yscalef", FUNCTION_WITH_BITDEPTH_AS_AUTOPARAM, upscaleByStretchY); // with optinal scaleb and scalef aliases
 // admin config
 Symbol Symbol::SetScriptBitDepthI8("i8", 8.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetScriptBitDepthI10("i10", 10.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
@@ -295,6 +319,11 @@ Symbol::Symbol(String value, String value2, Type type, Process3 process) :
 
 Symbol::Symbol(String value, String value2, Type type, ProcessScale process) :
   type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(value2), nParameter(3), processScale(process)
+{
+}
+
+Symbol::Symbol(String value, Type type, ProcessScale process) :
+  type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(""), nParameter(3), processScale(process)
 {
 }
 
@@ -450,7 +479,7 @@ Context::Context(const std::deque<Symbol> &expression)
 
    auto it = expression.begin();
 
-   sbitdepth = 8; // default source bit depth for expressions, used in scale_inputs and scaleb/scalef
+   sbitdepth = 8; // default source bit depth for expressions, used in scale_inputs and scaleb/scalef/yscalef,yscaleb
    // scaleb/scalef converts constants from this bit depth to the current one
    // when scale_inputs == true, this is the target bit depth of the internal scaling
 
