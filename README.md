@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.20 (20200210)**
+**Masktools2 v2.2.20 (20200303)**
 
 mod by pinterf
 
@@ -343,7 +343,7 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**v2.2.20 (20200206)
+**v2.2.20 (20200303)
 - new "yscalef" and "yscaleb" keywords similar to "scalef" and "scaleb" but scaling is forced to use rules for Y (non-UV) planes 
 - mt_lutspa: add parameters "scale_inputs", "clamp_float" and "clamp_float_UV"
 - new predefined constants in expressions: yrange_min, yrange_half, yrange_max
