@@ -34,7 +34,6 @@ protected:
 public:
     Hysteresis(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), stack(nullptr) {
       int bits_per_pixel = bit_depths[C];
-      int pixelsize = bits_per_pixel == 8 ? 1 : (bits_per_pixel == 32 ? 4 : 2);
       switch (bits_per_pixel) {
       case 8: processor = hysteresis_8_c; break;
       case 10: processor = hysteresis_10_c; break;
@@ -44,7 +43,7 @@ public:
       case 32: processor = hysteresis_32_c; break;
       }
 
-      stack = reinterpret_cast<Byte*>(_aligned_malloc(nWidth*nHeight*pixelsize, 16));
+      stack = reinterpret_cast<Byte*>(_aligned_malloc(nWidth*nHeight, 16));
     }
 
     ~Hysteresis() {

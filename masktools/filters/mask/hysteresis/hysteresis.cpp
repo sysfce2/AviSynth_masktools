@@ -13,7 +13,7 @@ struct Coordinates {
 typedef std::vector<Coordinates> CoordinatesList;
 
 template<typename pixel_t, int bits_per_pixel>
-static void expand_mask(pixel_t *pDst, ptrdiff_t nDstPitch, const pixel_t *pSrc2, ptrdiff_t nSrc2Pitch, pixel_t *pTemp, int x, int y, int nWidth, int nHeight, CoordinatesList &coordinates)
+static void expand_mask(pixel_t *pDst, ptrdiff_t nDstPitch, const pixel_t *pSrc2, ptrdiff_t nSrc2Pitch, Byte *pTemp, int x, int y, int nWidth, int nHeight, CoordinatesList &coordinates)
 {
     //CoordinatesList coordinates;
     coordinates.clear();
@@ -22,7 +22,7 @@ static void expand_mask(pixel_t *pDst, ptrdiff_t nDstPitch, const pixel_t *pSrc2
     nDstPitch /= sizeof(pixel_t);
     nSrc2Pitch /= sizeof(pixel_t);
 
-    pTemp[0] = mask_value;
+    pTemp[0] = 1;
     pDst[0] = mask_value;
 
     coordinates.emplace_back(0, 0);
@@ -43,7 +43,7 @@ static void expand_mask(pixel_t *pDst, ptrdiff_t nDstPitch, const pixel_t *pSrc2
             for (int j = x_min; j < x_max; j++) {
                 if (!pTemp[j + i * nWidth] && pSrc2[j + i * nSrc2Pitch]) {
                     coordinates.emplace_back(j, i);
-                    pTemp[j + i * nWidth] = mask_value;
+                    pTemp[j + i * nWidth] = 1;
                     pDst[j + i * nDstPitch] = mask_value;
                 }
             }
@@ -58,17 +58,18 @@ void hysteresis_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t 
 {
 
   memset(pDst, 0, nDstPitch * height); // dstPitch is byte size
-  memset(pTemp, 0, width * height * sizeof(pixel_t));
+  memset(pTemp, 0, width * height);
   CoordinatesList coordinates;
 
   for (int y = 0; y < height; y++)
   {
     for (int x = 0; x < width; x++) {
-      if (!(pixel_t *)(pTemp)[x] && (pixel_t *)(pSrc1)[x] && (pixel_t *)(pSrc2)[x]) {
-        expand_mask<pixel_t, bits_per_pixel>((pixel_t *)pDst + x, nDstPitch, (pixel_t *)pSrc2 + x, nSrc2Pitch, (pixel_t *)pTemp + x, x, y, width, height, coordinates);
+      if (!pTemp[x] && ((pixel_t *)pSrc1)[x] && ((pixel_t *)pSrc2)[x]) {
+        expand_mask<pixel_t, bits_per_pixel>((pixel_t *)pDst + x, nDstPitch, (pixel_t *)pSrc2 + x, nSrc2Pitch, pTemp + x, x, y, width, height, coordinates);
       }
+      
     }
-    pTemp += width * sizeof(pixel_t);
+    pTemp += width;
     pSrc1 += nSrc1Pitch;
     pSrc2 += nSrc2Pitch;
     pDst += nDstPitch;
