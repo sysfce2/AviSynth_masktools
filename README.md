@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.20 (20200303)**
+**Masktools2 v2.2.21 (20200410)**
 
 mod by pinterf
 
@@ -343,6 +343,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.21 (20200410)
+- Fix: mt_hysteresis for 10+ bits 
+
 **v2.2.20 (20200303)
 - new "yscalef" and "yscaleb" keywords similar to "scalef" and "scaleb" but scaling is forced to use rules for Y (non-UV) planes 
 - mt_lutspa: add parameters "scale_inputs", "clamp_float" and "clamp_float_UV"
