@@ -27,10 +27,10 @@ StackedProcessor *deflate_stacked_c = &MorphologicProcessor<Byte>::generic_16_c<
     process_line_morpho_stacked_c<Border::Right, meanMinThresholded>
 >;
 
-Processor16 *deflate_native_c = &MorphologicProcessor<Word>::generic_16_c<
-    process_line_morpho_native_c<Border::Left, meanMinThresholded>,
-    process_line_morpho_native_c<Border::None, meanMinThresholded>,
-    process_line_morpho_native_c<Border::Right, meanMinThresholded>
+Processor16 *deflate_16_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_16_c<Border::Left, meanMinThresholded>,
+    process_line_morpho_16_c<Border::None, meanMinThresholded>,
+    process_line_morpho_16_c<Border::Right, meanMinThresholded>
 >;
 
 Processor16 *deflate_sse4_16 = &generic_sse4_16<

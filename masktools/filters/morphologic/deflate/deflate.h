@@ -11,7 +11,7 @@ extern Processor *deflate_asse2;
 
 /* 16 bit */
 extern StackedProcessor *deflate_stacked_c;
-extern Processor16 *deflate_native_c;
+extern Processor16 *deflate_16_c;
 
 extern Processor16 *deflate_sse4_16;
 extern Processor16 *deflate_asse4_16;
@@ -38,7 +38,7 @@ public:
       stackedProcessors.push_back(Filtering::Processor<StackedProcessor>(deflate_stacked_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
     }
     else if (_bits_per_pixel <= 16) {
-      processors16.push_back(Filtering::Processor<Processor16>(deflate_native_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+      processors16.push_back(Filtering::Processor<Processor16>(deflate_16_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
       processors16.push_back(Filtering::Processor<Processor16>(deflate_sse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_NONE, 16), 1));
       processors16.push_back(Filtering::Processor<Processor16>(deflate_asse4_16, Constraint(CPU_SSE4_1, MODULO_NONE, MODULO_NONE, ALIGNMENT_16, 16), 2));
     }
