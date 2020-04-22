@@ -103,28 +103,28 @@ StackedProcessor *expand_both_stacked_c = &MorphologicProcessor<Byte>::generic_1
     process_line_morpho_stacked_c<Border::Right, maximumThresholded<::maximum_both>>
     >;
 
-Processor16 *expand_square_native_c = &MorphologicProcessor<Word>::generic_16_c<
-    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_square>>,
-    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_square>>,
-    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_square>>
+Processor16 *expand_square_16_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_16_c<Border::Left, maximumThresholded<::maximum_square>>,
+    process_line_morpho_16_c<Border::None, maximumThresholded<::maximum_square>>,
+    process_line_morpho_16_c<Border::Right, maximumThresholded<::maximum_square>>
     >;
 
-Processor16 *expand_horizontal_native_c = &MorphologicProcessor<Word>::generic_16_c<
-    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_horizontal>>,
-    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_horizontal>>,
-    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_horizontal>>
+Processor16 *expand_horizontal_16_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_16_c<Border::Left, maximumThresholded<::maximum_horizontal>>,
+    process_line_morpho_16_c<Border::None, maximumThresholded<::maximum_horizontal>>,
+    process_line_morpho_16_c<Border::Right, maximumThresholded<::maximum_horizontal>>
     >;
 
-Processor16 *expand_vertical_native_c = &MorphologicProcessor<Word>::generic_16_c<
-    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_vertical>>,
-    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_vertical>>,
-    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_vertical>>
+Processor16 *expand_vertical_16_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_16_c<Border::Left, maximumThresholded<::maximum_vertical>>,
+    process_line_morpho_16_c<Border::None, maximumThresholded<::maximum_vertical>>,
+    process_line_morpho_16_c<Border::Right, maximumThresholded<::maximum_vertical>>
     >;
 
-Processor16 *expand_both_native_c = &MorphologicProcessor<Word>::generic_16_c<
-    process_line_morpho_native_c<Border::Left, maximumThresholded<::maximum_both>>,
-    process_line_morpho_native_c<Border::None, maximumThresholded<::maximum_both>>,
-    process_line_morpho_native_c<Border::Right, maximumThresholded<::maximum_both>>
+Processor16 *expand_both_16_c = &MorphologicProcessor<Word>::generic_16_c<
+    process_line_morpho_16_c<Border::Left, maximumThresholded<::maximum_both>>,
+    process_line_morpho_16_c<Border::None, maximumThresholded<::maximum_both>>,
+    process_line_morpho_16_c<Border::Right, maximumThresholded<::maximum_both>>
     >;
 
 #define DEFINE_SSE4_VERSIONS(name, mem_mode) \
@@ -149,6 +149,6 @@ Processor16 *expand_square_asse4_16 = &xxpand_sse4_square_16<expand_operator_sse
 
 
 StackedProcessor *expand_custom_stacked_c       = &generic_custom_stacked_c<NewValue16>;
-Processor16 *expand_custom_native_c   = &generic_custom_native_c<NewValue16>;
+Processor16 *expand_custom_16_c   = &generic_custom_16_c<NewValue16>;
 
 } } } } }

@@ -46,7 +46,7 @@ void process_line_morpho_stacked_c(Byte *pDst, const Byte *pSrcp, const Byte *pS
 }
 
 template<Border borderMode, Operator16 op>
-void process_line_morpho_native_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch, int nOrigHeight) {
+void process_line_morpho_16_c(Word *pDst, const Word *pSrcp, const Word *pSrc, const Word *pSrcn, int maxDeviation, int width, int height, ptrdiff_t srcPitch, ptrdiff_t dstPitch, int nOrigHeight) {
     UNUSED(dstPitch); UNUSED(srcPitch); UNUSED(height); UNUSED(nOrigHeight);
 
     const int leftOffset = borderMode == Border::Left ? 0 : 1;
@@ -212,7 +212,6 @@ static MT_FORCEINLINE void process_line_xxpand_both_16(Byte *pDst, const Byte *p
     __m128i down_center = simd_load_si128<mem_mode>(pSrcn + x);
     __m128i middle_left = load16_one_to_left<borderMode, mem_mode>(pSrc + x);
     __m128i middle_right = load16_one_to_right<borderMode, mem_mode>(pSrc + x);
-
     __m128i acc = op(up_center, middle_left);
     acc = op(acc, middle_right);
     acc = op(acc, down_center);
@@ -473,7 +472,7 @@ void generic_custom_stacked_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc,
 
 
 template<class T>
-void generic_custom_native_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
+void generic_custom_16_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc, ptrdiff_t nSrcPitch, int nMaxDeviation, const int *pCoordinates, int nCoordinates, int nWidth, int nHeight, int nOrigHeight)
 {
     UNUSED(nOrigHeight);
 
