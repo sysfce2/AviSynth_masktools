@@ -119,34 +119,34 @@ Processor16 *or16_native_avx2   = &logic16_native_t_avx2<or16_avx2, or16_c>;
 Processor16 *andn16_native_avx2 = &logic16_native_t_avx2<andn16_avx2, andn16_c>;
 Processor16 *xor16_native_avx2  = &logic16_native_t_avx2<xor16_avx2, xor16_c>;
 
-#define DEFINE_SILLY_AVX2_VERSIONS(mode, layout) \
-    Processor16 *mode##_##layout##_avx2         = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, nop16_avx2>, mode##_t<nop16_c, nop16_c>>;   \
-    Processor16 *mode##sub_##layout##_avx2      = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, sub16_avx2>, mode##_t<nop16_c, sub16_c>>;   \
-    Processor16 *mode##add10_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<10>>, mode##_t<nop16_c, add16_c<10>>>;   \
-    Processor16 *mode##add12_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<12>>, mode##_t<nop16_c, add16_c<12>>>;   \
-    Processor16 *mode##add14_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<14>>, mode##_t<nop16_c, add16_c<14>>>;   \
-    Processor16 *mode##add16_##layout##_avx2   = &logic16_##layout##_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<16>>, mode##_t<nop16_c, add16_c<16>>>;   \
-    Processor16 *sub##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, nop16_avx2>, mode##_t<sub16_c, nop16_c>>;   \
-    Processor16 *sub##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, sub16_avx2>, mode##_t<sub16_c, sub16_c>>;   \
-    Processor16 *sub##mode##add10_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<10>>, mode##_t<sub16_c, add16_c<10>>>;   \
-    Processor16 *sub##mode##add12_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<12>>, mode##_t<sub16_c, add16_c<12>>>;   \
-    Processor16 *sub##mode##add14_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<14>>, mode##_t<sub16_c, add16_c<14>>>;   \
-    Processor16 *sub##mode##add16_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<16>>, mode##_t<sub16_c, add16_c<16>>>;   \
-    Processor16 *add10##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<10>, nop16_avx2>, mode##_t<add16_c<10>, nop16_c>>;   \
-    Processor16 *add12##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<12>, nop16_avx2>, mode##_t<add16_c<12>, nop16_c>>;   \
-    Processor16 *add14##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<14>, nop16_avx2>, mode##_t<add16_c<14>, nop16_c>>;   \
-    Processor16 *add16##mode##_##layout##_avx2    = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<16>, nop16_avx2>, mode##_t<add16_c<16>, nop16_c>>;   \
-    Processor16 *add10##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<10>, sub16_avx2>, mode##_t<add16_c<10>, sub16_c>>;   \
-    Processor16 *add12##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<12>, sub16_avx2>, mode##_t<add16_c<12>, sub16_c>>;   \
-    Processor16 *add14##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<14>, sub16_avx2>, mode##_t<add16_c<14>, sub16_c>>;   \
-    Processor16 *add16##mode##sub_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<16>, sub16_avx2>, mode##_t<add16_c<16>, sub16_c>>;   \
-    Processor16 *add10##mode##add10_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<10>, add16_avx2<10>>, mode##_t<add16_c<10>, add16_c<10>>>; \
-    Processor16 *add12##mode##add12_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<12>, add16_avx2<12>>, mode##_t<add16_c<12>, add16_c<12>>>; \
-    Processor16 *add14##mode##add14_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<14>, add16_avx2<14>>, mode##_t<add16_c<14>, add16_c<14>>>; \
-    Processor16 *add16##mode##add16_##layout##_avx2 = &logic16_##layout##_t_avx2<mode##_t_avx2<add16_avx2<16>, add16_avx2<16>>, mode##_t<add16_c<16>, add16_c<16>>>;
+#define DEFINE_SILLY_AVX2_VERSIONS(mode) \
+    Processor16 *mode##_native_avx2         = &logic16_native_t_avx2<mode##_t_avx2<nop16_avx2, nop16_avx2>, mode##_t<nop16_c, nop16_c>>;   \
+    Processor16 *mode##sub_native_avx2      = &logic16_native_t_avx2<mode##_t_avx2<nop16_avx2, sub16_avx2>, mode##_t<nop16_c, sub16_c>>;   \
+    Processor16 *mode##add10_native_avx2   = &logic16_native_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<10>>, mode##_t<nop16_c, add16_c<10>>>;   \
+    Processor16 *mode##add12_native_avx2   = &logic16_native_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<12>>, mode##_t<nop16_c, add16_c<12>>>;   \
+    Processor16 *mode##add14_native_avx2   = &logic16_native_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<14>>, mode##_t<nop16_c, add16_c<14>>>;   \
+    Processor16 *mode##add16_native_avx2   = &logic16_native_t_avx2<mode##_t_avx2<nop16_avx2, add16_avx2<16>>, mode##_t<nop16_c, add16_c<16>>>;   \
+    Processor16 *sub##mode##_native_avx2    = &logic16_native_t_avx2<mode##_t_avx2<sub16_avx2, nop16_avx2>, mode##_t<sub16_c, nop16_c>>;   \
+    Processor16 *sub##mode##sub_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<sub16_avx2, sub16_avx2>, mode##_t<sub16_c, sub16_c>>;   \
+    Processor16 *sub##mode##add10_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<10>>, mode##_t<sub16_c, add16_c<10>>>;   \
+    Processor16 *sub##mode##add12_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<12>>, mode##_t<sub16_c, add16_c<12>>>;   \
+    Processor16 *sub##mode##add14_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<14>>, mode##_t<sub16_c, add16_c<14>>>;   \
+    Processor16 *sub##mode##add16_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<sub16_avx2, add16_avx2<16>>, mode##_t<sub16_c, add16_c<16>>>;   \
+    Processor16 *add10##mode##_native_avx2    = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<10>, nop16_avx2>, mode##_t<add16_c<10>, nop16_c>>;   \
+    Processor16 *add12##mode##_native_avx2    = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<12>, nop16_avx2>, mode##_t<add16_c<12>, nop16_c>>;   \
+    Processor16 *add14##mode##_native_avx2    = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<14>, nop16_avx2>, mode##_t<add16_c<14>, nop16_c>>;   \
+    Processor16 *add16##mode##_native_avx2    = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<16>, nop16_avx2>, mode##_t<add16_c<16>, nop16_c>>;   \
+    Processor16 *add10##mode##sub_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<10>, sub16_avx2>, mode##_t<add16_c<10>, sub16_c>>;   \
+    Processor16 *add12##mode##sub_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<12>, sub16_avx2>, mode##_t<add16_c<12>, sub16_c>>;   \
+    Processor16 *add14##mode##sub_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<14>, sub16_avx2>, mode##_t<add16_c<14>, sub16_c>>;   \
+    Processor16 *add16##mode##sub_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<16>, sub16_avx2>, mode##_t<add16_c<16>, sub16_c>>;   \
+    Processor16 *add10##mode##add10_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<10>, add16_avx2<10>>, mode##_t<add16_c<10>, add16_c<10>>>; \
+    Processor16 *add12##mode##add12_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<12>, add16_avx2<12>>, mode##_t<add16_c<12>, add16_c<12>>>; \
+    Processor16 *add14##mode##add14_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<14>, add16_avx2<14>>, mode##_t<add16_c<14>, add16_c<14>>>; \
+    Processor16 *add16##mode##add16_native_avx2 = &logic16_native_t_avx2<mode##_t_avx2<add16_avx2<16>, add16_avx2<16>>, mode##_t<add16_c<16>, add16_c<16>>>;
 
-DEFINE_SILLY_AVX2_VERSIONS(min, native)
-DEFINE_SILLY_AVX2_VERSIONS(max, native)
+DEFINE_SILLY_AVX2_VERSIONS(min)
+DEFINE_SILLY_AVX2_VERSIONS(max)
 
 #undef DEFINE_SILLY_AVX2_VERSIONS
 
