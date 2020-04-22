@@ -33,13 +33,13 @@ enum class MemoryMode {
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE __m128i simd_load_si128(const T* ptr) {
 #ifdef USE_MOVPS
-    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+    if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
         return _mm_castps_si128(_mm_load_ps(reinterpret_cast<const float*>(ptr)));
     } else {
         return _mm_castps_si128(_mm_loadu_ps(reinterpret_cast<const float*>(ptr)));
     }
 #else
-    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+    if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
         return _mm_load_si128(reinterpret_cast<const __m128i*>(ptr));
     } else {
         return _mm_loadu_si128(reinterpret_cast<const __m128i*>(ptr));
@@ -50,14 +50,14 @@ static MT_FORCEINLINE __m128i simd_load_si128(const T* ptr) {
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE __m128 simd_load_ps(const T* ptr) {
 #ifdef USE_MOVPS
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm_load_ps(reinterpret_cast<const float*>(ptr));
   }
   else {
     return _mm_loadu_ps(reinterpret_cast<const float*>(ptr));
   }
 #else
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm_castsi128_ps(_mm_load_si128(reinterpret_cast<const __m128i*>(ptr)));
   }
   else {
@@ -70,13 +70,13 @@ static MT_FORCEINLINE __m128 simd_load_ps(const T* ptr) {
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE void simd_store_si128(T *ptr, __m128i value) {
 #ifdef USE_MOVPS
-    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+    if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
         _mm_store_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
     } else {
         _mm_storeu_ps(reinterpret_cast<float*>(ptr), _mm_castsi128_ps(value));
     }
 #else
-    if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+    if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
         _mm_store_si128(reinterpret_cast<__m128i*>(ptr), value);
     } else {   
         _mm_storeu_si128(reinterpret_cast<__m128i*>(ptr), value);
@@ -87,14 +87,14 @@ static MT_FORCEINLINE void simd_store_si128(T *ptr, __m128i value) {
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE void simd_store_ps(T *ptr, __m128 value) {
 #ifdef USE_MOVPS
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     _mm_store_ps(reinterpret_cast<float*>(ptr), value);
 }
   else {
     _mm_storeu_ps(reinterpret_cast<float*>(ptr), value);
   }
 #else
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     _mm_store_si128(reinterpret_cast<__m128i*>(ptr), _mm_castps_si128(value));
   }
   else {
@@ -109,14 +109,14 @@ __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i simd256_load_si256(const T* ptr) {
 #ifdef USE_MOVPS
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_castps_si256(_mm256_load_ps(reinterpret_cast<const float*>(ptr)));
 }
   else {
     return _mm256_castps_si256(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr)));
   }
 #else
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_load_si256(reinterpret_cast<const __m256i*>(ptr));
   }
   else {
@@ -131,14 +131,14 @@ __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 simd256_load_ps(const T* ptr) {
 #ifdef USE_MOVPS
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_load_ps(reinterpret_cast<const float*>(ptr));
   }
   else {
     return _mm256_loadu_ps(reinterpret_cast<const float*>(ptr));
   }
 #else
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_castsi256_ps(_mm256_load_si256(reinterpret_cast<const __m256i*>(ptr)));
   }
   else {
@@ -149,7 +149,7 @@ static MT_FORCEINLINE __m256 simd256_load_ps(const T* ptr) {
 
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE __m256 simd256_128_load_ps(const T* ptr) {
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_loadu2_m128(reinterpret_cast<const float*>(ptr) + 4, reinterpret_cast<const float*>(ptr));
   }
   else {
@@ -160,14 +160,14 @@ static MT_FORCEINLINE __m256 simd256_128_load_ps(const T* ptr) {
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE void simd256_store_si256(T *ptr, __m256i value) {
 #ifdef USE_MOVPS
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     _mm256_store_ps(reinterpret_cast<float*>(ptr), _mm256_castsi256_ps(value));
   }
   else {
     _mm256_storeu_ps(reinterpret_cast<float*>(ptr), _mm256_castsi256_ps(value));
   }
 #else
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     _mm256_store_si256(reinterpret_cast<__m256i*>(ptr), value);
   }
   else {
@@ -179,7 +179,7 @@ static MT_FORCEINLINE void simd256_store_si256(T *ptr, __m256i value) {
 template<MemoryMode mem_mode, typename T>
 static MT_FORCEINLINE void simd256_store_ps(T *ptr, __m256 value) {
 #ifdef USE_MOVPS
-  if (mem_mode == MemoryMode::SSE2_ALIGNED) {
+  if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     _mm256_store_ps(reinterpret_cast<float*>(ptr), value);
   }
   else {
@@ -219,7 +219,7 @@ enum class Border {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128i load_one_to_left(const Byte *ptr) {
-    if (border_mode == Border::Left) {
+    if constexpr (border_mode == Border::Left) {
         auto mask_left = _mm_setr_epi8(0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
         auto val = simd_load_si128<mem_mode>(ptr);
         return _mm_or_si128(_mm_slli_si128(val, 1), _mm_and_si128(val, mask_left)); // clone leftmost
@@ -230,7 +230,7 @@ static MT_FORCEINLINE __m128i load_one_to_left(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128i load_one_to_right(const Byte *ptr) {
-    if (border_mode == Border::Right) {
+    if constexpr (border_mode == Border::Right) {
         auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF);
         auto val = simd_load_si128<mem_mode>(ptr);
         return _mm_or_si128(_mm_srli_si128(val, 1), _mm_and_si128(val, mask_right));
@@ -241,7 +241,7 @@ static MT_FORCEINLINE __m128i load_one_to_right(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m256i load_one_to_left_si256(const Byte *ptr) {
-  if (border_mode == Border::Left) {
+  if constexpr (border_mode == Border::Left) {
     auto lo128 = load_one_to_left<border_mode, mem_mode>(ptr); // really left!
     auto hi128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 1);
     return _mm256_set_m128i(hi128, lo128);
@@ -253,7 +253,7 @@ static MT_FORCEINLINE __m256i load_one_to_left_si256(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m256i load_one_to_right_si256(const Byte *ptr) {
-  if (border_mode == Border::Right) {
+  if constexpr (border_mode == Border::Right) {
     auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
     auto hi128 = load_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
     return _mm256_set_m128i(hi128, lo128);
@@ -265,7 +265,7 @@ static MT_FORCEINLINE __m256i load_one_to_right_si256(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m256i load16_one_to_left_si256(const Byte *ptr) {
-  if (border_mode == Border::Left) {
+  if constexpr (border_mode == Border::Left) {
     auto lo128 = load16_one_to_left<border_mode, mem_mode>(ptr); // really left!
     auto hi128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 2);
     return _mm256_set_m128i(hi128, lo128);
@@ -277,7 +277,7 @@ static MT_FORCEINLINE __m256i load16_one_to_left_si256(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m256i load16_one_to_right_si256(const Byte *ptr) {
-  if (border_mode == Border::Right) {
+  if constexpr (border_mode == Border::Right) {
     auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
     auto hi128 = load16_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
     return _mm256_set_m128i(hi128, lo128);
@@ -289,7 +289,7 @@ static MT_FORCEINLINE __m256i load16_one_to_right_si256(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128i load16_one_to_left(const Byte *ptr) {
-  if (border_mode == Border::Left) {
+  if constexpr (border_mode == Border::Left) {
     auto mask_left = _mm_setr_epi8(0xFF, 0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
     auto val = simd_load_si128<mem_mode>(ptr);
     return _mm_or_si128(_mm_slli_si128(val, 2), _mm_and_si128(val, mask_left));
@@ -301,7 +301,7 @@ static MT_FORCEINLINE __m128i load16_one_to_left(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128i load16_one_to_right(const Byte *ptr) {
-  if (border_mode == Border::Right) {
+  if constexpr (border_mode == Border::Right) {
     auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF, 0xFF);
     auto val = simd_load_si128<mem_mode>(ptr);
     return _mm_or_si128(_mm_srli_si128(val, 2), _mm_and_si128(val, mask_right));
@@ -313,7 +313,7 @@ static MT_FORCEINLINE __m128i load16_one_to_right(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128 load32_one_to_left(const Byte *ptr) {
-  if (border_mode == Border::Left) {
+  if constexpr (border_mode == Border::Left) {
     auto mask_left = _mm_setr_epi8(0xFF, 0xFF, 0xFF, 0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
     auto val = simd_load_si128<mem_mode>(ptr);
     return _mm_castsi128_ps(_mm_or_si128(_mm_slli_si128(val, 4), _mm_and_si128(val, mask_left)));
@@ -325,7 +325,7 @@ static MT_FORCEINLINE __m128 load32_one_to_left(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128 load32_one_to_right(const Byte *ptr) {
-  if (border_mode == Border::Right) {
+  if constexpr (border_mode == Border::Right) {
     auto mask_right = _mm_setr_epi8(00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 0xFF, 0xFF, 0xFF, 0xFF);
     auto val = simd_load_si128<mem_mode>(ptr);
     return _mm_castsi128_ps(_mm_or_si128(_mm_srli_si128(val, 4), _mm_and_si128(val, mask_right)));
@@ -340,7 +340,7 @@ template<Border border_mode, MemoryMode mem_mode>
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
-  if (border_mode == Border::Left) {
+  if constexpr (border_mode == Border::Left) {
     auto lo128 = load32_one_to_left<border_mode, mem_mode>(ptr); // really left!
     auto hi128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 4);
     return _mm256_set_m128(hi128, lo128);
@@ -355,7 +355,7 @@ template<Border border_mode, MemoryMode mem_mode>
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256 load32_one_to_right_si256(const Byte *ptr) {
-  if (border_mode == Border::Right) {
+  if constexpr(border_mode == Border::Right) {
     auto lo128 = simd_load_ps<MemoryMode::SSE2_UNALIGNED>(ptr+4);
     auto hi128 = load32_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
     return _mm256_set_m128(hi128, lo128);
@@ -373,7 +373,7 @@ static MT_FORCEINLINE __m128i simd_movehl_si128(const __m128i &a, const __m128i 
 
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_blend_epi8(__m128i const &selector, __m128i const &a, __m128i const &b) {
-  if (flags >= CPU_SSE4_1) {
+  if constexpr (flags >= CPU_SSE4_1) {
     return _mm_blendv_epi8(b, a, selector);
   }
   else {
@@ -392,7 +392,7 @@ static MT_FORCEINLINE __m256i simd256_blend_epi8(const __m256i &selector, const 
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_blendv_epi8(__m128i x, __m128i y, __m128i mask)
 {
-  if (flags >= CPU_SSE4_1) {
+  if constexpr (flags >= CPU_SSE4_1) {
     return _mm_blendv_epi8(x, y, mask);
   }
   else {
@@ -404,7 +404,7 @@ static MT_FORCEINLINE __m128i simd_blendv_epi8(__m128i x, __m128i y, __m128i mas
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128 simd_blendv_ps(__m128 x, __m128 y, __m128 mask)
 {
-  if (flags >= CPU_SSE4_1) {
+  if constexpr (flags >= CPU_SSE4_1) {
     return _mm_blendv_ps(x, y, mask);
   }
   else {
@@ -456,7 +456,7 @@ static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m12
   auto sat = _mm_sub_epi16(value, vHalf);
   auto low = _mm_cmpgt_epi16(sat, lowThresh);
   auto high = _mm_cmpgt_epi16(sat, highThresh);
-  if (bits_per_pixel < 16)
+  if constexpr (bits_per_pixel < 16)
     high = _mm_and_si128(high, maxMask); // clamp FFFF to 03FF 0FFF or 3FFF at 10, 12 and 14 bits
   auto result = _mm_and_si128(value, low);
   return _mm_or_si128(result, high); 
@@ -514,7 +514,7 @@ static MT_FORCEINLINE __m256 threshold32_avx(const __m256 &value, const __m256 &
 
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_mullo_epi32(__m128i &a, __m128i &b) {
-    if (flags >= CPU_SSE4_1) {
+    if constexpr (flags >= CPU_SSE4_1) {
         return _mm_mullo_epi32(a, b);
     } else {
         auto a13    = _mm_shuffle_epi32(a, 0xF5);          // (-,a3,-,a1)
@@ -547,7 +547,7 @@ static MT_FORCEINLINE __m128i _MM_MULLO_EPI32(const __m128i &a, const __m128i &b
 // fake _mm_packus_epi32 (orig is SSE4.1 only)
 static MT_FORCEINLINE __m128i _MM_PACKUS_EPI32(__m128i a, __m128i b)
 {
-  
+
   const __m128i val_32 = _mm_set1_epi32(0x8000);
   const __m128i val_16 = _mm_set1_epi16(0x8000);
 
@@ -578,7 +578,7 @@ static MT_FORCEINLINE __m256i _MM256_CMPLE_EPU16(__m256i x, __m256i y)
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_max_epu16(__m128i x, __m128i y)
 {
-  if (flags >= CPU_SSE4_1) {
+  if constexpr (flags >= CPU_SSE4_1) {
     return _mm_max_epu16(x, y);
   }
   else {
@@ -590,7 +590,7 @@ static MT_FORCEINLINE __m128i simd_max_epu16(__m128i x, __m128i y)
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_min_epu16(__m128i x, __m128i y)
 {
-  if (flags >= CPU_SSE4_1) {
+  if constexpr(flags >= CPU_SSE4_1) {
     return _mm_min_epu16(x, y);
   }
   else {
@@ -600,7 +600,7 @@ static MT_FORCEINLINE __m128i simd_min_epu16(__m128i x, __m128i y)
 
 template<CpuFlags flags>
 static MT_FORCEINLINE __m128i simd_packus_epi32(__m128i &a, __m128i &b) {
-  if (flags >= CPU_SSE4_1) {
+  if constexpr(flags >= CPU_SSE4_1) {
     return _mm_packus_epi32(a, b);
   }
   else {
@@ -654,13 +654,13 @@ static MT_FORCEINLINE void write_word_stacked_simd(Byte *pMsb, Byte *pLsb, int x
 template<BYTE shiftcount>
 MT_FORCEINLINE __m256i _MM256_SLLI_SI256(__m256i a)
 {
-  if (shiftcount == 0)
+  if constexpr(shiftcount == 0)
     return a;
-  else if (shiftcount < 16)
+  else if constexpr (shiftcount < 16)
     return _mm256_alignr_epi8(a, _mm256_permute2x128_si256(a, a, _MM_SHUFFLE(0, 0, 2, 0)), 16 - shiftcount);
-  else if (shiftcount == 16)
+  else if constexpr (shiftcount == 16)
     return _mm256_permute2x128_si256(a, a, _MM_SHUFFLE(0, 0, 2, 0));
-  else if (shiftcount < 32)
+  else if constexpr (shiftcount < 32)
     return _mm256_slli_si256(_mm256_permute2x128_si256(a, a, _MM_SHUFFLE(0, 0, 2, 0)), shiftcount - 16);
   return _mm256_setzero_si256();
 }
@@ -669,13 +669,13 @@ MT_FORCEINLINE __m256i _MM256_SLLI_SI256(__m256i a)
 template<BYTE shiftcount>
 MT_FORCEINLINE __m256i _MM256_SRLI_SI256(__m256i a)
 {
-  if (shiftcount == 0)
+  if constexpr (shiftcount == 0)
     return a;
-  if (shiftcount < 16)
+  else if constexpr (shiftcount < 16)
     return _mm256_alignr_epi8(_mm256_permute2x128_si256(a, a, _MM_SHUFFLE(2, 0, 0, 1)), a, shiftcount);
-  if (shiftcount == 16)
+  else if constexpr (shiftcount == 16)
     return _mm256_permute2x128_si256(a, a, _MM_SHUFFLE(2, 0, 0, 1));
-  if (shiftcount < 32)
+  else if constexpr (shiftcount < 32)
     return _mm256_srli_si256(_mm256_permute2x128_si256(a, a, _MM_SHUFFLE(2, 0, 0, 1)), shiftcount - 16);
   return _mm256_setzero_si256();
 }
