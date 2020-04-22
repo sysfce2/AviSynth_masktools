@@ -519,7 +519,7 @@ public:
         }
     }
 
-    virtual Frame<Byte> get_frame(int n, const Frame<Byte> &output_frame, IScriptEnvironment *env)
+    virtual Frame<Byte> get_frame(int n, const Frame<Byte> &output_frame, bool need_copy_frame_properties, PVideoFrame &dst, IScriptEnvironment *env)
     {
       Frame<Byte> output = output_frame.offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
 
@@ -536,6 +536,8 @@ public:
         // output in tmp_videoframes
         frames[i] = currentClip->get_const_frame(n + input_configuration()[i].offset(), tmp_videoframes[i], env)
           .offset(nXOffset, nYOffset, nCoreWidth, nCoreHeight);
+        if (need_copy_frame_properties && i == 0) // copy from first
+          env->copyFrameProps(tmp_videoframes[0], dst);
       }
 
       for (int i = 0; i < plane_counts[C]; i++) {

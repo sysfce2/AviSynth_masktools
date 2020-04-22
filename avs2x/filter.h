@@ -23,6 +23,7 @@ static CpuFlags AvsToInternalCpuFlags(int avsCpuFlags) {
 template<class T>
 class Filter : public GenericVideoFilter
 {
+    bool has_at_least_v8; // avs+ frame properties support
     T _filter;
     Signature signature;
     int inputConfigSize; // to prevent MT static init problems with /Zc:threadSafeInit- settings for WinXP
@@ -56,6 +57,15 @@ public:
         if (_filter.is_error())
         {
             env->ThrowError((signature.getName() + " : " + _filter.get_error()).c_str());
+        }
+
+        // querying v8 interface for frame properties support
+        has_at_least_v8 = true;
+        try { 
+          env->CheckVersion(8); 
+        } catch (const AvisynthError&) 
+        { 
+          has_at_least_v8 = false; 
         }
     }
 
@@ -112,15 +122,21 @@ public:
       }
 
       // filter is not a lut or lut w/o "Expr" call
-      PVideoFrame dst = _filter.is_in_place() ? child->GetFrame(n, env) : env->NewVideoFrame(vi);
+      PVideoFrame dst = _filter.is_in_place() ? 
+        child->GetFrame(n, env) : 
+        env->NewVideoFrame(vi);
 
       if (_filter.is_in_place()) {
         env->MakeWritable(&dst);
       }
 
+      const bool need_copy_frame_properties = has_at_least_v8 && !_filter.is_in_place();
+
       Frame<Byte> destination = dynamic_cast<Clip *>((Filtering::Clip *)_filter.get_childs()[0].get())->ConvertTo<Byte>(dst);
 
-      _filter.get_frame(n, destination, env);
+      // see in common/base/filter.h
+      // I have to pass dst as ref, this whole thing is very nice but was made so abstract that I'm unable to access dst from Frame<Byte>
+      _filter.get_frame(n, destination, need_copy_frame_properties, dst, env);
 
       return dst;
     }
