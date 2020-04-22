@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.21 (20200410)**
+**Masktools2 v2.2.22 (20200422)**
 
 mod by pinterf
 
@@ -35,6 +35,7 @@ Differences to Masktools 2.0b1
   mt_merge: 8-16 bit: AVX2, float:AVX
   mt_logic: 8-16 bit: AVX2, float:AVX
   mt_edge: 8-16 bit: AVX2, 32 bit float AVX
+  mt_expand, mt_inpand: 10-16 bit: AVX2
 - mt_polish to recognize new constants and scaling operator, and some other operators introduced in earlier versions.
   For a complete list, see v2.2.4 change log
 - new: mt_lutxyza. Accepts four clips. 4th variable name is 'a' (besides x, y and z)
@@ -343,6 +344,10 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.22 (20200422)
+- Add AVX2 to mt_expand and mt_inpand 10-16 bit processing
+- Add Avisynth+ interface V8 frame property copy support (test)
+
 **v2.2.21 (20200410)
 - Fix: mt_hysteresis for 10+ bits 
 
