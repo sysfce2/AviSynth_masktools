@@ -282,6 +282,9 @@
     <ClInclude Include="..\filters\mask\functions16_avx2.h">
       <Filter>filters\mask</Filter>
     </ClInclude>
+    <ClInclude Include="..\filters\morphologic\functions16_avx2.h">
+      <Filter>filters\morphologic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\avs2x\wrapper.cpp">
@@ -478,6 +481,12 @@
     </ClCompile>
     <ClCompile Include="..\filters\mask\edge\edgemask16_avx2.cpp">
       <Filter>filters\mask\edge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\morphologic\expand\expand16_avx2.cpp">
+      <Filter>filters\morphologic\expand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\filters\morphologic\inpand\inpand16_avx2.cpp">
+      <Filter>filters\morphologic\inpand</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

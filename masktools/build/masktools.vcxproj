@@ -439,6 +439,7 @@
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -481,6 +482,7 @@
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -523,6 +525,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -566,6 +569,7 @@
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AdditionalOptions>-Wno-gcc-compat -msse4.1 -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -609,6 +613,7 @@
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AdditionalOptions>-Wno-gcc-compat -msse4.1 -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -652,6 +657,7 @@
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -694,6 +700,7 @@
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <Cpp0xSupport>true</Cpp0xSupport>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -736,6 +743,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -778,6 +786,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -819,6 +828,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -860,6 +870,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <AdditionalOptions>-Wno-gcc-compat -msse4.1 -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -901,6 +912,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <AdditionalOptions>-Wno-gcc-compat -msse4.1 -Wno-unused-function %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -943,6 +955,7 @@
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
       <AdditionalOptions> /Zc:threadSafeInit- %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -985,6 +998,7 @@
       </DebugInformationFormat>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <AssemblerListingLocation>$(IntDir)\asm\</AssemblerListingLocation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -1019,6 +1033,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <PreprocessToFile>false</PreprocessToFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1051,6 +1066,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>common_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -1080,6 +1096,7 @@
     <ClInclude Include="..\filters\mask\functions_avx2.h" />
     <ClInclude Include="..\filters\merge\merge.h" />
     <ClInclude Include="..\filters\morphologic\functions16.h" />
+    <ClInclude Include="..\filters\morphologic\functions16_avx2.h" />
     <ClInclude Include="..\filters\morphologic\functions32.h" />
     <ClInclude Include="..\filters\morphologic\morphologic.h" />
     <ClInclude Include="..\filters\morphologic\functions.h" />
@@ -1318,6 +1335,24 @@
     <ClCompile Include="..\filters\morphologic\deflate\deflate32.cpp" />
     <ClCompile Include="..\filters\morphologic\expand\expand.cpp" />
     <ClCompile Include="..\filters\morphologic\expand\expand16.cpp" />
+    <ClCompile Include="..\filters\morphologic\expand\expand16_avx2.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-boost|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-clangCL|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-boost|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-clangCL|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\filters\morphologic\expand\expand32.cpp" />
     <ClCompile Include="..\filters\morphologic\inflate\inflate16.cpp" />
     <ClCompile Include="..\filters\morphologic\inflate\inflate32.cpp" />
@@ -1333,6 +1368,24 @@
     <ClCompile Include="..\filters\logic\logic.cpp" />
     <ClCompile Include="..\filters\convolution\convolution.cpp" />
     <ClCompile Include="..\filters\morphologic\inpand\inpand16.cpp" />
+    <ClCompile Include="..\filters\morphologic\inpand\inpand16_avx2.cpp">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-boost|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-clangCL|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|Win32'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-boost|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-LLVM-clangCL|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-boost-dualsign|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='profile-avs26-16bit|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='debug-avs26-16bit|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='release-no-boost-dualsign|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\filters\morphologic\inpand\inpand32.cpp" />
     <ClCompile Include="..\filters\support\adddiff16\adddiff16.cpp" />
     <ClCompile Include="..\filters\support\average16\average16.cpp" />
