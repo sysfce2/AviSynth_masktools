@@ -195,7 +195,7 @@ public:
 
 
          /* ternary ops */
-         termter = term6 >> *((ch_p('?') >> term6 >> ch_p(':') >> term6)[AddNamedSymbol("?", self.rpn)]);
+         termter = term6 >> *((ch_p('?') >> termter >> ch_p(':') >> termter)[AddNamedSymbol("?", self.rpn)]);
         }
         rule<ScannerT> factor, term0, term1, term2, term3, term4, term5, term6, termter;
 
