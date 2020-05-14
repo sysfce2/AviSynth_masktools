@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.22 (20200422)**
+**Masktools2 v2.2.23 (20200514)**
 
 mod by pinterf
 
@@ -344,6 +344,14 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.23 (20200513)
+- fix mt_polish for nested ternary operators
+  Example: 
+    mt_polish("x > 128 ? 255 : x > 64 ? 128 : 0")
+  results: 
+    "x 128 > 255 x 64 > 128 0 ? ?" 
+  (was: "x 128 > 255 x 64 > ? 128 0 ?")
+ 
 **v2.2.22 (20200422)
 - Add AVX2 to mt_expand and mt_inpand 10-16 bit processing
 - Add Avisynth+ interface V8 frame property copy support (test)
