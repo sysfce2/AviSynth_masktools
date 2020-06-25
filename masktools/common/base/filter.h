@@ -364,6 +364,10 @@ public:
             }
         }
 
+        // don't try to process non-existant planes
+        for (int i = plane_counts[C]; i < 4; i++)
+          operators[i] = NONE;
+
         /* effective modes */
         print(LOG_DEBUG, "modes : %i %i %i %i\n", operators[0].getMode(), operators[1].getMode(), operators[2].getMode(), operators[3].getMode());
 

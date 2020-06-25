@@ -179,7 +179,7 @@ public:
             for (int i = 0; i < plane_counts[C]; i++)
                 planes[i] = Avisynth2x::ConvertTo<T>(frame, planes_isRGB[C] ? PlaneOrderRGB[i] : PlaneOrder[i], nPixelSize);
         }
-        return plane_counts[C] == 1 ? Frame<T>(planes[0]) : Frame<T>(planes, C);
+        return plane_counts[C] == 1 ? Frame<T>(planes[0], C) : Frame<T>(planes, C);
     }
 
 
