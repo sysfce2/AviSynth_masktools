@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.23 (20200514)**
+**Masktools2 v2.2.24 (20200619)**
 
 mod by pinterf
 
@@ -344,6 +344,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.24 (20200619)
+- fix: mt_convolution divbyzero when greyscale + forced U=3,V=3 (process chroma)
+
 **v2.2.23 (20200513)
 - fix mt_polish for nested ternary operators
   Example: 
