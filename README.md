@@ -1,6 +1,6 @@
 ﻿### MaskTools 2 ###
 
-**Masktools2 v2.2.24 (20200619)**
+**Masktools2 v2.2.25 (20200813)**
 
 mod by pinterf
 
@@ -289,12 +289,20 @@ Example #3 (new, with constants)
   expr="x 2 /"
   expr="2 x swap /"
 ```  
+- new: "swap1" to "swap9" keywords in expressions (v2.2.25-)
+  Swaps the Nth stack result with stack top (top is N=0) during RPN evaluation.
+  Appears as a function in mt_infix.
+
 - new: "dup" keyword in expressions (v2.2.5-)
-  duplicates the last result and put on the top of RPN evaluation stack. Not compatible with mt_infix()
+  Duplicates the last result and put on the top of RPN evaluation stack.
 ```  
   expr="x 3 / x 3 / +"
   expr="x 3 / dup +"
 ```  
+- new: "dup0" to "dup9" keyword in expressions (v2.2.25-)
+  Duplicates the Nth result and put on the top of RPN evaluation stack.
+  dup0 is the same as dup.
+  Appears as a function in mt_infix
   
    
 - Feature matrix   
@@ -344,6 +352,15 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.25 (20200813)
+- Introduce swap1 to swap9, dup0 to dup9 keywords besides dup and swap
+- mt_infix duplicates the expression string when 'dup' found.
+  swap, swap1..9 and dup1..9 in mt_infix appear as functions
+  This is in no way a proper solution and does not result in valid expression.
+  The effect of stack operations on the resulting expression is not easy to stringify.
+  At least now dup and swap will appear somehow in infix.
+- mt_edge, mt_logic: fix possible use of AVX2 instructions on AVX-only processors (such as on i7-3930)
+
 **v2.2.24 (20200619)
 - fix: mt_convolution divbyzero when greyscale + forced U=3,V=3 (process chroma)
 
