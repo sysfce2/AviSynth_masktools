@@ -118,6 +118,8 @@ Parser::Parser Parser::getDefaultParser()
    parser.addSymbol(Symbol::ScaleByShiftY).addSymbol(Symbol::ScaleByStretchY);
    /* swap and dup */
    parser.addSymbol(Symbol::Swap).addSymbol(Symbol::Dup);
+   parser.addSymbol(Symbol::Dup0).addSymbol(Symbol::Dup1).addSymbol(Symbol::Dup2).addSymbol(Symbol::Dup3).addSymbol(Symbol::Dup4).addSymbol(Symbol::Dup5).addSymbol(Symbol::Dup6).addSymbol(Symbol::Dup7).addSymbol(Symbol::Dup8).addSymbol(Symbol::Dup9);
+   parser.addSymbol(Symbol::Swap1).addSymbol(Symbol::Swap2).addSymbol(Symbol::Swap3).addSymbol(Symbol::Swap4).addSymbol(Symbol::Swap5).addSymbol(Symbol::Swap6).addSymbol(Symbol::Swap7).addSymbol(Symbol::Swap8).addSymbol(Symbol::Swap9);
    /* config commands for setting base bit depth of the script */
    parser.addSymbol(Symbol::SetScriptBitDepthI8).addSymbol(Symbol::SetScriptBitDepthI10).addSymbol(Symbol::SetScriptBitDepthI12);
    parser.addSymbol(Symbol::SetScriptBitDepthI14).addSymbol(Symbol::SetScriptBitDepthI16).addSymbol(Symbol::SetScriptBitDepthF32);

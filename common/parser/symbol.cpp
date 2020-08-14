@@ -263,20 +263,47 @@ Symbol Symbol::SetFloatToClampUseI16Range("clamp_f_i16", -16.0, FUNCTION_CONFIG_
 Symbol Symbol::SetFloatToClampUseF32Range("clamp_f_f32", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 Symbol Symbol::SetFloatToClampUseF32Range_2("clamp_f", -32.0, FUNCTION_CONFIG_SCRIPT_BITDEPTH, 0, NULL);
 
-Symbol Symbol::Dup("dup", DUP);
-Symbol Symbol::Swap("swap", SWAP);
+Symbol Symbol::Dup("dup", DUP, 0); // dup 0
+Symbol Symbol::Dup0("dup0", DUP, 0); // duplicates Nth stack element to the top
+Symbol Symbol::Dup1("dup1", DUP, 1);
+Symbol Symbol::Dup2("dup2", DUP, 2);
+Symbol Symbol::Dup3("dup3", DUP, 3);
+Symbol Symbol::Dup4("dup4", DUP, 4);
+Symbol Symbol::Dup5("dup5", DUP, 5);
+Symbol Symbol::Dup6("dup6", DUP, 6);
+Symbol Symbol::Dup7("dup7", DUP, 7);
+Symbol Symbol::Dup8("dup8", DUP, 8);
+Symbol Symbol::Dup9("dup9", DUP, 9);
+Symbol Symbol::Swap("swap", SWAP, 1); // swap 1 and 2 (n and top)
+Symbol Symbol::Swap1("swap1", SWAP, 1); // swaps Nth stack element with the top (top is 0)
+Symbol Symbol::Swap2("swap2", SWAP, 2);
+Symbol Symbol::Swap3("swap3", SWAP, 3);
+Symbol Symbol::Swap4("swap4", SWAP, 4);
+Symbol Symbol::Swap5("swap5", SWAP, 5);
+Symbol Symbol::Swap6("swap6", SWAP, 6);
+Symbol Symbol::Swap7("swap7", SWAP, 7);
+Symbol Symbol::Swap8("swap8", SWAP, 8);
+Symbol Symbol::Swap9("swap9", SWAP, 9);
 
 Symbol::Symbol() :
 type(UNDEFINED), value(""), value2("")
 {
 }
 
-// dup, swap, direct numeric literals from parser
+// direct numeric literals from parser
 Symbol::Symbol(String value, Type type) :
   type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(""), nParameter(0), process0(NULL), process1(NULL), process2(NULL), process3(NULL)
 {
   if (type == NUMBER)
     dValue = atof(value.c_str());
+}
+
+
+// dup, swap
+// dup0 .. dup9, swap1..swap9
+Symbol::Symbol(String value, Type type, int nParameter) :
+  type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(""), nParameter(nParameter), process0(NULL), process1(NULL), process2(NULL), process3(NULL)
+{
 }
 
 // function, operator, ternary
@@ -652,12 +679,20 @@ double Context::rec_compute()
       }
       break;
     }
-    case Symbol::DUP: { exprstack[p++] = last; break;  }
+
+    case Symbol::DUP: {
+      int distance = s.nParameter; // 1..9  duplicates the nth distance stack value to the top
+      if(distance != 0)
+        last = exprstack[p - distance];
+      exprstack[p++] = last;
+      break;
+    }
 
     case Symbol::SWAP:
     {
-      double p1 = exprstack[p-1];
-      exprstack[p-1] = last;
+      int distance = s.nParameter; // 1..9  exchanges stacktop with the nth distance stack value
+      double p1 = exprstack[p - distance];
+      exprstack[p - distance] = last;
       last = p1;
       break;
     }
@@ -883,12 +918,16 @@ String Context::rec_infix()
       return s.value + "(" + rec_infix() + ")";
     }
 
-    case Symbol::DUP: {
-      return ""; // cannot convert to infix
+    case Symbol::DUP:
+    {
+      // really a stack operation, try to fake convert as function to infix
+      return s.value + "(" + rec_infix() + ")";
     }
 
-    case Symbol::SWAP: {
-      return ""; // cannot convert to infix
+    case Symbol::SWAP:
+    {
+      // really a stack operation, try to fake convert as function to infix
+      return s.value + "(" + rec_infix() + ")";
     }
 
     default:

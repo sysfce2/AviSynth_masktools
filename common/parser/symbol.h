@@ -88,8 +88,10 @@ private:
 public:
 
    Symbol();
-   // dup, swap, direct numeric literals from parser
+   // direct numeric literals from parser
    Symbol(String value, Type type);
+   // dup, swap
+   Symbol(String value, Type type, int nParameter);
    // functions, operators, ternary
    Symbol(String value, Type type, Process0 process);
    Symbol(String value, Type type, Process1 process);
@@ -201,6 +203,26 @@ public:
    // v.2.2.5 extensions
    static Symbol Swap;
    static Symbol Dup;
+   // v 2.2.25
+   static Symbol Swap1;
+   static Symbol Swap2;
+   static Symbol Swap3;
+   static Symbol Swap4;
+   static Symbol Swap5;
+   static Symbol Swap6;
+   static Symbol Swap7;
+   static Symbol Swap8;
+   static Symbol Swap9;
+   static Symbol Dup0;
+   static Symbol Dup1;
+   static Symbol Dup2;
+   static Symbol Dup3;
+   static Symbol Dup4;
+   static Symbol Dup5;
+   static Symbol Dup6;
+   static Symbol Dup7;
+   static Symbol Dup8;
+   static Symbol Dup9;
 };
 
 class Context {

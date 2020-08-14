@@ -145,6 +145,27 @@ public:
                  (str_p("acos") >> '(' >> (termter) >> ')')[AddNamedSymbol("acos", self.rpn)] |
                  (str_p("asin") >> '(' >> (termter) >> ')')[AddNamedSymbol("asin", self.rpn)] |
                  (str_p("round") >> '(' >> (termter) >> ')')[AddNamedSymbol("round", self.rpn)] |
+                 (str_p("dup0") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup0", self.rpn)] |
+                 (str_p("dup1") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup1", self.rpn)] |
+                 (str_p("dup2") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup2", self.rpn)] |
+                 (str_p("dup3") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup3", self.rpn)] |
+                 (str_p("dup4") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup4", self.rpn)] |
+                 (str_p("dup5") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup5", self.rpn)] |
+                 (str_p("dup6") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup6", self.rpn)] |
+                 (str_p("dup7") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup7", self.rpn)] |
+                 (str_p("dup8") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup8", self.rpn)] |
+                 (str_p("dup9") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup9", self.rpn)] |
+                 (str_p("dup") >> '(' >> (termter) >> ')')[AddNamedSymbol("dup", self.rpn)] |
+                 (str_p("swap1") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap1", self.rpn)] |
+                 (str_p("swap2") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap2", self.rpn)] |
+                 (str_p("swap3") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap3", self.rpn)] |
+                 (str_p("swap4") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap4", self.rpn)] |
+                 (str_p("swap5") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap5", self.rpn)] |
+                 (str_p("swap6") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap6", self.rpn)] |
+                 (str_p("swap7") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap7", self.rpn)] |
+                 (str_p("swap8") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap8", self.rpn)] |
+                 (str_p("swap9") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap9", self.rpn)] |
+                 (str_p("swap") >> '(' >> (termter) >> ')')[AddNamedSymbol("swap", self.rpn)] |
                  (str_p("min") >> '(' >> (termter) >> ',' >> (termter) >> ')')[AddNamedSymbol("min", self.rpn)] |
                  (str_p("max") >> '(' >> (termter) >> ',' >> (termter) >> ')')[AddNamedSymbol("max", self.rpn)] |
                  (str_p("clip") >> '(' >> (termter) >> ',' >> (termter) >> ',' >> (termter) >> ')')[AddNamedSymbol("clip", self.rpn)];
