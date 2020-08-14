@@ -352,7 +352,7 @@ static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
 
 template<Border border_mode, MemoryMode mem_mode>
 #ifdef __clang__
-__attribute__((__target__("avx2")))
+__attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 load32_one_to_right_si256(const Byte *ptr) {
   if constexpr(border_mode == Border::Right) {
