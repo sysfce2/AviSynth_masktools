@@ -1,5 +1,7 @@
 ﻿### MaskTools 2 ###
 
+(20201229: can be built under linux/gcc)
+
 **Masktools2 v2.2.26 (20200904)**
 
 mod by pinterf
@@ -353,6 +355,19 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**no new version (20201229)
+- Source syntax for GCC
+- CMake build environment, builds on Linux, at least on my (pinterf) Ubuntu 19.10 WSL
+  (INTEL_INTRINSICS handling not implemented in the source, so it compiles on Intel at the moment)
+  (Neither is boost library incorporated: mt_infix is unavaliable, MT_HAVE_BOOST_SPIRIT is not defined - maybe later)
+
+  git clone https://github.com/pinterf/masktools.git
+  cd masktools
+  mkdir build
+  cd build
+  cmake ..
+  sudo make install
+
 **v2.2.26 (20200904)
 - mt_lut family: ignore "use_expr" parameter if "Expr" function does not exist in ancient AviSynth versions.
 - more friendly error messages when an exception occurs during "Expr" call.
