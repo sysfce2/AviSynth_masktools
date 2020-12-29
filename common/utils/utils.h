@@ -9,10 +9,18 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <float.h>
+#include <limits>
+#include <cstring>
+#include <cctype>
+#include <cmath>
 
+
+#ifdef _WIN32
 #define NOMINMAX // no min & max macros
 #include <windows.h>
 #undef NOMINMAX
+#endif
+
 
 #pragma warning(disable:4267) // disable possible loss of data conversion
 #pragma warning(disable:4127) // disable conditional expression is constant
@@ -34,9 +42,11 @@ typedef double Double;
 typedef std::string String;
 
 /* case insensive == operator for String */
+
 static inline bool operator==(const String &s1, const String &s2)
 {
-   return s1.size() == s2.size() && !_strnicmp( s1.c_str(), s2.c_str(), s1.size() );
+  return s1.size() == s2.size() && std::equal(s1.begin(), s1.end(), s2.begin(), [](auto a, auto b) {return std::tolower(a) == std::tolower(b); });
+//     !_strnicmp( s1.c_str(), s2.c_str(), s1.size() );
 }
 
 
@@ -149,16 +159,20 @@ static inline void print(LogLevel level, const char *format, ...)
    if ( level > MAX_LOG_LEVEL )
       return;
 
+#ifdef _WIN32
    va_start(args, format);
    vsprintf(buf, format, args);
    OutputDebugString(buf);
+#else
+   // non-Windows: debug output not implemented
+#endif
 }
 
 /* min & max */
 template<typename T> T min(T a, T b) { return a < b ? a : b; }
 template<typename T> T max(T a, T b) { return a > b ? a : b; }
 
-static inline double fix(double a) { return _isnan(a) || !_finite(a) ? 0 : a; }
+static inline double fix(double a) { return std::isnan(a) || !std::isfinite(a) ? 0 : a; }
 
 /* abs */
 template<typename T> static T abs(T x) { return x < 0 ? -x : x; }
@@ -171,14 +185,14 @@ template<typename T> static T max_value() { return T(-1); } // unsigned only, al
 template<> inline int max_value<int>() { return 0x7fffffff; }
 template<> inline Short max_value<Short>() { return (1 << 15) - 1; }
 template<> inline Char max_value<Char>() { return (1 << 7) - 1; }
-template<> inline Int64 max_value<Int64>() { return 0x7FFFFFFFFFFFFFFFLL; }
+template<> inline Int64 max_value<Int64>() { return std::numeric_limits<int64_t>::max(); /*0x7FFFFFFFFFFFFFFFLL;*/ }
 template<> inline Float max_value<Float>() { return 1.0f; } // for mask
 
 /* min_value, for integer type */
 template<typename T> static T min_value() { return 0; } // unsigned only
 template<> inline Short min_value<Short>() { return -(1 << 15); }
 template<> inline Char min_value<Char>() { return -(1 << 7); }
-template<> inline Int64 min_value<Int64>() { return -(1LL << 63); }
+template<> inline Int64 min_value<Int64>() { return std::numeric_limits<int64_t>::min(); /*-(1LL << 63);*/ }
 
 /* ceiled & floored round */
 template<typename T> static T ceiled(T x, T mod) { return ((x + mod - 1) / mod) * mod; }

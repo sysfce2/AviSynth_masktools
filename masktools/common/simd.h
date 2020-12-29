@@ -5,21 +5,95 @@
 #include <smmintrin.h>
 #include <immintrin.h>
 
-#ifdef __clang__
+/*
+#if defined(GCC) || defined(CLANG)
 // in clang immintrin.h only inlcudes them if the whole module is targeted as avx/avx2
 #include <avxintrin.h>
 #include <avx2intrin.h>
 #endif
+*/
+
+#if defined (__GNUC__) && ! defined (__INTEL_COMPILER)
+#include <x86intrin.h>
+// x86intrin.h includes header files for whatever instruction
+// sets are specified on the compiler command line, such as: xopintrin.h, fma4intrin.h
+#else
+#include <immintrin.h> // MS version of immintrin.h covers AVX, AVX2 and FMA3
+#endif // __GNUC__
+
+// fixme: separate to simd_avx(2).h
+// then this warning can go back
+#if 0
+#if !defined(__FMA__)
+// Assume that all processors that have AVX2 also have FMA3
+#if defined (__GNUC__) && !defined (__INTEL_COMPILER) && ! defined (__clang__)
+// Prevent error message in g++ when using FMA intrinsics with avx2:
+#pragma message "It is recommended to specify also option -mfma when using -mavx2 or higher"
+#else
+#define __FMA__  1
+#endif
+#endif
+#endif
+
+// FMA3 instruction set
+#if defined (__FMA__) && (defined(__GNUC__) || defined(__clang__))  && ! defined (__INTEL_COMPILER)
+#include <fmaintrin.h>
+#endif // __FMA__ 
+
+// define some simd macros which work on msvc but not in gcc
+
+#ifndef _mm256_cvtsi256_si32
+// int _mm256_cvtsi256_si32 (__m256i a)
+#define _mm256_cvtsi256_si32(a) (_mm_cvtsi128_si32(_mm256_castsi256_si128(a)))
+#endif
+
+#ifndef _mm256_loadu2_m128i
+#define _mm256_loadu2_m128i(/* __m128i const* */ hiaddr, \
+                            /* __m128i const* */ loaddr) \
+    _mm256_set_m128i(_mm_loadu_si128(hiaddr), _mm_loadu_si128(loaddr))
+#endif
+
+#ifndef _mm256_loadu2_m128
+#define _mm256_loadu2_m128(/* float const* */ hiaddr, \
+                           /* float const* */ loaddr) \
+    _mm256_set_m128(_mm_loadu_ps(hiaddr), _mm_loadu_ps(loaddr))
+#endif
+
 
 #include "common.h"
 
 namespace Filtering {
 
-//because ICC is smart enough on its own and force inlining actually makes it slower
-#ifdef __INTEL_COMPILER
-#define MT_FORCEINLINE inline
+#ifndef MT_FORCEINLINE
+#if defined(__clang__)
+// Check clang first. clang-cl also defines __MSC_VER
+// We set MSVC because they are mostly compatible
+#   define CLANG
+#if defined(_MSC_VER)
+#   define MSVC
+#   define MT_FORCEINLINE __attribute__((always_inline)) inline
 #else
-#define MT_FORCEINLINE __forceinline
+#   define MT_FORCEINLINE __attribute__((always_inline)) inline
+#endif
+#elif   defined(_MSC_VER)
+#   define MSVC
+#   define MSVC_PURE
+#   define MT_FORCEINLINE __forceinline
+#elif defined(__GNUC__)
+#   define GCC
+#   define MT_FORCEINLINE __attribute__((always_inline)) inline
+#else
+#   define MT_FORCEINLINE inline
+#   undef __forceinline
+#   define __forceinline inline
+#endif 
+
+#endif
+
+#if defined(GCC)
+#include <stdlib.h>
+#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
+#define _aligned_free(ptr) free(ptr)
 #endif
 
 #define USE_MOVPS
@@ -104,7 +178,7 @@ static MT_FORCEINLINE void simd_store_ps(T *ptr, __m128 value) {
 }
 
 template<MemoryMode mem_mode, typename T>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i simd256_load_si256(const T* ptr) {
@@ -125,8 +199,9 @@ static MT_FORCEINLINE __m256i simd256_load_si256(const T* ptr) {
 #endif
 }
 
+
 template<MemoryMode mem_mode, typename T>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 simd256_load_ps(const T* ptr) {
@@ -148,6 +223,9 @@ static MT_FORCEINLINE __m256 simd256_load_ps(const T* ptr) {
 }
 
 template<MemoryMode mem_mode, typename T>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 simd256_128_load_ps(const T* ptr) {
   if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
     return _mm256_loadu2_m128(reinterpret_cast<const float*>(ptr) + 4, reinterpret_cast<const float*>(ptr));
@@ -158,6 +236,9 @@ static MT_FORCEINLINE __m256 simd256_128_load_ps(const T* ptr) {
 }
 
 template<MemoryMode mem_mode, typename T>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE void simd256_store_si256(T *ptr, __m256i value) {
 #ifdef USE_MOVPS
   if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
@@ -177,6 +258,9 @@ static MT_FORCEINLINE void simd256_store_si256(T *ptr, __m256i value) {
 }
 
 template<MemoryMode mem_mode, typename T>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE void simd256_store_ps(T *ptr, __m256 value) {
 #ifdef USE_MOVPS
   if constexpr (mem_mode == MemoryMode::SSE2_ALIGNED) {
@@ -200,10 +284,21 @@ static MT_FORCEINLINE void simd256_store_ps(T *ptr, __m256 value) {
 static MT_FORCEINLINE int simd_bit_scan_forward(int value) {
 #ifdef __INTEL_COMPILER
     return _bit_scan_forward(value);
+#elif __GNUC__
+  // assume: value contains at least 1 bits set to 1
+  auto index = __builtin_ffsll(value);
+  return index - 1; // return the real position, ignore 'not found' case when result is 0
+  // Built-in Function : int __builtin_ffs(int x)
+  // Returns one plus the index of the least significant 1 - bit of x, or if x is zero, returns zero.
 #else
     unsigned long index;
     _BitScanForward(&index, value);
+    /*
+    If a set bit is found, the bit position of the first set bit found is returned in the first parameter.
+    If no set bit is found, 0 is returned; otherwise, 1 is returned.
+    */
     return index;
+
 #endif
 }
 
@@ -240,6 +335,9 @@ static MT_FORCEINLINE __m128i load_one_to_right(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i load_one_to_left_si256(const Byte *ptr) {
   if constexpr (border_mode == Border::Left) {
     auto lo128 = load_one_to_left<border_mode, mem_mode>(ptr); // really left!
@@ -252,6 +350,9 @@ static MT_FORCEINLINE __m256i load_one_to_left_si256(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i load_one_to_right_si256(const Byte *ptr) {
   if constexpr (border_mode == Border::Right) {
     auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
@@ -260,30 +361,6 @@ static MT_FORCEINLINE __m256i load_one_to_right_si256(const Byte *ptr) {
   }
   else {
     return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr + 1);
-  }
-}
-
-template<Border border_mode, MemoryMode mem_mode>
-static MT_FORCEINLINE __m256i load16_one_to_left_si256(const Byte *ptr) {
-  if constexpr (border_mode == Border::Left) {
-    auto lo128 = load16_one_to_left<border_mode, mem_mode>(ptr); // really left!
-    auto hi128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 2);
-    return _mm256_set_m128i(hi128, lo128);
-  }
-  else {
-    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr - 2);
-  }
-}
-
-template<Border border_mode, MemoryMode mem_mode>
-static MT_FORCEINLINE __m256i load16_one_to_right_si256(const Byte *ptr) {
-  if constexpr (border_mode == Border::Right) {
-    auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
-    auto hi128 = load16_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
-    return _mm256_set_m128i(hi128, lo128);
-  }
-  else {
-    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
   }
 }
 
@@ -312,6 +389,37 @@ static MT_FORCEINLINE __m128i load16_one_to_right(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
+static MT_FORCEINLINE __m256i load16_one_to_left_si256(const Byte* ptr) {
+  if constexpr (border_mode == Border::Left) {
+    auto lo128 = load16_one_to_left<border_mode, mem_mode>(ptr); // really left!
+    auto hi128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 16 - 2);
+    return _mm256_set_m128i(hi128, lo128);
+  }
+  else {
+    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr - 2);
+  }
+}
+
+template<Border border_mode, MemoryMode mem_mode>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
+static MT_FORCEINLINE __m256i load16_one_to_right_si256(const Byte* ptr) {
+  if constexpr (border_mode == Border::Right) {
+    auto lo128 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
+    auto hi128 = load16_one_to_right<border_mode, mem_mode>(ptr + 16); // really right!
+    return _mm256_set_m128i(hi128, lo128);
+  }
+  else {
+    return simd256_load_si256<MemoryMode::SSE2_UNALIGNED>(ptr + 2);
+  }
+}
+
+
+template<Border border_mode, MemoryMode mem_mode>
 static MT_FORCEINLINE __m128 load32_one_to_left(const Byte *ptr) {
   if constexpr (border_mode == Border::Left) {
     auto mask_left = _mm_setr_epi8(0xFF, 0xFF, 0xFF, 0xFF, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00);
@@ -336,7 +444,7 @@ static MT_FORCEINLINE __m128 load32_one_to_right(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
@@ -351,7 +459,7 @@ static MT_FORCEINLINE __m256 load32_one_to_left_si256(const Byte *ptr) {
 }
 
 template<Border border_mode, MemoryMode mem_mode>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 load32_one_to_right_si256(const Byte *ptr) {
@@ -381,7 +489,7 @@ static MT_FORCEINLINE __m128i simd_blend_epi8(__m128i const &selector, __m128i c
   }
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i simd256_blend_epi8(const __m256i &selector, const __m256i &a, const __m256i &b) {
@@ -413,7 +521,7 @@ static MT_FORCEINLINE __m128 simd_blendv_ps(__m128 x, __m128 y, __m128 mask)
   }
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 simd256_blendv_ps(__m256 x, __m256 y, __m256 mask)
@@ -421,7 +529,7 @@ static MT_FORCEINLINE __m256 simd256_blendv_ps(__m256 x, __m256 y, __m256 mask)
   return _mm256_blendv_ps(x, y, mask);
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i simd256_blendv_epi8(__m256i x, __m256i y, __m256i mask)
@@ -439,7 +547,7 @@ static MT_FORCEINLINE __m128i threshold_sse2(const __m128i &value, const __m128i
     return _mm_or_si128(result, high);
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i threshold_avx2(const __m256i &value, const __m256i &lowThresh, const __m256i &highThresh, const __m256i &v128) {
@@ -464,7 +572,7 @@ static MT_FORCEINLINE __m128i threshold16_sse2(const __m128i &value, const __m12
 
 //  thresholds are decreased by half range in order to do signed comparison
 template<int bits_per_pixel>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i threshold16_avx2(const __m256i &value, const __m256i &lowThresh, const __m256i &highThresh, const __m256i &vHalf, const __m256i &maxMask) {
@@ -490,14 +598,14 @@ static MT_FORCEINLINE __m128 threshold32_sse2(const __m128 &value, const __m128 
   return result;
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 _mm256_cmpgt_ps(__m256 a, __m256 b) {
   return _mm256_cmp_ps(a, b, _CMP_NLE_US); // NLE = GT
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx")))
 #endif
 static MT_FORCEINLINE __m256 threshold32_avx(const __m256 &value, const __m256 &lowThresh, const __m256 &highThresh) {
@@ -527,6 +635,9 @@ static MT_FORCEINLINE __m128i simd_mullo_epi32(__m128i &a, __m128i &b) {
     }
 }
 
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256i simd256_mullo_epi32(__m256i &a, __m256i &b) {
   return _mm256_mullo_epi32(a, b);
 }
@@ -568,6 +679,9 @@ static MT_FORCEINLINE __m128i _MM_CMPLE_EPU16(__m128i x, __m128i y)
 }
 
 // non-existant in simd
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
 static MT_FORCEINLINE __m256i _MM256_CMPLE_EPU16(__m256i x, __m256i y)
 {
   // Returns 0xFFFF where x <= y:
@@ -620,12 +734,18 @@ static MT_FORCEINLINE __m128 simd_abs_diff_ps(__m128 a, __m128 b) {
   return _mm_and_ps(_mm_sub_ps(a, b), absmask);
 }
 
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 simd256_abs_ps(__m256 a) {
   // maybe not optimal, mask may be generated 
   const __m256 absmask = _mm256_castsi256_ps(_mm256_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
   return _mm256_and_ps(a, absmask);
 }
 
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx")))
+#endif
 static MT_FORCEINLINE __m256 simd256_abs_diff_ps(__m256 a, __m256 b) {
   // maybe not optimal
   const __m256 absmask = _mm256_castsi256_ps(_mm256_set1_epi32(~(1 << 31))); // 0x7FFFFFFF
@@ -652,6 +772,9 @@ static MT_FORCEINLINE void write_word_stacked_simd(Byte *pMsb, Byte *pLsb, int x
 #pragma warning(disable: 4556)
 // simulate real 256 bit byte-shift (not 2x128 lanes)
 template<BYTE shiftcount>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
 MT_FORCEINLINE __m256i _MM256_SLLI_SI256(__m256i a)
 {
   if constexpr(shiftcount == 0)
@@ -667,6 +790,9 @@ MT_FORCEINLINE __m256i _MM256_SLLI_SI256(__m256i a)
 
 // simulate real 256 bit byte-shift (not 2x128 lanes)
 template<BYTE shiftcount>
+#if defined(GCC) || defined(CLANG)
+__attribute__((__target__("avx2")))
+#endif
 MT_FORCEINLINE __m256i _MM256_SRLI_SI256(__m256i a)
 {
   if constexpr (shiftcount == 0)

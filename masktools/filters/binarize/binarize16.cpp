@@ -96,7 +96,7 @@ static inline __m128i binarize_upper_sse2_op(__m128i x, __m128i t, __m128i, __m1
 }
 
 template<int bits_per_pixel>
-static __forceinline __m128i binarize_lower_sse2_op(__m128i x, __m128i, __m128i halfrange, __m128i &max) {
+static MT_FORCEINLINE __m128i binarize_lower_sse2_op(__m128i x, __m128i, __m128i halfrange, __m128i &max) {
 #pragma warning(disable: 4309)
   auto r = _mm_add_epi16(x,  _mm_set1_epi16(0x8000)); // 0x8000 for (at 8 bit version:0x80) and 16bit branch signed cmp
 #pragma warning(default: 4309)
@@ -115,7 +115,7 @@ static inline __m128i binarize_0_x_sse2_op(__m128i x, __m128i t, __m128i halfran
 }
 
 template<int bits_per_pixel>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static inline __m128i binarize_t_x_sse2_op(__m128i x, __m128i t, __m128i, __m128i &) {
@@ -129,7 +129,7 @@ static inline __m128i binarize_x_0_sse2_op(__m128i x, __m128i t, __m128i halfran
 }
 
 template<int bits_per_pixel>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static inline __m128i binarize_x_t_sse2_op(__m128i x, __m128i t, __m128i, __m128i &) {

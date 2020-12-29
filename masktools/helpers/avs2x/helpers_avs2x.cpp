@@ -1,12 +1,20 @@
 #define NOMINMAX
+#if !defined(FILTER_AVS_25) && !defined(FILTER_AVS_26)
+#define FILTER_AVS_26
+#endif
 #if defined(FILTER_AVS_25)
 #include "../../../avs2x/avisynth-2_5.h"
 #elif defined(FILTER_AVS_26)
+#ifdef _WIN32
 #include <windows.h>
 #pragma warning( push )
 #pragma warning(disable:4100) // disable possible loss of data conversion
 #include <avisynth.h>
 #pragma warning( pop )
+#else
+#include <avisynth.h>
+#endif
+#include <avs/config.h>
 #endif
 #include "../../../common/utils/utils.h"
 #include "../../helpers/forms/forms.h"

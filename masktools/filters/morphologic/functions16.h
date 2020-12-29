@@ -119,7 +119,7 @@ struct MorphologicProcessor {
 };
 
 //-------------------------extern "C" ----------------------------------------
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static MT_FORCEINLINE __m128i limit_up_sse4_16(__m128i source, __m128i sum, __m128i deviation) {
@@ -127,7 +127,7 @@ static MT_FORCEINLINE __m128i limit_up_sse4_16(__m128i source, __m128i sum, __m1
   return _mm_min_epu16(limit, _mm_max_epu16(source, sum));
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static MT_FORCEINLINE __m128i limit_down_sse4_16(__m128i source, __m128i sum, __m128i deviation) {

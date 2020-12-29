@@ -1,5 +1,6 @@
 #include "functions.h"
 #include <immintrin.h>
+#include <cstring>
 
 using namespace Filtering;
 

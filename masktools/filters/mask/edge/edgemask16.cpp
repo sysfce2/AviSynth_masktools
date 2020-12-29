@@ -1,6 +1,7 @@
 #include "edgemask.h"
 #include "../functions16.h"
 #include "../../../common/simd.h"
+#include <limits.h>
 
 using namespace Filtering;
 
@@ -168,10 +169,13 @@ static MT_FORCEINLINE __m128i simd_abs_diff_epi32(__m128i a, __m128i b) {
     return _mm_abs_epi32(diff);
   }
   else {
-    auto x = simd_min_ep
-    auto gt = _mm_subs_epu32(a, b);
-    auto lt = _mm_subs_epu32(b, a);
-    return _mm_add_epi32(gt, lt);
+    auto diff = _mm_sub_epi32(a, b); // not correct, todo
+    // sse2 emulation of _mm_abs_epi32()
+    __m128i mask = _mm_cmplt_epi32(diff, _mm_setzero_si128()); // FFFF   where diff < 0
+    diff = _mm_xor_si128(diff, mask);                         // Invert where diff < 0
+    mask = _mm_srli_epi32(mask, 31);                        // 0001   where a < 0
+    diff = _mm_add_epi32(a, mask);                             // Add 1  where a < 0
+    return diff;
   }
 }
 

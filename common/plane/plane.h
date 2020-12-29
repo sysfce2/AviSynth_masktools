@@ -37,7 +37,14 @@ public:
    { 
      return Plane<T>( pPixel + x * nPixelSize + y * nPitch, nPitch, w, h, nPixelSize, nOrigHeight ); // byte pointers->x*pixelsize
    }
-   void print() const { Filtering::print( LOG_DEBUG, "plane 0x%x (%ix%i:%i) t%i\n", pPixel, nWidth, nHeight, nPitch, GetCurrentThreadId() ); }
+   void print() const
+   { 
+#ifdef _WIN32
+     Filtering::print( LOG_DEBUG, "plane 0x%x (%ix%i:%i) t%i\n", pPixel, nWidth, nHeight, nPitch, GetCurrentThreadId() ); 
+#else
+     Filtering::print(LOG_DEBUG, "plane 0x%x (%ix%i:%i)\n", pPixel, nWidth, nHeight, nPitch);
+#endif
+   }
 
 };
 

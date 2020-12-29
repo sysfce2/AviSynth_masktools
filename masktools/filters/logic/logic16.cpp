@@ -69,7 +69,7 @@ static void logic16_native_t(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, 
 /* sse2 */
 
 template<int bits_per_pixel>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static MT_FORCEINLINE __m128i add16_sse2(__m128i a, __m128i b)
@@ -98,7 +98,7 @@ static MT_FORCEINLINE __m128i xor16_sse2(const __m128i &a, const __m128i &b, con
 }
 
 template <decltype(nop16_sse2) opa, decltype(nop16_sse2) opb>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static MT_FORCEINLINE __m128i min_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) {
@@ -106,7 +106,7 @@ static MT_FORCEINLINE __m128i min_t_sse2(const __m128i &a, const __m128i &b, con
 }
 
 template <decltype(nop16_sse2) opa, decltype(nop16_sse2) opb>
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("sse4.1")))
 #endif
 static MT_FORCEINLINE __m128i max_t_sse2(const __m128i &a, const __m128i &b, const __m128i& th1, const __m128i& th2) {

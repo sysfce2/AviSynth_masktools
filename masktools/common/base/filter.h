@@ -411,7 +411,7 @@ public:
         }
     }
 
-    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const byte> frames[4])
+    void process_plane(int n, const Plane<Byte> &output_plane, int nPlane, const Constraint constraints[4], const Frame<const Byte> frames[4])
     {
         bool isStacked = parameters["stacked"].is_defined() && parameters["stacked"].toBool();
 

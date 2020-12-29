@@ -94,7 +94,7 @@ struct MorphologicProcessor {
 };
 
 //-------------------------extern "C" ----------------------------------------
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i limit_up_16_avx2(__m256i source, __m256i sum, __m256i deviation) {
@@ -102,7 +102,7 @@ static MT_FORCEINLINE __m256i limit_up_16_avx2(__m256i source, __m256i sum, __m2
   return _mm256_min_epu16(limit, _mm256_max_epu16(source, sum));
 }
 
-#ifdef __clang__
+#if defined(GCC) || defined(CLANG)
 __attribute__((__target__("avx2")))
 #endif
 static MT_FORCEINLINE __m256i limit_down_16_avx2(__m256i source, __m256i sum, __m256i deviation) {
@@ -113,7 +113,7 @@ static MT_FORCEINLINE __m256i limit_down_16_avx2(__m256i source, __m256i sum, __
 
 template<Border borderMode, Limit16 limit, MemoryMode mem_mode>
 static void process_line_xxflate_16_avx2(Byte *pDst, const Byte *pSrcp, const Byte *pSrc, const Byte *pSrcn, const __m256i &maxDeviation, int byte_width) {
-  auto zero = _mm256_setzero_si128();
+  auto zero = _mm256_setzero_si256();
   for (int x = 0; x < byte_width; x += 32) {
     auto up_left = load16_one_to_left_si256<borderMode, mem_mode>(pSrcp + x);
     auto up_center = simd256_load_si256<mem_mode>(pSrcp + x);
