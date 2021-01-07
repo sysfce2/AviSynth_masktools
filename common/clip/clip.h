@@ -1,12 +1,12 @@
 #ifndef __Common_Clip_H__
 #define __Common_Clip_H__
 
-#include "../frame/frame.h"
-#include <memory>
-
 #if !defined(FILTER_AVS_25) && !defined(FILTER_AVS_26)
 #define FILTER_AVS_26
 #endif
+
+#include "../frame/frame.h"
+#include <memory>
 
 #if defined(FILTER_AVS_25)
 #include "avisynth-2_5.h"
