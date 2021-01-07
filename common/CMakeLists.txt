@@ -17,9 +17,8 @@ project(${ProjectName} LANGUAGES CXX)
 
 Include("Files.cmake")
 
-#add_library(${PluginName} SHARED ${common_Sources})
-# or a STATIC instead of shared?
-add_library(${PluginName} ${common_Sources})
+# STATIC instead of shared. common is linked to masktools2
+add_library(${PluginName} STATIC ${common_Sources})
 
 set_target_properties(${PluginName} PROPERTIES "OUTPUT_NAME" "${PluginName}")
 if (MINGW)
@@ -27,8 +26,11 @@ if (MINGW)
   set_target_properties(${PluginName} PROPERTIES IMPORT_PREFIX "")
 endif()
 
-#require sse4.1, there are mixed parts in the source
+#require sse4.1, there are mixed parts in the source which is pain to separate to sse2/sse4.1
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DINTEL_INTRINSICS -msse4.1")
+
+# position independent code
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 
 # Automatically group source files according to directory structure
 foreach(FILE ${common_Sources}) 
@@ -49,6 +51,14 @@ endforeach()
 
 if (MSVC_IDE)
   IF(CLANG_IN_VS STREQUAL "1")
+     # special SSSE3 option for source files with *_ssse3.cpp pattern
+      file(GLOB_RECURSE SRCS_SSSE3 "*_ssse3.cpp")
+      set_source_files_properties(${SRCS_SSSE3} PROPERTIES COMPILE_FLAGS " -mssse3 ")
+
+      # special SSE4.1 option for source files with *_sse41.cpp pattern
+      file(GLOB_RECURSE SRCS_SSE41 "*_sse41.cpp")
+      set_source_files_properties(${SRCS_SSE41} PROPERTIES COMPILE_FLAGS " -msse4.1 ")
+
       # special AVX option for source files with *_avx.cpp pattern
       file(GLOB_RECURSE SRCS_AVX "*_avx.cpp")
       set_source_files_properties(${SRCS_AVX} PROPERTIES COMPILE_FLAGS " -mavx ")
@@ -74,6 +84,14 @@ if (MSVC_IDE)
       set_source_files_properties(${SRCS_AVX512} PROPERTIES COMPILE_FLAGS " /arch:AVX512 ")
   ENDIF()
 else()
+  # special SSSE3 option for source files with *_ssse3.cpp pattern
+  file(GLOB_RECURSE SRCS_SSSE3 "*_ssse3.cpp")
+  set_source_files_properties(${SRCS_SSSE3} PROPERTIES COMPILE_FLAGS " -mssse3 ")
+
+  # special SSE4.1 option for source files with *_sse41.cpp pattern
+  file(GLOB_RECURSE SRCS_SSE41 "*_sse41.cpp")
+  set_source_files_properties(${SRCS_SSE41} PROPERTIES COMPILE_FLAGS " -msse4.1 ")
+
   # special AVX option for source files with *_avx.cpp pattern
   file(GLOB_RECURSE SRCS_AVX "*_avx.cpp")
   set_source_files_properties(${SRCS_AVX} PROPERTIES COMPILE_FLAGS " -mavx ")
@@ -89,14 +107,16 @@ endif()
 
 
 # Specify include directories
-target_link_libraries(${ProjectName})
 target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #dedicated include dir for avisynth.h
 #target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Windows DLL dependencies 
 #if (MSVC OR MINGW)
-#  target_link_libraries("common" "uuid" "winmm" "vfw32" "msacm32" "gdi32" "user32" "advapi32" "ole32" "imagehlp")
+target_link_libraries(${ProjectName})
+#else
+target_link_libraries(${ProjectName})
+# "dl" "pthread"
 #endif()
 
 include(GNUInstallDirs)
