@@ -41,6 +41,8 @@ extern "C" __declspec(dllexport) const char* __stdcall AvisynthPluginInit3(IScri
     AVS_linkage = vectors;
 #endif
 
+   // masktools 'cuda': only kmt_lut and kmt_lutxy is implemented
+
    //Avisynth2x::Filter<Invert::Invert>::create( env ); // 8-32
    //Avisynth2x::Filter<Binarize::Binarize>::create( env ); // 8-32, stacked
    //Avisynth2x::Filter<Morphologic::Inflate::Inflate>::create( env ); // 8-32, stacked
