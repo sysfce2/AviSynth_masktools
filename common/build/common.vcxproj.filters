@@ -28,6 +28,12 @@
     <Filter Include="avs2x">
       <UniqueIdentifier>{ffb5e560-d962-491c-9fc7-84920971209a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common_cuda">
+      <UniqueIdentifier>{033dd2e5-a7d7-41ba-b0ff-26c9c6411a4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="avs_headers">
+      <UniqueIdentifier>{aff9ce54-8312-49a3-bfb1-2073f6f67218}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\utils\utils.h">
@@ -66,6 +72,63 @@
     <ClInclude Include="..\..\avs2x\params.h">
       <Filter>avs2x</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common_cuda\VectorFunctions.cuh">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\CommonFunctions.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\Copy.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\DebugWriter.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\DeviceLocalData.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\EnvCommon.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\Frame.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\KMV.h">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\common_cuda\ReduceKernel.cuh">
+      <Filter>common_cuda</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avisynth.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\alignment.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\capi.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\config.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\cpuid.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\filesystem.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\minmax.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\posix.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\types.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\avs\win.h">
+      <Filter>avs_headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\parser\parser.cpp">
@@ -80,10 +143,19 @@
     <ClCompile Include="..\constraints\constraints.cpp">
       <Filter>constraints</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\common_cuda\DebugWriter.cpp">
+      <Filter>common_cuda</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common_cuda\DeviceLocalData.cpp">
+      <Filter>common_cuda</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\functions\functions_cuda.cu">
       <Filter>functions</Filter>
+    </CudaCompile>
+    <CudaCompile Include="..\..\common_cuda\Copy.cu">
+      <Filter>common_cuda</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>
