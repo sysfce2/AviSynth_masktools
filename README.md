@@ -355,6 +355,11 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**no new version (20210209)
+- Fetching the new 'cuda' branch from Nekopanda's masktools fork
+  git fetch git://github.com/nekopanda/masktools.git cuda:cuda
+  (For experimenting and adjusting to latest Avisynth+ Cuda-aware version. Implements lut.)
+
 **no new version (20201229)
 - Source syntax for GCC
 - CMake build environment, builds on Linux, at least on my (pinterf) Ubuntu 19.10 WSL
