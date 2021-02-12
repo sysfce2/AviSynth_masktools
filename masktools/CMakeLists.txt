@@ -104,7 +104,7 @@ endif()
 # Specify include directories
 target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 #dedicated include dir for avisynth.h
-target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/avsheaders)
+target_include_directories(${ProjectName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 #ADD_DEPENDENCIES("masktools2" "common") 
 
