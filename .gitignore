@@ -2,9 +2,6 @@ CMakeCache.txt
 CMakeFiles/*
 cmake.db
 
-MedianBlur2/CMakeCache.txt
-MedianBlur2/CMakeFiles/*
-
 #cmake generated files
 cmake_install.cmake
 cmake_uninstall.cmake
