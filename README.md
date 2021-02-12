@@ -634,3 +634,40 @@ Changelog
   - parameter "stacked" (default false) for filters with stacked format support
   - parameter "realtime" for lut-type filters to override default behaviour
   
+Build instructions
+==================
+VS2019: 
+  use IDE
+
+Windows GCC (mingw installed by msys2):
+  from the 'build' folder under project root:
+
+  del ..\CMakeCache.txt
+  cmake .. -G "MinGW Makefiles" -DENABLE_INTEL_SIMD:bool=on
+  @rem test: cmake .. -G "MinGW Makefiles" -DENABLE_INTEL_SIMD:bool=off
+  cmake --build . --config Release  
+
+Linux
+* Clone repo
+    
+        git clone https://github.com/pinterf/masktools
+        cd masktools
+        cmake -B build -S .
+        cmake --build build
+
+      Not working yet: 
+      Possible option test for C only on x86 arhitectures:
+        cmake -B build -S . -DENABLE_INTEL_SIMD:bool=off
+        cmake --build build
+
+        Note: ENABLE_INTEL_SIMD is automatically off for non x86 arhitectures and ON for x86
+
+* Find binaries at
+    
+        build/masktools/libmasktools2.so
+
+* Install binaries
+
+        cd build
+        sudo make install
+
