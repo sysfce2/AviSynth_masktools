@@ -1,4 +1,6 @@
-#define NOMINMAX
+#ifndef NOMINMAX
+#define NOMINMAX // no min & max macros
+#endif
 #if !defined(FILTER_AVS_25) && !defined(FILTER_AVS_26)
 #define FILTER_AVS_26
 #endif
