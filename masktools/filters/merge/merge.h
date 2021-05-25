@@ -277,6 +277,12 @@ public:
         return;
       }
 
+      // error when when mask clip is greyscale and 'u' or 'v' or 'a' processing is set (2.2.27-)
+      if (!use_luma && plane_counts[c3] == 1 && (operators[1] == PROCESS || operators[2] == PROCESS || operators[3] == PROCESS)) {
+        error = "mask clip is greyscale and 'u' or 'v' or 'a' processing is set with luma=false";
+        return;
+      }
+
       if (use_luma) {
          // PF: implement use_luma for 422 and 411 clips
         if ((width_ratios[1][c1] != width_ratios[1][c2]) || (height_ratios[1][c1] != height_ratios[1][c2])) {
