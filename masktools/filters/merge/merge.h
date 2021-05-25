@@ -16,6 +16,7 @@ typedef void(Processor32)(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, pt
 Processor merge_c;
 Processor merge_luma_420_c;
 Processor merge_luma_420_mpeg2_c;
+Processor merge_luma_420_topleft_c;
 Processor merge_luma_422_c;
 Processor merge_luma_422_mpeg2_c;
 Processor merge_luma_411_c;
@@ -26,6 +27,8 @@ extern Processor *merge_luma_420_sse2;
 extern Processor *merge_luma_420_asse2;
 extern Processor *merge_luma_420_mpeg2_sse2;
 extern Processor *merge_luma_420_mpeg2_asse2;
+extern Processor* merge_luma_420_topleft_sse2;
+extern Processor* merge_luma_420_topleft_asse2;
 extern Processor *merge_luma_422_sse2;
 extern Processor *merge_luma_422_asse2;
 extern Processor *merge_luma_422_mpeg2_sse2;
@@ -39,6 +42,8 @@ extern Processor *merge_luma_420_sse4;
 extern Processor *merge_luma_420_asse4;
 extern Processor *merge_luma_420_mpeg2_sse4;
 extern Processor *merge_luma_420_mpeg2_asse4;
+extern Processor* merge_luma_420_topleft_sse4;
+extern Processor* merge_luma_420_topleft_asse4;
 extern Processor *merge_luma_422_sse4;
 extern Processor *merge_luma_422_asse4;
 extern Processor *merge_luma_422_mpeg2_sse4;
@@ -81,6 +86,7 @@ extern Processor16 *merge16_luma_422_mpeg2_sse4_1_stacked;
 extern Processor16 *merge16_##bits_per_pixel##_c; \
 extern Processor16 *merge16_luma_420_##bits_per_pixel##_c; \
 extern Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_c; \
+extern Processor16 *merge16_luma_420_topleft_##bits_per_pixel##_c; \
 extern Processor16 *merge16_luma_422_##bits_per_pixel##_c; \
 extern Processor16 *merge16_luma_422_mpeg2_##bits_per_pixel##_c; \
 extern Processor16 *merge16_##bits_per_pixel##_sse2; \
@@ -93,6 +99,8 @@ extern Processor16 *merge16_luma_420_##bits_per_pixel##_avx2; \
 extern Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_sse2; \
 extern Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_ssse3; \
 extern Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_sse4_1; \
+extern Processor16 *merge16_luma_420_topleft_##bits_per_pixel##_sse2; \
+extern Processor16 *merge16_luma_420_topleft_##bits_per_pixel##_sse4_1; \
 /*extern Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_avx2;*/ \
 extern Processor16 *merge16_luma_422_##bits_per_pixel##_sse2; \
 extern Processor16 *merge16_luma_422_##bits_per_pixel##_ssse3; \
@@ -113,6 +121,7 @@ MAKE_16BIT_EXTERNS(16)
 Processor32 merge32_c;
 Processor32 merge32_luma_420_c;
 Processor32 merge32_luma_420_mpeg2_c;
+Processor32 merge32_luma_420_topleft_c;
 Processor32 merge32_luma_422_c;
 Processor32 merge32_luma_422_mpeg2_c;
 
@@ -235,11 +244,13 @@ public:
 
       String cplace = parameters["cplace"].toString();
       bool isMpeg2 = false;
-      if (cplace != "mpeg1" && cplace != "mpeg2") {
-        error = "cplace: only mpeg1 or mpeg2 allowed";
+      bool isTopLeft = false;
+      if (cplace != "mpeg1" && cplace != "mpeg2" && cplace != "topleft") {
+        error = "cplace: only mpeg1, mpeg2 and topleft allowed";
         return;
       }
-      isMpeg2 = cplace == "mpeg2";
+      isMpeg2 = cplace == "mpeg2" && (is420 || is422);
+      isTopLeft = cplace == "topleft" && is420;
 
       if (isStacked && bits_per_pixel != 8) {
         error = "Stacked specified for a non-8 bit clip";
@@ -328,7 +339,14 @@ public:
           /* add the chroma processors */
           // they are used only for 420 and 422
           if (is420) {
-            if (isMpeg2) {
+            if (isTopLeft) {
+              chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_topleft_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
+              chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_topleft_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
+              chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_topleft_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
+              chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_topleft_sse4, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3));
+              chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_topleft_asse4, Constraint(CPU_SSE4_1, 1, 1, 16, 16), 4));
+
+            } else if (isMpeg2) {
               chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_mpeg2_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
               chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_mpeg2_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
               chroma_processors.push_back(Filtering::Processor<Processor>(merge_luma_420_mpeg2_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));
@@ -383,7 +401,11 @@ public:
           /* add the chroma processors16 */ \
           /* used only for 420 and 422  */ \
           if (is420) { \
-            if(isMpeg2) { \
+            if (isTopLeft) { \
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_topleft_##bits_per_pixel##_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_topleft_##bits_per_pixel##_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1)); \
+              chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_topleft_##bits_per_pixel##_sse4_1, Constraint(CPU_SSE4_1, 1, 1, 1, 1), 3)); \
+            } else if(isMpeg2) { \
               chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_##bits_per_pixel##_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
               chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_##bits_per_pixel##_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1)); \
               chroma_processors16.push_back(Filtering::Processor<Processor16>(merge16_luma_420_mpeg2_##bits_per_pixel##_ssse3, Constraint(CPU_SSSE3, 1, 1, 1, 1), 2)); \
@@ -435,7 +457,9 @@ public:
         /* add the chroma processors */
         // they are used only for 420 and 422
         if (is420) {
-          if (isMpeg2) {
+          if (isTopLeft) {
+            chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_topleft_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0)); \
+          } else if (isMpeg2) {
             chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_mpeg2_c, Constraint(CPU_NONE, 1, 1, 1, 1), 0));
             chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_mpeg2_sse2, Constraint(CPU_SSE2, 1, 1, 1, 1), 1));
             chroma_processors32.push_back(Filtering::Processor<Processor32>(merge32_luma_420_mpeg2_asse2, Constraint(CPU_SSE2, 1, 1, 16, 16), 2));

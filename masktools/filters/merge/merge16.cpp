@@ -8,6 +8,7 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
 enum MaskMode {
     MASK420,
     MASK420_MPEG2,
+    MASK420_TOPLEFT,
     MASK422,
     MASK422_MPEG2,
     MASK444
@@ -75,6 +76,39 @@ MT_FORCEINLINE static __m128i get_single_mask_value_420_mpeg2(const __m128i &row
   auto sum_hi = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(left_hi, _mm_slli_epi32(mid_hi, 1)), right_hi), four); // left + 2 * mid + right + 4
   auto avg_lo = _mm_srli_epi32(sum_lo, 3);
   auto avg_hi = _mm_srli_epi32(sum_hi, 3);
+  // back to 16 bits
+  return simd_packus_epi32<flags>(avg_lo, avg_hi);
+}
+
+template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_single_mask_value_420_topleft(const __m128i& row0_lo, const __m128i& row0_hi, const __m128i& row1_lo, const __m128i& row1_hi, const __m128i& row2_lo, const __m128i& row2_hi, __m128i& right_hi) {
+  const __m128i evenmask = _mm_set1_epi32(0x0000FFFF);
+  // go to 32bit domain, 1-2-1 weights
+  auto mid_lo = _mm_add_epi32(
+    _mm_slli_epi32(_mm_and_si128(row1_lo, evenmask), 1), // *2
+    _mm_add_epi32(_mm_and_si128(row0_lo, evenmask), _mm_and_si128(row2_lo, evenmask))); // evens
+  auto mid_hi = _mm_add_epi32(
+    _mm_slli_epi32(_mm_and_si128(row1_hi, evenmask), 1), // *2
+    _mm_add_epi32(_mm_and_si128(row0_hi, evenmask), _mm_and_si128(row2_hi, evenmask))); // evens
+
+  auto old_right_hi = right_hi;
+
+  auto right_lo = _mm_add_epi32(
+    _mm_slli_epi32(_mm_srli_epi32(row1_lo, 16), 1), // *2
+    _mm_add_epi32(_mm_srli_epi32(row0_lo, 16), _mm_srli_epi32(row2_lo, 16))); // odds
+  right_hi = _mm_add_epi32(
+    _mm_slli_epi32(_mm_srli_epi32(row1_hi, 16), 1), // *2
+    _mm_add_epi32(_mm_srli_epi32(row0_hi, 16), _mm_srli_epi32(row2_hi, 16)));
+
+  auto left_hi = _mm_or_si128(_mm_slli_si128(right_hi, 4), _mm_srli_si128(right_lo, 12)); // 32 byte srli across 128bit registers
+  auto left_lo = _mm_or_si128(_mm_slli_si128(right_lo, 4), _mm_srli_si128(old_right_hi, 12)); // shift in from previous right_hi
+
+  // mask: (left + mid*2 + right) / 16. Left, mid and right are already sums of 3 pixels or weight 4
+  auto eight = _mm_set1_epi32(8); // rounder
+  auto sum_lo = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(left_lo, _mm_slli_epi32(mid_lo, 1)), right_lo), eight); // left + 2 * mid + right + 8
+  auto sum_hi = _mm_add_epi32(_mm_add_epi32(_mm_add_epi32(left_hi, _mm_slli_epi32(mid_hi, 1)), right_hi), eight); // left + 2 * mid + right + 8
+  auto avg_lo = _mm_srli_epi32(sum_lo, 4); // /16
+  auto avg_hi = _mm_srli_epi32(sum_hi, 4);
   // back to 16 bits
   return simd_packus_epi32<flags>(avg_lo, avg_hi);
 }
@@ -435,6 +469,15 @@ MT_FORCEINLINE static Word get_mask_420_mpeg2_c(const Byte *ptr, ptrdiff_t pitch
   return (Word)((left + 2 * mid + right + 4) >> 3);
 }
 
+template<bool allow_topminus1>
+MT_FORCEINLINE static Word get_mask_420_topleft_c(const Byte* ptr, ptrdiff_t nPrevMaskPitch, ptrdiff_t pitch, int x, int& right) {
+  x = x * 2;
+  const int left = right;
+  const int mid = reinterpret_cast<const Word*>(ptr + nPrevMaskPitch)[x] + (reinterpret_cast<const Word*>(ptr)[x] << 1) + reinterpret_cast<const Word*>(ptr + pitch)[x];
+  right = reinterpret_cast<const Word*>(ptr + nPrevMaskPitch)[x + 1] + (reinterpret_cast<const Word*>(ptr)[x + 1] << 1) + reinterpret_cast<const Word*>(ptr + pitch)[x + 1];
+  return (Word)((left + 2 * mid + right + 8) >> 4);
+}
+
 
 MT_FORCEINLINE static Word get_mask_422_c(const Byte *ptr, int x) {
   x = x * 2;
@@ -457,15 +500,16 @@ static void internal_merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pS
 {
     for ( int y = 0; y < nHeight; ++y )
     {
+        constexpr auto left_or_same = allow_leftminus1 ? -1 : 0;
+        const auto top_or_same = y == 0 ? 0 : -nMaskPitch; // for MASK420_TOPLEFT, later -nMaskPitch
+
         int right;
-        if (mode == MASK420_MPEG2)
-          right = allow_leftminus1 ? 
-            reinterpret_cast<const Word*>(pMask)[-1] + reinterpret_cast<const Word*>(pMask + nMaskPitch)[-1] : 
-            reinterpret_cast<const Word*>(pMask)[0] + reinterpret_cast<const Word*>(pMask + nMaskPitch)[0];
+        if (mode == MASK420_TOPLEFT) {
+          right = reinterpret_cast<const Word*>(pMask + top_or_same)[left_or_same] + (reinterpret_cast<const Word*>(pMask)[left_or_same] << 1) + reinterpret_cast<const Word*>(pMask + nMaskPitch)[left_or_same];
+        } else if (mode == MASK420_MPEG2)
+          right = reinterpret_cast<const Word*>(pMask)[left_or_same] + reinterpret_cast<const Word*>(pMask + nMaskPitch)[left_or_same];
         else if (mode == MASK422_MPEG2)
-          right = allow_leftminus1 ?
-          reinterpret_cast<const Word*>(pMask)[-1]:
-          reinterpret_cast<const Word*>(pMask)[0];
+          right = reinterpret_cast<const Word*>(pMask)[left_or_same];
 
         for ( int x = 0; x < nWidth; ++x ) {
             Word dst = reinterpret_cast<const Word*>(pDst)[x];
@@ -476,6 +520,8 @@ static void internal_merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pS
               mask = get_mask_420_c(pMask, nMaskPitch, x);
             else if (mode == MASK420_MPEG2)
               mask = get_mask_420_mpeg2_c(pMask, nMaskPitch, x, right); // right: in-out parameter
+            else if (mode == MASK420_TOPLEFT)
+              mask = get_mask_420_topleft_c<true>(pMask, top_or_same, nMaskPitch, x, right); // right: in-out parameter
             else if (mode == MASK422)
               mask = get_mask_422_c(pMask, x);
             else if (mode == MASK422_MPEG2)
@@ -490,7 +536,7 @@ static void internal_merge16_t_c(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pS
         pDst += nDstPitch;
         pSrc1 += nSrc1Pitch;
 
-        if (mode == MASK420 || mode == MASK420_MPEG2) {
+        if (mode == MASK420 || mode == MASK420_MPEG2 || mode == MASK420_TOPLEFT) {
             pMask += nMaskPitch * 2;
         } else {
             pMask += nMaskPitch; // 422, 444
@@ -538,6 +584,20 @@ MT_FORCEINLINE static __m128i get_mask_420_mpeg2_simd(const Byte *ptr, ptrdiff_t
 }
 
 template <CpuFlags flags>
+MT_FORCEINLINE static __m128i get_mask_420_topleft_simd(const Byte* ptr, ptrdiff_t pitch_prev, ptrdiff_t pitch, int x, __m128i& right_hi) {
+  x = x * 2;
+
+  auto row0_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + pitch_prev + x));
+  auto row0_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + pitch_prev + x + 16));
+  auto row1_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + x));
+  auto row1_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + x + 16));
+  auto row2_lo = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + pitch + x));
+  auto row2_hi = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(ptr + pitch + x + 16));
+
+  return get_single_mask_value_420_topleft<flags>(row0_lo, row0_hi, row1_lo, row1_hi, row2_lo, row2_hi, right_hi); // right: in-out
+}
+
+template <CpuFlags flags>
 MT_FORCEINLINE static __m128i get_mask_422_simd(const Byte *ptr, int x) {
   x = x * 2;
 
@@ -576,10 +636,11 @@ static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, p
 #pragma warning(default: 4244)
 
     for ( int j = 0; j < nHeight; ++j ) {
+      const auto top_or_same = j == 0 ? 0 : -nMaskPitch; // for MASK420_TOPLEFT
 
       // mpeg2:
       __m128i right_hi;
-      if (mode == MASK420_MPEG2) {
+      if constexpr(mode == MASK420_MPEG2) {
         // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
         auto row1 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + 0));
         auto row2 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + nMaskPitch + 0));
@@ -588,6 +649,26 @@ static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, p
 #pragma warning(default: 4309)
         right_hi = _mm_add_epi32(_mm_slli_si128(_mm_and_si128(row1, evenmask), 12), _mm_slli_si128(_mm_and_si128(row2, evenmask), 12));
       } else if (mode == MASK422_MPEG2) {
+        // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
+        auto row1 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + 0));
+#pragma warning(disable: 4309)
+        auto evenmask = _mm_set1_epi32(0x0000FFFF);
+#pragma warning(default: 4309)
+        right_hi = _mm_slli_si128(_mm_and_si128(row1, evenmask), 12);
+      }
+      else if constexpr (mode == MASK420_TOPLEFT) {
+        // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
+        auto row0 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + top_or_same + 0));
+        auto row1 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + 0));
+        auto row2 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + nMaskPitch + 0));
+#pragma warning(disable: 4309)
+        auto evenmask = _mm_set1_epi32(0x0000FFFF);
+#pragma warning(default: 4309)
+        right_hi = _mm_add_epi32(
+          _mm_slli_epi32(_mm_slli_si128(_mm_and_si128(row1, evenmask), 12),1), // *2 weight
+          _mm_add_epi32(_mm_slli_si128(_mm_and_si128(row0, evenmask), 12), _mm_slli_si128(_mm_and_si128(row2, evenmask), 12)));
+      }
+      else if (mode == MASK422_MPEG2) {
         // prepare "right_hi": we need only pixel column #0 as the rightmost 32 bit word (12-15th byte)
         auto row1 = simd_load_si128<MemoryMode::SSE2_UNALIGNED>(reinterpret_cast<const __m128i*>(pMask + 0));
 #pragma warning(disable: 4309)
@@ -605,6 +686,8 @@ static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, p
               mask = get_mask_420_simd<flags>(pMask, nMaskPitch, i);
             else if(mode == MASK420_MPEG2)
               mask = get_mask_420_mpeg2_simd<flags>(pMask, nMaskPitch, i, right_hi); // right_hi in/out
+            else if (mode == MASK420_TOPLEFT)
+              mask = get_mask_420_topleft_simd<flags>(pMask, top_or_same, nMaskPitch, i, right_hi); // right_hi in/out
             else if (mode == MASK422)
               mask = get_mask_422_simd<flags>(pMask, i);
             else if (mode == MASK422_MPEG2)
@@ -620,7 +703,7 @@ static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, p
         pDst += nDstPitch;
         pSrc1 += nSrc1Pitch;
 
-        if (mode == MASK420 || mode == MASK420_MPEG2) {
+        if (mode == MASK420 || mode == MASK420_MPEG2 || mode == MASK420_TOPLEFT) {
             pMask += nMaskPitch * 2;
         } else {
             pMask += nMaskPitch; // 422, 444
@@ -628,8 +711,8 @@ static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, p
     }
 
     if (nWidth > wMod16) {
-        const int maskShift = (mode == MASK420 || mode == MASK420_MPEG2 || mode == MASK422 || mode == MASK422_MPEG2) ? wMod16 * 2 : wMod16;
-        if(wMod16 != 0 && (mode == MASK420_MPEG2 || mode == MASK422_MPEG2)) // indexing leftmost - 1 is allowed
+        const int maskShift = (mode == MASK420 || mode == MASK420_MPEG2 || mode == MASK420_TOPLEFT || mode == MASK422 || mode == MASK422_MPEG2) ? wMod16 * 2 : wMod16;
+        if(wMod16 != 0 && (mode == MASK420_MPEG2 || mode == MASK420_TOPLEFT || mode == MASK422_MPEG2)) // indexing leftmost - 1 is allowed
           merge_allow_leftminus1_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth - wMod16) / sizeof(uint16_t), nHeight, nOrigHeight);
         else
           merge_c(pDst_s + wMod16, nDstPitch, pSrc1_s + wMod16, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth-wMod16) / sizeof(uint16_t), nHeight, nOrigHeight);
@@ -683,6 +766,8 @@ template void merge16_t_simd<CPU_SSE4_1, MASK420, merge16_t_c<MASK420, bits_per_
 template void merge16_t_simd<CPU_SSE2, MASK420_MPEG2, merge16_t_c<MASK420_MPEG2, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_MPEG2, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 template void merge16_t_simd<CPU_SSSE3, MASK420_MPEG2, merge16_t_c<MASK420_MPEG2, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_MPEG2, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 template void merge16_t_simd<CPU_SSE4_1, MASK420_MPEG2, merge16_t_c<MASK420_MPEG2, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_MPEG2, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
+template void merge16_t_simd<CPU_SSE2, MASK420_TOPLEFT, merge16_t_c<MASK420_TOPLEFT, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_TOPLEFT, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
+template void merge16_t_simd<CPU_SSE4_1, MASK420_TOPLEFT, merge16_t_c<MASK420_TOPLEFT, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_TOPLEFT, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 \
 template void merge16_t_simd<CPU_SSE2, MASK422, merge16_t_c<MASK422, bits_per_pixel>, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
 template void merge16_t_simd<CPU_SSSE3, MASK422, merge16_t_c<MASK422, bits_per_pixel>, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, ptrdiff_t nSrc1Pitch, const Byte *pMask, ptrdiff_t nMaskPitch, int nWidth, int nHeight, int nOrigHeight); \
@@ -701,6 +786,7 @@ MAKE_TEMPLATES(16)
 Processor16 *merge16_##bits_per_pixel##_c = &merge16_t_c<MASK444, bits_per_pixel>; \
 Processor16 *merge16_luma_420_##bits_per_pixel##_c = &merge16_t_c<MASK420, bits_per_pixel>; \
 Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_c = &merge16_t_c<MASK420_MPEG2, bits_per_pixel>; \
+Processor16 *merge16_luma_420_topleft_##bits_per_pixel##_c = &merge16_t_c<MASK420_TOPLEFT, bits_per_pixel>; \
 Processor16 *merge16_luma_422_##bits_per_pixel##_c = &merge16_t_c<MASK422, bits_per_pixel>; \
 Processor16 *merge16_luma_422_mpeg2_##bits_per_pixel##_c = &merge16_t_c<MASK422_MPEG2, bits_per_pixel>; \
 Processor16 *merge16_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK444, merge16_t_c<MASK444, bits_per_pixel>, merge16_t_c<MASK444, bits_per_pixel>, bits_per_pixel>; \
@@ -711,6 +797,8 @@ Processor16 *merge16_luma_420_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE
 Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK420_MPEG2, merge16_t_c<MASK420_MPEG2, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_MPEG2, bits_per_pixel>, bits_per_pixel>; \
 Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_ssse3 = merge16_t_simd<CPU_SSSE3, MASK420_MPEG2, merge16_t_c<MASK420_MPEG2, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_MPEG2, bits_per_pixel>, bits_per_pixel>; \
 Processor16 *merge16_luma_420_mpeg2_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK420_MPEG2, merge16_t_c<MASK420_MPEG2, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_MPEG2, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_420_topleft_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK420_TOPLEFT, merge16_t_c<MASK420_TOPLEFT, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_TOPLEFT, bits_per_pixel>, bits_per_pixel>; \
+Processor16 *merge16_luma_420_topleft_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK420_TOPLEFT, merge16_t_c<MASK420_TOPLEFT, bits_per_pixel>, merge16_t_allow_leftminus1_c<MASK420_TOPLEFT, bits_per_pixel>, bits_per_pixel>; \
 Processor16 *merge16_luma_422_##bits_per_pixel##_sse2 = merge16_t_simd<CPU_SSE2, MASK422, merge16_t_c<MASK422, bits_per_pixel>, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>; \
 Processor16 *merge16_luma_422_##bits_per_pixel##_ssse3 = merge16_t_simd<CPU_SSSE3, MASK422, merge16_t_c<MASK422, bits_per_pixel>, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>; \
 Processor16 *merge16_luma_422_##bits_per_pixel##_sse4_1 = merge16_t_simd<CPU_SSE4_1, MASK422, merge16_t_c<MASK422, bits_per_pixel>, merge16_t_c<MASK422, bits_per_pixel>, bits_per_pixel>; \
