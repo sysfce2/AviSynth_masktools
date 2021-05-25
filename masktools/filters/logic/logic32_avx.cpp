@@ -1,5 +1,5 @@
 #include "logic.h"
-#include "../../common/simd.h"
+#include "../../common/simd_avx.h"
 
 using namespace Filtering;
 

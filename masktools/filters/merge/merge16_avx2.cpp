@@ -1,11 +1,11 @@
 #include "merge.h"
-#include "../../common/simd.h"
+#include "../../common/simd_avx2.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge {
 
 /* Common */
 
-// no MASK420_MPEG2 and MASK422_MPEG2 support in AVX2
+// no MASK420_MPEG2, MASK420_TOPLEFT and MASK422_MPEG2 support in AVX2
 
 enum MaskMode {
     MASK420,

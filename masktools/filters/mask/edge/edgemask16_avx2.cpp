@@ -1,6 +1,6 @@
 #include "edgemask.h"
 #include "../functions16_avx2.h"
-#include "../../../common/simd.h"
+#include "../../../common/simd_avx2.h"
 
 using namespace Filtering;
 

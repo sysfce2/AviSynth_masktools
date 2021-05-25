@@ -2,7 +2,7 @@
 #define __Mt_MaskFunctions_AVX2_H__
 
 #include "../../../common/utils/utils.h"
-#include "../../common/simd.h"
+#include "../../common/simd_avx2.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Mask {
 

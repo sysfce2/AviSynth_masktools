@@ -2,7 +2,7 @@
 #define __Mt_MorphologicFunctions16_H__
 
 #include "../../../common/utils/utils.h"
-#include "../../common/simd.h"
+#include "../../common/simd_avx2.h"
 #include "../../common/16bit.h"
 
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Morphologic {
