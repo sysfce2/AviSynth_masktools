@@ -1085,6 +1085,8 @@
     <ClInclude Include="..\common\16bit.h" />
     <ClInclude Include="..\common\common.h" />
     <ClInclude Include="..\common\simd.h" />
+    <ClInclude Include="..\common\simd_avx.h" />
+    <ClInclude Include="..\common\simd_avx2.h" />
     <ClInclude Include="..\filters\blur\mappedblur.h" />
     <ClInclude Include="..\filters\invert\invert.h" />
     <ClInclude Include="..\filters\binarize\binarize.h" />
