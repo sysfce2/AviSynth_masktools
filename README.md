@@ -2,7 +2,7 @@
 
 (20201229: can be built under linux/gcc)
 
-**Masktools2 v2.2.26 (20200904)**
+**Masktools2 v2.2.27 (20210525 - WIP)**
 
 mod by pinterf
 
@@ -31,7 +31,7 @@ Differences to Masktools 2.0b1
 - YV411 (8 bit 4:1:1) support
 - mt_merge accepts 4:2:2 clips when luma=true (8-16 bit)
 - mt_merge accepts 4:1:1 clips when luma=true
-- mt_merge new parameter hint when luma=true and 4:2:0/4:2:2 'cplace' (2.2.15-). Possible values "mpeg1" or "mpeg2" (default)
+- mt_merge new parameter hint when luma=true and 4:2:0/4:2:2 'cplace' (2.2.15-). Possible values "mpeg1", "mpeg2" (default), "topleft" (2.2.37-)
 - mt_merge to discard U and V automatically when input is greyscale
 - some filters got AVX (float) and AVX2 (integer) support:
   mt_merge: 8-16 bit: AVX2, float:AVX
@@ -355,10 +355,49 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**no new version (v2.2.27 - ) (20210525)
+- mt_merge: error is luma=false, mask is greyscale but clip is not greyscale
+- mt_merge new parameter hint for chroma placement when luma=true and 4:2:0: "topleft"
+  "topleft" is a new option for 4:2:0 videos only 
+  
+  In all:
+  
+  String 'cplace': possible values "mpeg1", "mpeg2" (default) or "topleft"
+  ("mpeg1" is center and "mpeg2" is left placement)
+  Parameter is effective only for 420 and 422 formats (topleft is 420-only), otherwise ignored.
+
+  Default "mpeg1" is using fast 2x2 pixel (1x2 for 4:2:2) averaging when converting a 4:4:4 mask to a 4:2:0 or 4:2:2 format (old behaviour)
+  420 schema:
+   +------+------+
+   | 0.25 | 0.25 |
+   |------+------|
+   | 0.25 | 0.25 |
+   +------+------+
+
+  "mpeg2" is using 2x3 (1x3 for 4:2:2) pixel weighted averaging when converting a 4:4:4 mask to a 4:2:0 or 4:2:2 format
+  420 schema:
+   ------+------+-------+
+   0.125 | 0.25 | 0.125 |
+   ------|------+-------|
+   0.125 | 0.25 | 0.125 |
+   ------+------+-------+
+
+  "topleft" is using 3x3 pixel weighted averaging when converting a 4:4:4 mask to a 4:2:0 format
+  
+   1/16  | 1/8  | 1/16  |
+   ------+------+-------+
+   1/8   | 1/4  | 1/8   |
+   ------|------+-------|
+   1/16  | 1/8  | 1/16  |
+   ------+------+-------+
+
+- get the source built with LLVM (not clangCl) again
+
 **no new version (20210209)
 - Fetching the new 'cuda' branch from Nekopanda's masktools fork
   git fetch git://github.com/nekopanda/masktools.git cuda:cuda
-  (For experimenting and adjusting to latest Avisynth+ Cuda-aware version. Implements lut.)
+  (Note: _only_ for experimenting and adjusting to latest Avisynth+ Cuda-aware version. 
+   Cuda version implements only mt_lut.)
 
 **no new version (20201229)
 - Source syntax for GCC
