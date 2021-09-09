@@ -53,6 +53,14 @@
 #   define ARM64
 #elif defined(_M_ARM) || defined(__arm__)
 #   define ARM32
+#elif defined(__PPC64__)
+#   define PPC64
+#elif defined(_M_PPC) || defined(__PPC__) || defined(__POWERPC__)
+#   define PPC32
+#elif defined(__riscv)
+#   define RISCV
+#elif defined(__sparc_v9__)
+#   define SPARC
 #else
 #   error Unsupported CPU architecture.
 #endif
@@ -98,6 +106,9 @@
 #elif defined(__APPLE__)
 #   define AVS_MACOS
 #   define AVS_POSIX
+#elif defined(__HAIKU__)
+#   define AVS_HAIKU
+#   define AVS_POSIX
 #else
 #   error Operating system unsupported.
 #endif
@@ -138,7 +149,7 @@
 #define NEW_AVSVALUE
 #endif
 
-#if defined(AVS_WINDOWS)
+#if defined(AVS_WINDOWS) && defined(_USING_V110_SDK71_)
 // Windows XP does not have proper initialization for
 // thread local variables.
 // Use workaround instead __declspec(thread)
