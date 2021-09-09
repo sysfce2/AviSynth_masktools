@@ -2,7 +2,7 @@
 
 (20201229: can be built under linux/gcc)
 
-**Masktools2 v2.2.27 (20210525 - WIP)**
+**Masktools2 v2.2.27 (20210909)**
 
 mod by pinterf
 
@@ -355,12 +355,16 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
-**no new version (v2.2.27 - ) (20210525)
+**v2.2.27 (20210909)
+- fix zero=false case for shape helper function (mt_rectangle, mt_circle, mt_diamond etc...)
+- lut expressions: report obvious script error (unbalanced stack, invalid keyword or variable, etc)
+- mt_lut: reuse LUTs across planes if they are the same like in e.g. mt_lutxyz.
+- 1D LUT expressions: occupy only the necessary size for 10-14 bit LUT tables (was: buffer was always reserved for 16 bit data)
 - mt_merge: error is luma=false, mask is greyscale but clip is not greyscale
 - mt_merge new parameter hint for chroma placement when luma=true and 4:2:0: "topleft"
   "topleft" is a new option for 4:2:0 videos only 
   
-  In all:
+  Refreshing memories for 'cplace' kinds:
   
   String 'cplace': possible values "mpeg1", "mpeg2" (default) or "topleft"
   ("mpeg1" is center and "mpeg2" is left placement)
@@ -393,17 +397,17 @@ Changelog
 
 - get the source built with LLVM (not clangCl) again
 
-**no new version (20210209)
+**no new version (20210209) does not appear in release, just another test fork update
 - Fetching the new 'cuda' branch from Nekopanda's masktools fork
   git fetch git://github.com/nekopanda/masktools.git cuda:cuda
   (Note: _only_ for experimenting and adjusting to latest Avisynth+ Cuda-aware version. 
    Cuda version implements only mt_lut.)
 
-**no new version (20201229)
-- Source syntax for GCC
+- Source syntax update for GCC (20201229)
 - CMake build environment, builds on Linux, at least on my (pinterf) Ubuntu 19.10 WSL
-  (INTEL_INTRINSICS handling not implemented in the source, so it compiles on Intel at the moment)
+  (INTEL_INTRINSICS handling not implemented in the source, so it compiles only for Intel at the moment)
   (Neither is boost library incorporated: mt_infix is unavaliable, MT_HAVE_BOOST_SPIRIT is not defined - maybe later)
+  For build instructions see the end of this readme.
 
   git clone https://github.com/pinterf/masktools.git
   cd masktools
