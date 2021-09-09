@@ -4,17 +4,29 @@
 #include "../../../common/base/filter.h"
 #include "../../../../common/parser/parser.h"
 
+/*\\\ INCLUDE FILES \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
+#include "avs/config.h" // WIN/POSIX/ETC defines
+
+#if (defined(GCC) || defined(CLANG)) && !defined(_WIN32)
+#include <stdlib.h>
+#define _aligned_malloc(size, alignment) aligned_alloc(alignment, size)
+#define _aligned_free(ptr) free(ptr)
+#endif
+
 namespace Filtering { namespace MaskTools { namespace Filters { namespace Lut { namespace Single {
 
-typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Byte lut[256]);
-typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked);
+typedef void(Processor)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Byte *lut);
+typedef void(Processor16)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word *lut, int nOrigHeightForStacked);
 typedef void(ProcessorCtx)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, Parser::Context &ctx);
 typedef void(ProcessorCtx32)(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, bool chroma, Parser::Context &ctx);
 
 Processor lut_c;
 
-Processor16 lut16_c_native;
-Processor16 lut16_c_stacked;
+extern Processor16* lut10_c;
+extern Processor16* lut12_c;
+extern Processor16* lut14_c;
+extern Processor16* lut16_c;
+extern Processor16* lut16_stacked_c;
 
 ProcessorCtx realtime8_c;
 extern ProcessorCtx *realtime10_c;
@@ -23,10 +35,50 @@ extern ProcessorCtx *realtime14_c;
 extern ProcessorCtx *realtime16_c;
 ProcessorCtx32 realtime32_c;
 
-class Lut : public MaskTools::Filter
+class Lutx : public MaskTools::Filter
 {
-   Byte luts[4][256];
-   Word *luts16[4]; // full size, even for 10 bits (avoid over addressing by invalid pixel values)
+  // re-use repeated luts, like in lutxyz
+  struct Lut {
+    bool used;
+    Byte* ptr;
+  };
+
+  Lut luts[4 + 1];
+
+  static Byte* calculateLut(const std::deque<Filtering::Parser::Symbol>& expr, int bits_per_pixel, String scale_inputs, int clamp_float, int &compute_error) {
+    Parser::Context ctx(expr, scale_inputs, clamp_float);
+    int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
+    size_t buffer_size = ((size_t)1 << bits_per_pixel) * pixelsize;
+    Byte* lut = (Byte *)_aligned_malloc(buffer_size, 128);
+
+    switch (bits_per_pixel) {
+    case 8:
+      for (int x = 0; x < 256; x++)
+        lut[x] = ctx.compute_byte_x(x);
+      break;
+    case 10:
+      for (int x = 0; x < 1024; x++)
+        reinterpret_cast<Word*>(lut)[x] = ctx.compute_word_x<10>(x);
+      break;
+    case 12:
+      for (int x = 0; x < 4096; x++)
+        reinterpret_cast<Word*>(lut)[x] = ctx.compute_word_x<12>(x);
+      break;
+    case 14:
+      for (int x = 0; x < 16384; x++)
+        reinterpret_cast<Word*>(lut)[x] = ctx.compute_word_x<14>(x);
+      break;
+    case 16:
+      for (int x = 0; x < 65536; x++)
+        reinterpret_cast<Word*>(lut)[x] = ctx.compute_word_x<16>(x);
+      break;
+    }
+
+    // problem if compute_error != Parser::Context::compute_error_t::CE_NONE
+    compute_error = ctx.get_compute_error();
+
+    return lut;
+  }
 
    // for realtime
    std::deque<Filtering::Parser::Symbol> *parsed_expressions[4];
@@ -60,17 +112,21 @@ protected:
           }
         }
         else if (bits_per_pixel == 8)
-          processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane]);
+          processor(dst.data(), dst.pitch(), dst.width(), dst.height(), luts[nPlane].ptr);
         else if (bits_per_pixel <= 16)
-          processor16(dst.data(), dst.pitch(), dst.width(), dst.height(), luts16[nPlane], dst.origheight());
+          processor16(dst.data(), dst.pitch(), dst.width(), dst.height(), (Word*)luts[nPlane].ptr, dst.origheight());
     }
 
 public:
-  Lut(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
+  Lutx(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::INPLACE, (CpuFlags)cpuFlags)
   {
       for (int i = 0; i < 4; i++) {
-        luts16[i] = nullptr;
         parsed_expressions[i] = nullptr;
+      }
+
+      for (int i = 0; i < 4 + 1; ++i) {
+        luts[i].used = false;
+        luts[i].ptr = nullptr;
       }
 
       static const char *expr_strs[] = { "yExpr", "uExpr", "vExpr", "aExpr" };
@@ -79,7 +135,6 @@ public:
 
       isStacked = parameters["stacked"].toBool();
       bits_per_pixel = bit_depths[C];
-      int max_pixel_value = (1 << bits_per_pixel) - 1;
 
       if (isStacked && bits_per_pixel != 8) {
         error = "Stacked specified for a non-8 bit clip";
@@ -185,10 +240,19 @@ public:
             continue;
           }
 
-          if (parameters[expr_strs[i]].is_defined())
-            parser.parse(parameters[expr_strs[i]].toString(), " ");
+          bool customExpressionDefined = false;
+          if (parameters[expr_strs[i]].is_defined()) {
+            parser.parse_strict(parameters[expr_strs[i]].toString(), " ");
+            customExpressionDefined = true;
+          }
           else
-            parser.parse(parameters["expr"].toString(), " ");
+            parser.parse_strict(parameters["expr"].toString(), " ");
+
+          auto err_pos = parser.getErrorPos();
+          if (err_pos >= 0) {
+            error = "Error at position " + std::to_string(1 + err_pos) + ": cannot convert to number: " + parser.getFailedSymbol();
+            return;
+          }
 
           Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float_i);
 
@@ -212,56 +276,60 @@ public:
             continue;
           }
 
-          // real lut
-          if (bits_per_pixel >= 8 && bits_per_pixel <= 16)
-            luts16[i] = reinterpret_cast<Word*>(_aligned_malloc(65536 * sizeof(uint16_t), 16));
+          // pure lut, no realtime
+
+          int compute_error = Parser::Context::compute_error_t::CE_NONE;
+
+          // save memory, reuse luts, like in xyz
+          if (customExpressionDefined) {
+            luts[i].used = true;
+            luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float_i, /*ref*/ compute_error);
+          }
+          else {
+            if (luts[4].ptr == nullptr) {
+              luts[4].used = true;
+              luts[4].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float_i, /*ref*/ compute_error);
+            }
+            luts[i].ptr = luts[4].ptr;
+          }
+
+          if (compute_error != Parser::Context::compute_error_t::CE_NONE) {
+            error = "invalid expression in the lut code = " + std::to_string(compute_error);
+            return;
+          }
 
           switch (bits_per_pixel) {
           case 8:
-            for (int x = 0; x < 256; x++)
-              luts[i][x] = ctx.compute_byte_x(x);
+            processor = lut_c;
             break;
           case 10:
-            for (int x = 0; x < 1024; x++)
-              luts16[i][x] = ctx.compute_word_x<10>(x);
+            processor16 = lut10_c;
             break;
           case 12:
-            for (int x = 0; x < 4096; x++)
-              luts16[i][x] = ctx.compute_word_x<12>(x);
+            processor16 = lut12_c;
             break;
           case 14:
-            for (int x = 0; x < 16384; x++)
-              luts16[i][x] = ctx.compute_word_x<14>(x);
+            processor16 = lut14_c;
             break;
           case 16:
-            // real or stacked 16 bit
-            for (int x = 0; x < 65536; x++)
-              luts16[i][x] = ctx.compute_word_x<16>(x);
-            break;
-          }
-          // fill the rest against invalid input values for 10-14 bits
-          if (bits_per_pixel > 8 && bits_per_pixel < 16) {
-            for (int x = max_pixel_value; x < 65536; x++)
-              luts16[i][x] = Word(max_pixel_value);
-          }
-
-          if (bits_per_pixel == 8) {
-            processor = lut_c;
-          }
-          else {
             if (isStacked)
-              processor16 = lut16_c_stacked;
+              processor16 = lut16_stacked_c;
             else
-              processor16 = lut16_c_native;
+              processor16 = lut16_c;
+            break;
           }
         }
       }
    }
 
-   ~Lut()
+   ~Lutx()
    {
+     for (int i = 0; i < 4 + 1; ++i) {
+       if (luts[i].used) {
+         _aligned_free(luts[i].ptr);
+       }
+     }
      for (int i = 0; i < 4; i++) {
-       _aligned_free(luts16[i]);
        delete parsed_expressions[i];
      }
    }

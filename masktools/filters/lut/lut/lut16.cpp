@@ -2,29 +2,106 @@
 
 using namespace Filtering;
 
-void Filtering::MaskTools::Filters::Lut::Single::lut16_c_native(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int)
+
+template<int bits_per_pixel>
+static void lut16_t_c(Byte * pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word *lut, int)
 {
+    constexpr int max_pixel_value = (1 << bits_per_pixel) - 1;
     for ( int y = 0; y < nHeight; y++ )
     {
         auto pDst16 = reinterpret_cast<Word*>(pDst);
-        for ( int x = 0; x < nWidth; x+=1 )
-            pDst16[x] = lut[pDst16[x]];
-        pDst += nDstPitch;
-    }
-}
+        int x;
+        const int wmod2 = nWidth / 2 * 2;
+        for (x = 0; x < wmod2; x+=2 ) {
+            int pixelX = pDst16[x];
+            if constexpr (bits_per_pixel != 16)
+              pixelX = min(pixelX, max_pixel_value);
 
-void Filtering::MaskTools::Filters::Lut::Single::lut16_c_stacked(Byte *pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word lut[65536], int nOrigHeightForStacked)
-{
-    auto pLsb = pDst + nDstPitch * nOrigHeightForStacked / 2;
+            pDst16[x] = lut[pixelX];
 
-    for ( int y = 0; y < nHeight / 2; y++ )
-    {
-        for ( int x = 0; x < nWidth; x++ ) {
-            Word value = lut[(pDst[x] << 8) + pLsb[x]];
-            pDst[x] = value >> 8;
-            pLsb[x] = value & 0xFF;
+            pixelX = pDst16[x + 1];
+            if constexpr (bits_per_pixel != 16)
+              pixelX = min(pixelX, max_pixel_value);
+
+            pDst16[x + 1] = lut[pixelX];
+
         }
+        if (wmod2 != nWidth) {
+          int pixelX = pDst16[x];
+          if constexpr (bits_per_pixel != 16)
+            pixelX = min(pixelX, max_pixel_value);
+
+          pDst16[x] = lut[pixelX];
+        }
+
         pDst += nDstPitch;
-        pLsb += nDstPitch;
     }
 }
+
+template<int bits_per_pixel>
+static void realtime16_t_c(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, Parser::Context& ctx)
+{
+  constexpr int max_pixel_value = (1 << bits_per_pixel) - 1;
+  for (int y = 0; y < height; y++)
+  {
+    for (int x = 0; x < width; x++) {
+      int pixel = reinterpret_cast<uint16_t*>(dstp)[x];
+      if constexpr(bits_per_pixel != 16) 
+        pixel = min(pixel, max_pixel_value);
+
+      const auto result = ctx.compute_word_x<bits_per_pixel>(pixel);
+
+      reinterpret_cast<uint16_t*>(dstp)[x] = result;
+    }
+    dstp += dst_pitch;
+  }
+}
+
+static void lut16_t_stacked_c(Byte* pDst, ptrdiff_t nDstPitch, int nWidth, int nHeight, const Word* lut, int nOrigHeightForStacked)
+{
+  auto pLsb = pDst + nDstPitch * nOrigHeightForStacked / 2;
+
+  for (int y = 0; y < nHeight / 2; y++)
+  {
+    for (int x = 0; x < nWidth; x++) {
+      Word value = lut[(pDst[x] << 8) + pLsb[x]];
+      pDst[x] = value >> 8;
+      pLsb[x] = value & 0xFF;
+    }
+    pDst += nDstPitch;
+    pLsb += nDstPitch;
+  }
+}
+
+template void realtime16_t_c<10>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, Parser::Context& ctx);
+template void realtime16_t_c<12>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, Parser::Context& ctx);
+template void realtime16_t_c<14>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, Parser::Context& ctx);
+template void realtime16_t_c<16>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, Parser::Context& ctx);
+
+template void lut16_t_c<10>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, const Word* lut, int);
+template void lut16_t_c<12>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, const Word* lut, int);
+template void lut16_t_c<14>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, const Word* lut, int);
+template void lut16_t_c<16>(Byte* dstp, ptrdiff_t dst_pitch, int width, int height, const Word* lut, int);
+
+namespace Filtering {
+  namespace MaskTools {
+    namespace Filters {
+      namespace Lut {
+        namespace Single {
+          Processor16* lut10_c = &lut16_t_c<10>;
+          Processor16* lut12_c = &lut16_t_c<12>;
+          Processor16* lut14_c = &lut16_t_c<14>;
+          Processor16* lut16_c = &lut16_t_c<16>;
+          Processor16* lut16_stacked_c = &lut16_t_stacked_c;
+
+
+          ProcessorCtx* realtime10_c = &realtime16_t_c<10>;
+          ProcessorCtx* realtime12_c = &realtime16_t_c<12>;
+          ProcessorCtx* realtime14_c = &realtime16_t_c<14>;
+          ProcessorCtx* realtime16_c = &realtime16_t_c<16>;
+        }
+      }
+    }
+  }
+}
+
