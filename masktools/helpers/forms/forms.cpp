@@ -8,7 +8,8 @@ static String &append_vector(String &str, int nX, int nY)
    return str.append(std::to_string(nX)).append(" ").append(std::to_string(nY)).append(" ");
 }
 
-#define ZERO ( zero || !i || !j )
+// parameter zero is false if we do not need the center point
+#define ZERO ( zero || i || j )
 
 String RectangleToString(int nTopLeftX, int nTopLeftY, int nBottomRightX, int nBottomRightY, bool zero)
 {
