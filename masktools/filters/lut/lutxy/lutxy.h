@@ -36,7 +36,7 @@ class Lutxy : public MaskTools::Filter
 
    Lut luts[4+1];
    
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, int clamp_float) {
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, int bits_per_pixel, String scale_inputs, int clamp_float, int& compute_error) {
      Parser::Context ctx(expr, scale_inputs, clamp_float);
      int pixelsize = bits_per_pixel == 8 ? 1 : 2; // byte / uint16_t
      size_t buffer_size = ((size_t)1 << bits_per_pixel) * ((size_t)1 << bits_per_pixel) *pixelsize;
@@ -70,6 +70,10 @@ class Lutxy : public MaskTools::Filter
            reinterpret_cast<Word *>(lut)[((size_t)x << 16) + y] = ctx.compute_word_xy<16>(x, y);
        break;
      }
+
+     // problem if compute_error != Parser::Context::compute_error_t::CE_NONE
+     compute_error = ctx.get_compute_error();
+
      return lut;
    }
 
@@ -232,14 +236,20 @@ public:
 
           bool customExpressionDefined = false;
           if (parameters[expr_strs[i]].is_defined()) {
-            parser.parse(parameters[expr_strs[i]].toString(), " ");
+            parser.parse_strict(parameters[expr_strs[i]].toString(), " ");
             customExpressionDefined = true;
           }
           else
-            parser.parse(parameters["expr"].toString(), " ");
+            parser.parse_strict(parameters["expr"].toString(), " ");
+
+          auto err_pos = parser.getErrorPos();
+          if (err_pos >= 0) {
+            error = "Error at position " + std::to_string(1 + err_pos) + ": cannot convert to number: " + parser.getFailedSymbol();
+            return;
+          }
 
           // for check:
-          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
+          Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float_i);
 
           if (!ctx.check())
           {
@@ -263,17 +273,24 @@ public:
 
           // pure lut, no realtime
 
+          int compute_error = Parser::Context::compute_error_t::CE_NONE;
+
           // save memory, reuse luts, like in xyz
           if (customExpressionDefined) {
             luts[i].used = true;
-            luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float);
+            luts[i].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float_i, /*ref*/ compute_error); // fixme/fixed: this was clamp_float before 2.2.27
           }
           else {
             if (luts[4].ptr == nullptr) {
               luts[4].used = true;
-              luts[4].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float);
+              luts[4].ptr = calculateLut(parser.getExpression(), bits_per_pixel, scale_inputs, clamp_float_i, /*ref*/ compute_error);
             }
             luts[i].ptr = luts[4].ptr;
+          }
+
+          if (compute_error != Parser::Context::compute_error_t::CE_NONE) {
+            error = "invalid expression in the lut code = " + std::to_string(compute_error);
+            return;
           }
 
           switch (bits_per_pixel) {

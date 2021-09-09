@@ -261,11 +261,17 @@ public:
        //----- main expression
        bool customExpressionDefined = false;
        if (parameters[expr_strs[i]].is_defined()) {
-         parser.parse(parameters[expr_strs[i]].toString(), " ");
+         parser.parse_strict(parameters[expr_strs[i]].toString(), " ");
          customExpressionDefined = true;
        }
        else
-         parser.parse(parameters["expr"].toString(), " ");
+         parser.parse_strict(parameters["expr"].toString(), " ");
+
+       auto err_pos = parser.getErrorPos();
+       if (err_pos >= 0) {
+         error = "Error at position " + std::to_string(1 + err_pos) + ": cannot convert to number: " + parser.getFailedSymbol();
+         return;
+       }
 
        // for check:
        Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
@@ -300,14 +306,20 @@ public:
        //Part #2 ----- weight expression
        bool customExpressionDefined_w = false;
        if (parameters[expr_strs_w[i]].is_defined()) {
-         parser.parse(parameters[expr_strs_w[i]].toString(), " ");
+         parser.parse_strict(parameters[expr_strs_w[i]].toString(), " ");
          customExpressionDefined_w = true;
        }
        else if (parameters["wexpr"].is_defined()) {
-         parser.parse(parameters["wexpr"].toString(), " ");
+         parser.parse_strict(parameters["wexpr"].toString(), " ");
        }
        else {
          continue; // no parse context/lut will be used for weights
+       }
+
+       err_pos = parser.getErrorPos();
+       if (err_pos >= 0) {
+         error = "Error at position " + std::to_string(1 + err_pos) + ": cannot convert to number: " + parser.getFailedSymbol();
+         return;
        }
 
        hasWeights = true;

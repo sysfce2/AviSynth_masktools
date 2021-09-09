@@ -9,6 +9,8 @@ namespace Filtering { namespace Parser {
 
 class Parser {
    String parsed_string;
+   String error_string;
+   int err_pos;
    std::deque<Symbol> elements;
    std::deque<Symbol> symbols;
 
@@ -20,12 +22,16 @@ public:
    Parser &addSymbol(const Symbol &symbol);
 private:
    const Symbol *findSymbol(const String &value) const;
-   Symbol stringToSymbol(const String &value) const;
+   Symbol stringToSymbol(const String &value, bool InvalidSymbolIsZero) const;
+   Parser& parse_internal(const String& _parsed_string, const String& separators, bool InvalidSymbolIsZero);
 public:
-   Parser &parse(const String &parsed_string, const String &separators);
+   Parser& parse(const String& parsed_string, const String& separators);
+   Parser& parse_strict(const String& parsed_string, const String& separators);
 
    String getParsedString() const;
    int count() const;
+   int getErrorPos() const { return err_pos; }
+   String getFailedSymbol() const { return error_string; }
 
    std::deque<Symbol> &getExpression() { return elements; }
 

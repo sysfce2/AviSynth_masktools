@@ -28,7 +28,7 @@ class Lutxyz : public MaskTools::Filter
 
    Lut luts[4+1];
 
-   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, String scale_inputs, int clamp_float) {
+   static Byte *calculateLut(const std::deque<Filtering::Parser::Symbol> &expr, String scale_inputs, int clamp_float, int& compute_error) {
        Parser::Context ctx(expr, scale_inputs, clamp_float);
        Byte *lut = new Byte[256 * 256 * 256];
 
@@ -39,6 +39,10 @@ class Lutxyz : public MaskTools::Filter
                }
            }
        }
+
+       // problem if compute_error != Parser::Context::compute_error_t::CE_NONE
+       compute_error = ctx.get_compute_error();
+
        return lut;
    }
 
@@ -193,11 +197,17 @@ public:
 
           bool customExpressionDefined = false;
           if (parameters[expr_strs[i]].is_defined()) {
-            parser.parse(parameters[expr_strs[i]].toString(), " ");
+            parser.parse_strict(parameters[expr_strs[i]].toString(), " ");
             customExpressionDefined = true;
           }
           else
-            parser.parse(parameters["expr"].toString(), " ");
+            parser.parse_strict(parameters["expr"].toString(), " ");
+
+          auto err_pos = parser.getErrorPos();
+          if (err_pos >= 0) {
+            error = "Error at position " + std::to_string(1 + err_pos) + ": cannot convert to number: " + parser.getFailedSymbol();
+            return;
+          }
 
           // for check:
           Parser::Context ctx(parser.getExpression(), scale_inputs, clamp_float);
@@ -222,17 +232,25 @@ public:
             continue;
           }
 
+          int compute_error = Parser::Context::compute_error_t::CE_NONE;
+
           if (customExpressionDefined) {
             luts[i].used = true;
-            luts[i].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float); // 8 bit always
+            luts[i].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float, /*ref*/ compute_error); // 8 bit always
           }
           else {
             if (luts[4].ptr == nullptr) {
               luts[4].used = true;
-              luts[4].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float);
+              luts[4].ptr = calculateLut(parser.getExpression(), scale_inputs, clamp_float, /*ref*/ compute_error);
             }
             luts[i].ptr = luts[4].ptr;
           }
+
+          if (compute_error != Parser::Context::compute_error_t::CE_NONE) {
+            error = "invalid expression in the lut code = " + std::to_string(compute_error);
+            return;
+          }
+
         }
       }
    }

@@ -51,17 +51,32 @@ const Parser::Symbol *Parser::Parser::findSymbol(const String &value) const
    return nullptr;
 }
 
-Parser::Symbol Parser::Parser::stringToSymbol(const String &value) const
+Parser::Symbol Parser::Parser::stringToSymbol(const String &value, bool InvalidSymbolIsZero) const
 { 
     auto found = findSymbol(value);
     return found == nullptr
-        ? Symbol(value, Symbol::NUMBER)
-        : *found;
+      ? Symbol(value, Symbol::NUMBER, InvalidSymbolIsZero)
+      : *found;
 }
 
-Parser::Parser &Parser::Parser::parse(const String &_parsed_string, const String &separators)
+// String to double conversion error yields 0 value
+Parser::Parser& Parser::Parser::parse(const String& _parsed_string, const String& separators)
+{
+  return parse_internal(_parsed_string, separators, true); // tolerate invalid symbols
+}
+
+// Stops on string to double conversion error.
+// Used for mt_lut
+Parser::Parser& Parser::Parser::parse_strict(const String& _parsed_string, const String& separators)
+{
+  return parse_internal(_parsed_string, separators, false);
+}
+
+Parser::Parser &Parser::Parser::parse_internal(const String &_parsed_string, const String &separators, bool InvalidSymbolIsZero)
 {
    this->parsed_string = _parsed_string;
+   this->error_string = "";
+   this->err_pos = -1; // no error
 
    size_t nPos = _parsed_string.find_first_not_of(separators, 0);
    size_t nEndPos;
@@ -70,12 +85,29 @@ Parser::Parser &Parser::Parser::parse(const String &_parsed_string, const String
 
    while ( nPos != String::npos && (nEndPos = _parsed_string.find_first_of(separators, nPos)) != String::npos )
    {
-      elements.push_back(stringToSymbol(_parsed_string.substr(nPos, nEndPos - nPos)));
+      auto curr_str = _parsed_string.substr(nPos, nEndPos - nPos);
+      auto curr_sym = stringToSymbol(curr_str, InvalidSymbolIsZero);
+      if (curr_sym.type == Symbol::UNDEFINED) {
+        this->err_pos = nPos;
+        this->error_string = curr_str;
+        elements.clear();
+        return *this;
+      }
+      elements.push_back(curr_sym);
       nPos = _parsed_string.find_first_not_of(separators, nEndPos);
    }
 
-   if ( nPos != String::npos )
-      elements.push_back(stringToSymbol(_parsed_string.substr(nPos)));
+   if (nPos != String::npos) {
+      auto curr_str = _parsed_string.substr(nPos);
+      auto curr_sym = stringToSymbol(curr_str, InvalidSymbolIsZero);
+      if (curr_sym.type == Symbol::UNDEFINED) {
+        this->err_pos = nPos;
+        this->error_string = curr_str;
+        elements.clear();
+        return *this;
+      }
+      elements.push_back(curr_sym);
+   }
 
    return *this;
 }

@@ -21,8 +21,6 @@ public:
       DUP,
       SWAP,
       FUNCTION_CONFIG_SCRIPT_BITDEPTH,
-      FUNCTION_CONFIG_AUTO_BITDEPTH,
-      FUNCTION_CONFIG_AUTO_BITDEPTH_FULL,
       OPERATOR,
       FUNCTION,
       TERNARY,
@@ -83,7 +81,7 @@ public:
 
    Symbol();
    // direct numeric literals from parser
-   Symbol(String value, Type type);
+   Symbol(String value, Type type, bool InvalidSymbolIsZero);
    // dup, swap
    Symbol(String value, Type type, int nParameter);
    // functions, operators, ternary
@@ -221,12 +219,10 @@ public:
 
 class Context {
 
-   Symbol *pSymbols;
-   int nSymbols;
-   int nPos;
+   std::vector<Symbol> pSymbols;
+   int nPos_infix; // for mt_infix
 
-   Symbol *pSymbols_control;
-   int nSymbols_control;
+   int compute_error; // CE_xx
 
    double x, y, z, a;
    int bitdepth; // bit depth
@@ -253,7 +249,7 @@ class Context {
    double cmin_f; // limited range
    double cmax_f;
 
-   double *exprstack;
+   std::vector<double> exprstack;
 
    // helpers for float input autoscales
    // 0: none
@@ -296,6 +292,18 @@ public:
    bool SetScaleInputs(String scale_inputs); // v2.2.15-
 
    bool check();
+
+   enum compute_error_t {
+     CE_NONE = 0,
+     CE_SWAP_INDEX,
+     CE_DUP_INDEX,
+     CE_NOT_ENOUGH_OPERANDS,
+     CE_INVALID_INTERNAL_VARIABLE, // this is internal error, cannot happen
+     CE_INVALID_FIRST_TAG,
+     CE_EXTRA_EXPRESSION_LEFT
+   };
+   int get_compute_error();
+
    String infix();
 
    double compute_1(double x, int bitdepth, bool chroma);
