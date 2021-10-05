@@ -2,7 +2,7 @@
 
 (20201229: can be built under linux/gcc)
 
-**Masktools2 v2.2.27 (20210909)**
+**Masktools2 v2.2.28 (20211005)**
 
 mod by pinterf
 
@@ -355,6 +355,9 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.28 (20211005)
+- allow TAB, CR and LF characters as symbol separators in expression strings
+
 **v2.2.27 (20210909)
 - fix zero=false case for shape helper function (mt_rectangle, mt_circle, mt_diamond etc...)
 - lut expressions: report obvious script error (unbalanced stack, invalid keyword or variable, etc)
