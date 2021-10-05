@@ -85,8 +85,8 @@ public:
       i_vertical = i_horizontal = NULL;
       f_vertical = f_horizontal = NULL;
       vertical = horizontal = NULL;
-      auto hcoeffs = Parser::getDefaultParser().parse(parameters["horizontal"].toString(), " ").getExpression();
-      auto vcoeffs = Parser::getDefaultParser().parse(parameters["vertical"].toString(), " ").getExpression();
+      auto hcoeffs = Parser::getDefaultParser().parse(parameters["horizontal"].toString(), Parser::SYMBOL_SEPARATORS).getExpression();
+      auto vcoeffs = Parser::getDefaultParser().parse(parameters["vertical"].toString(), Parser::SYMBOL_SEPARATORS).getExpression();
       nHorizontal = hcoeffs.size();
       nVertical = vcoeffs.size();
       

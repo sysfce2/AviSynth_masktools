@@ -63,7 +63,7 @@ public:
       bits_per_pixel = bit_depths[C];
       bool isFloat = bits_per_pixel == 32;
 
-      auto coeffs = Parser::getDefaultParser().parse(parameters["kernel"].toString(), " ").getExpression();
+      auto coeffs = Parser::getDefaultParser().parse(parameters["kernel"].toString(), Parser::SYMBOL_SEPARATORS).getExpression();
 
       if (isFloat) {
         memset(matrix_f, 0, sizeof(matrix_f));

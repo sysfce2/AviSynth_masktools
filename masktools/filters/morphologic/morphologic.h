@@ -57,7 +57,7 @@ protected:
 
     void FillCoordinates(const String &coordinates)
     {
-        auto coeffs = Parser::getDefaultParser().parse(coordinates, " (),;.").getExpression();
+        auto coeffs = Parser::getDefaultParser().parse(coordinates, Parser::SYMBOL_SEPARATORS_COORD).getExpression();
         coordinates_count = coeffs.size();
         coordinates_list = new int[coordinates_count];
         int i = 0;

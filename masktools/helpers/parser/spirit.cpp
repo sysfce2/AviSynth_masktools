@@ -247,7 +247,7 @@ String Converter(const String &str)
 String Infix(const String &str)
 {
    Parser::Parser parser = Parser::getDefaultParser().addSymbol(Parser::Symbol::X).addSymbol(Parser::Symbol::Y).addSymbol(Parser::Symbol::Z);
-   parser.parse(str, " ");
+   parser.parse(str, Parser::SYMBOL_SEPARATORS);
    Parser::Context ctx(parser.getExpression());
    return ctx.infix();
 }

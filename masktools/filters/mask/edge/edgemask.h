@@ -503,7 +503,7 @@ public:
       else
       {
          print(LOG_DEBUG, "Edge : using custom detector");
-         auto coeffs = Parser::getDefaultParser().parse(parameters["mode"].toString(), " ").getExpression();
+         auto coeffs = Parser::getDefaultParser().parse(parameters["mode"].toString(), Parser::SYMBOL_SEPARATORS).getExpression();
          bool isAsmOk = true;
          if (isFloat) {
            memset(matrix_f, 0, sizeof(matrix_f));

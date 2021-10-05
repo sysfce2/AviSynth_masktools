@@ -7,6 +7,9 @@
 
 namespace Filtering { namespace Parser {
 
+constexpr auto SYMBOL_SEPARATORS = " \r\n\t";
+constexpr auto SYMBOL_SEPARATORS_COORD = " \r\n\t(),;.";
+
 class Parser {
    String parsed_string;
    String error_string;

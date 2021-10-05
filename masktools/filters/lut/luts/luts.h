@@ -131,7 +131,7 @@ class Luts : public MaskTools::Filter
 
    void FillCoordinates(const String &coordinates)
    {
-      auto coeffs = Parser::getDefaultParser().parse( coordinates, " (),;." ).getExpression();
+      auto coeffs = Parser::getDefaultParser().parse( coordinates, Parser::SYMBOL_SEPARATORS_COORD).getExpression();
       nCoordinates = coeffs.size();
       pCoordinates = new int[nCoordinates];
       int i = 0;
@@ -261,11 +261,11 @@ public:
        //----- main expression
        bool customExpressionDefined = false;
        if (parameters[expr_strs[i]].is_defined()) {
-         parser.parse_strict(parameters[expr_strs[i]].toString(), " ");
+         parser.parse_strict(parameters[expr_strs[i]].toString(), Parser::SYMBOL_SEPARATORS);
          customExpressionDefined = true;
        }
        else
-         parser.parse_strict(parameters["expr"].toString(), " ");
+         parser.parse_strict(parameters["expr"].toString(), Parser::SYMBOL_SEPARATORS);
 
        auto err_pos = parser.getErrorPos();
        if (err_pos >= 0) {
@@ -306,11 +306,11 @@ public:
        //Part #2 ----- weight expression
        bool customExpressionDefined_w = false;
        if (parameters[expr_strs_w[i]].is_defined()) {
-         parser.parse_strict(parameters[expr_strs_w[i]].toString(), " ");
+         parser.parse_strict(parameters[expr_strs_w[i]].toString(), Parser::SYMBOL_SEPARATORS);
          customExpressionDefined_w = true;
        }
        else if (parameters["wexpr"].is_defined()) {
-         parser.parse_strict(parameters["wexpr"].toString(), " ");
+         parser.parse_strict(parameters["wexpr"].toString(), Parser::SYMBOL_SEPARATORS);
        }
        else {
          continue; // no parse context/lut will be used for weights

@@ -197,11 +197,11 @@ public:
 
           bool customExpressionDefined = false;
           if (parameters[expr_strs[i]].is_defined()) {
-            parser.parse_strict(parameters[expr_strs[i]].toString(), " ");
+            parser.parse_strict(parameters[expr_strs[i]].toString(), Parser::SYMBOL_SEPARATORS);
             customExpressionDefined = true;
           }
           else
-            parser.parse_strict(parameters["expr"].toString(), " ");
+            parser.parse_strict(parameters["expr"].toString(), Parser::SYMBOL_SEPARATORS);
 
           auto err_pos = parser.getErrorPos();
           if (err_pos >= 0) {

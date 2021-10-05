@@ -115,7 +115,7 @@ class Nonizer {
 public:
    Nonizer(const String &mode)
    {
-      auto coefficients = Parser::getDefaultParser().parse(mode, " (),;").getExpression();
+      auto coefficients = Parser::getDefaultParser().parse(mode, Parser::SYMBOL_SEPARATORS_COORD).getExpression();
       nCoefficients = coefficients.size();
       pdCoefficients = new Double[nCoefficients];
       int i = 0;
@@ -359,7 +359,7 @@ class Nonizer16 {
 public:
   Nonizer16(const String &mode)
   {
-    auto coefficients = Parser::getDefaultParser().parse(mode, " (),;").getExpression();
+    auto coefficients = Parser::getDefaultParser().parse(mode, Parser::SYMBOL_SEPARATORS_COORD).getExpression();
     nCoefficients = coefficients.size();
     pdCoefficients = new Double[nCoefficients];
     int i = 0;
@@ -605,7 +605,7 @@ class Nonizer32 {
 public:
   Nonizer32(const String &mode)
   {
-    auto coefficients = Parser::getDefaultParser().parse(mode, " (),;").getExpression();
+    auto coefficients = Parser::getDefaultParser().parse(mode, Parser::SYMBOL_SEPARATORS_COORD).getExpression();
     nCoefficients = coefficients.size();
     pdCoefficients = new Double[nCoefficients];
     int i = 0;
