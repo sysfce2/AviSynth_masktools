@@ -2,6 +2,7 @@
 #define __Common_Plane_H__
 
 #include "../utils/utils.h"
+#include <cstddef>
 
 namespace Filtering {
 
