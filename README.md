@@ -2,7 +2,7 @@
 
 (20201229: can be built under linux/gcc)
 
-**Masktools2 v2.2.28 (20211005)**
+**Masktools2 v2.2.29 (20211116)**
 
 mod by pinterf
 
@@ -355,6 +355,13 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.29 (20211116)
+- floating point number formats are local independent again. Regression since 2.2.26
+- mt_merge accept "top_left" chroma placement ("topleft" is still valid)
+- (avx2: stop using _mm256_zeroupper - compilers are do that automatically, 
+  mainly because LLVM (12.0) generated suboptimal save-restore-all-xmm registers in
+  prologue and epilogue when encountered with it.)
+
 **v2.2.28 (20211005)
 - allow TAB, CR and LF characters as symbol separators in expression strings
 
