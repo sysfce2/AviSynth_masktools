@@ -118,7 +118,6 @@ void binarize_avx2_t(Byte *dstp, ptrdiff_t dst_pitch, Byte threshold, int width,
     if (width > mod32_width) {
         binarize_avx2_t<op_c>(dstp2 + mod32_width, dst_pitch, threshold, width - mod32_width, height);
     }
-    _mm256_zeroupper();
 }
 
 // Experimental 256 bit AVX2 for 8bit video. 

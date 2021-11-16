@@ -110,7 +110,6 @@ static void generic_avx2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc, ptrd
     /* bottom-right */
     process_line_right(pDst + nWidth - 32, pSrcp + nWidth - 32, pSrc + nWidth - 32, pSrc + nWidth - 32, matrix, low_thr_v, high_thr_v, 32);
 
-    _mm256_zeroupper();
 }
 
 } } } }

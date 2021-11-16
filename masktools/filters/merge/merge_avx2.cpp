@@ -159,7 +159,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       if (nWidth > wMod32) {
          merge_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32, nSrc2Pitch, nWidth - wMod32, nHeight);
       }
-      _mm256_zeroupper();
    }
    
    template <MemoryMode mem_mode>
@@ -208,7 +207,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        // pMask offset: mask is not subsampled -> width*2
        merge_luma_420_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, nWidth - wMod32, nHeight);
      }
-     _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
@@ -253,7 +251,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        // pMask offset: mask is not subsampled -> width*2
        merge_luma_422_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, nWidth - wMod32, nHeight);
      }
-     _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
@@ -300,7 +297,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      if (nWidth > wMod32) {
        merge_luma_411_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 4, nSrc2Pitch, nWidth - wMod32, nHeight);
      }
-     _mm256_zeroupper();
    }
 
    // no MPEG2 option here in 8bit AVX2

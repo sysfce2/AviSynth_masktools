@@ -92,7 +92,6 @@ template<MemoryMode mem_mode, decltype(and_avx2_op) op, decltype(_and) op_c>
     if (nWidth > wMod32) {
         logic_t<op_c>(pDst2 + wMod32, nDstPitch, pSrc2 + wMod32, nSrcPitch, nWidth - wMod32, nHeight, nThresholdDestination, nThresholdSource);
     }
-    _mm256_zeroupper();
 }
 
 

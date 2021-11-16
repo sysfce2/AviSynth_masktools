@@ -112,7 +112,6 @@ static void generic32_avx(Float *pDst0, ptrdiff_t nDstPitch, const Float *pSrc0,
     process_line(pDst + 32, pSrcp+32, pSrc+32, pSrc+32, matrix, low_thr_v, high_thr_v, avx_width - 32);
     /* bottom-right */
     process_line_right(pDst + nWidth - 32, pSrcp + nWidth - 32, pSrc + nWidth - 32, pSrc + nWidth - 32, matrix, low_thr_v, high_thr_v, 32);
-    _mm256_zeroupper();
 }
 
 } } } }

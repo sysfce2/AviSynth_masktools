@@ -120,7 +120,6 @@ void generic16_avx2(Word *pDst0, ptrdiff_t nDstPitch, const Word *pSrc0, ptrdiff
     /* bottom-right */
     process_line_right(pDst + nWidth - 32, pSrcp + nWidth - 32, pSrc + nWidth - 32, pSrc + nWidth - 32, matrix, low_thr_v, high_thr_v, 32);
 
-    _mm256_zeroupper();
 }
 
 } } } }

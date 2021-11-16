@@ -168,7 +168,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
       if (nWidth > wMod32) {
          merge32_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
       }
-      _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
@@ -212,7 +211,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      if (nWidth > wMod32) {
        merge32_luma_420_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
      }
-     _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
@@ -284,7 +282,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        else
          merge32_luma_420_mpeg2_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
      }
-     _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
@@ -321,7 +318,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
      if (nWidth > wMod32) {
        merge32_luma_422_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
      }
-     _mm256_zeroupper();
    }
 
    template <MemoryMode mem_mode>
@@ -383,7 +379,6 @@ namespace Filtering { namespace MaskTools { namespace Filters { namespace Merge 
        else
          merge32_luma_422_mpeg2_avx2_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + wMod32 * 2, nSrc2Pitch, (nWidth - wMod32) / sizeof(Float), nHeight);
      }
-     _mm256_zeroupper();
    }
 
 

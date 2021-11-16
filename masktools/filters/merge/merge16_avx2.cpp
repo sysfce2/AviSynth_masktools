@@ -239,7 +239,6 @@ static void merge16_t_simd(Byte *pDst, ptrdiff_t nDstPitch, const Byte *pSrc1, p
       const int maskShift = (mode == MASK420 || mode == MASK422) ? wMod32 * 2 : wMod32;
       merge_c(pDst_s + wMod32, nDstPitch, pSrc1_s + wMod32, nSrc1Pitch, pMask_s + maskShift, nMaskPitch, (nWidth - wMod32) / sizeof(uint16_t), nHeight, nOrigHeight);
     }
-    _mm256_zeroupper();
 }
 
 /* Native */

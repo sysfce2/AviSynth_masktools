@@ -108,7 +108,6 @@ static void logic16_native_t_avx2(Byte *pDst, ptrdiff_t nDstPitch, const Byte *p
     if (nWidth > wMod32) {
         logic16_native_t_c<op_c>(pDst2 + wMod32, nDstPitch, pSrc2 + wMod32, nSrcPitch, (nWidth - wMod32) / sizeof(uint16_t), nHeight, nOrigHeight, nThresholdDestination, nThresholdSource);
     }
-    _mm256_zeroupper();
 }
 
 

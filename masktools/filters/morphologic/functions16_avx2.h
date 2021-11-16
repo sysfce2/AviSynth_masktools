@@ -89,7 +89,6 @@ struct MorphologicProcessor {
         process_line(pDst + 1, pSrcp+1, pSrc+1, pSrc+1, nMaxDeviation, nWidth - 2, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
         /* bottom-right */
         process_line_right(pDst + nWidth - 1, pSrcp + nWidth - 1, pSrc + nWidth - 1, pSrc + nWidth - 1, nMaxDeviation, 1, nHeight, nSrcPitch, nDstPitch, nOrigHeight);
-        _mm256_zeroupper();
     }
 };
 
@@ -177,7 +176,6 @@ static void process_line_xxflate_16_avx2(Byte *pDst, const Byte *pSrcp, const By
 
     simd256_store_si256<mem_mode>(pDst + x, result);
   }
-  _mm256_zeroupper();
 }
 
 template<Border borderMode, decltype(_mm256_max_epu16) op, Limit16 limit, MemoryMode mem_mode>
@@ -258,7 +256,6 @@ static void xxpand_avx2_vertical_16(Word *pDst16, ptrdiff_t nDstPitch, const Wor
   if (not_mod32) {
     process_line_xxpand_vertical_16_avx2<op, limit, MemoryMode::SSE2_UNALIGNED>(pDst + byte_width - 32, pSrcp + byte_width - 32, pSrc + byte_width - 32, pSrc + byte_width - 32, max_dev_v, 32);
   }
-  _mm256_zeroupper();
 }
 
 
@@ -356,7 +353,6 @@ static void xxpand_avx2_horizontal_16(Word *pDst16, ptrdiff_t nDstPitch, const W
     pSrc += nSrcPitch;
     pDst += nDstPitch;
   }
-  _mm256_zeroupper();
 }
 
 /* Square mt_xxpand */
@@ -417,7 +413,6 @@ static void generic_16_avx2(Word *pDst16, ptrdiff_t nDstPitch, const Word *pSrc1
   process_line(pDst + 32, pSrcp + 32, pSrc + 32, pSrc + 32, max_dev_v, mod32_width - 32);
   /* bottom-right */
   process_line_right(pDst + byte_width - 32, pSrcp + byte_width - 32, pSrc + byte_width - 32, pSrc + byte_width - 32, max_dev_v, 32);
-  _mm256_zeroupper();
 }
 //-----------------------------------------------------------------
 
@@ -445,7 +440,6 @@ void generic_custom_16_avx2_c(Word *pDst, ptrdiff_t nDstPitch, const Word *pSrc,
         pSrc += nSrcPitch;
         pDst += nDstPitch;
     }
-    _mm256_zeroupper();
 }
 
 
