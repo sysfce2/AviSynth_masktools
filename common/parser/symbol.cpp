@@ -1,5 +1,7 @@
 #include "symbol.h"
 #include <math.h>
+#include <sstream>
+#include <string>
 
 using namespace Filtering;
 using namespace Filtering::Parser;
@@ -290,20 +292,28 @@ type(UNDEFINED), value(""), value2("")
 {
 }
 
+static bool local_independent_convert(const std::string& text, double &result)
+{
+  if (text == "")
+    return false;
+  std::istringstream iss(text);
+  iss.imbue(std::locale::classic());
+  iss >> result;
+  if (iss.eof())
+    return true;
+  else
+    return false;
+}
 // direct numeric literals from parser
 Symbol::Symbol(String value, Type type, bool InvalidSymbolIsZero) :
   type(type), vartype(VARIABLE_UNDEFINED), value(value), value2(""), nParameter(0), process0(NULL), process1(NULL), process2(NULL), process3(NULL)
 {
   if (type == NUMBER) {
-    char* nexts;
-    errno = 0; // thread-safe error code
-    dValue = std::strtod(value.c_str(), &nexts); // instead of atof(value.c_str());
-
-    if (!InvalidSymbolIsZero &&
-      (
-        *nexts != '\0' ||  // error, we didn't consume the entire string
-        errno != 0)   // error, overflow or underflow
-      )
+    // instead of atof(value.c_str()); not good, no error report
+    //errno = 0; // thread-safe error code
+    //dValue = std::strtod(value.c_str(), &nexts); not good, local dependepent
+    bool success = local_independent_convert(value, /*ref*/dValue);
+    if (!InvalidSymbolIsZero && !success)
     {
       // fail
       this->type = UNDEFINED; // signal to parser about the error
