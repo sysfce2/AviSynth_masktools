@@ -245,12 +245,12 @@ public:
       String cplace = parameters["cplace"].toString();
       bool isMpeg2 = false;
       bool isTopLeft = false;
-      if (cplace != "mpeg1" && cplace != "mpeg2" && cplace != "topleft") {
-        error = "cplace: only mpeg1, mpeg2 and topleft allowed";
+      if (cplace != "mpeg1" && cplace != "mpeg2" && cplace != "topleft" && cplace != "top_left") {
+        error = "cplace: only mpeg1, mpeg2 and top_left allowed";
         return;
       }
       isMpeg2 = cplace == "mpeg2" && (is420 || is422);
-      isTopLeft = cplace == "topleft" && is420;
+      isTopLeft = (cplace == "topleft" || cplace == "top_left") && is420; // others using with _
 
       if (isStacked && bits_per_pixel != 8) {
         error = "Stacked specified for a non-8 bit clip";
