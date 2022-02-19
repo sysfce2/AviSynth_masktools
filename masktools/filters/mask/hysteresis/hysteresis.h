@@ -14,6 +14,12 @@ extern Processor *hysteresis_12_c;
 extern Processor *hysteresis_14_c;
 extern Processor *hysteresis_16_c;
 extern Processor *hysteresis_32_c;
+extern Processor* hysteresis_8_nocorner_c;
+extern Processor* hysteresis_10_nocorner_c;
+extern Processor* hysteresis_12_nocorner_c;
+extern Processor* hysteresis_14_nocorner_c;
+extern Processor* hysteresis_16_nocorner_c;
+extern Processor* hysteresis_32_nocorner_c;
 
 class Hysteresis : public MaskTools::Filter
 {
@@ -34,13 +40,15 @@ protected:
 public:
     Hysteresis(const Parameters &parameters, CpuFlags cpuFlags) : MaskTools::Filter(parameters, FilterProcessingType::CHILD, (CpuFlags)cpuFlags), stack(nullptr) {
       int bits_per_pixel = bit_depths[C];
+      const bool corners = parameters["corners"].toBool();
+
       switch (bits_per_pixel) {
-      case 8: processor = hysteresis_8_c; break;
-      case 10: processor = hysteresis_10_c; break;
-      case 12: processor = hysteresis_12_c; break;
-      case 14: processor = hysteresis_14_c; break;
-      case 16: processor = hysteresis_16_c; break;
-      case 32: processor = hysteresis_32_c; break;
+      case 8: processor = corners ? hysteresis_8_c : hysteresis_8_nocorner_c; break;
+      case 10: processor = corners ? hysteresis_10_c : hysteresis_8_nocorner_c; break;
+      case 12: processor = corners ? hysteresis_12_c : hysteresis_8_nocorner_c; break;
+      case 14: processor = corners ? hysteresis_14_c : hysteresis_8_nocorner_c; break;
+      case 16: processor = corners ? hysteresis_16_c : hysteresis_8_nocorner_c; break;
+      case 32: processor = corners ? hysteresis_32_c : hysteresis_8_nocorner_c; break;
       }
 
       stack = reinterpret_cast<Byte*>(_aligned_malloc(nWidth*nHeight, 16));
@@ -58,6 +66,7 @@ public:
 
         signature.add(Parameter(TYPE_CLIP, "", false));
         signature.add(Parameter(TYPE_CLIP, "", false));
+        signature.add(Parameter(true, "corners", false)); // default true
 
         return add_defaults(signature);
     }
