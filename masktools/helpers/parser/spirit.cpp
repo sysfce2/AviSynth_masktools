@@ -141,6 +141,7 @@ public:
                  (str_p("tan") >> '(' >> (termter) >> ')')[AddNamedSymbol("tan", self.rpn)] |
                  (str_p("exp") >> '(' >> (termter) >> ')')[AddNamedSymbol("exp", self.rpn)] |
                  (str_p("log") >> '(' >> (termter) >> ')')[AddNamedSymbol("log", self.rpn)] |
+                 (str_p("atan2") >> '(' >> (termter) >> ',' >> (termter) >> ')')[AddNamedSymbol("atan2", self.rpn)] |
                  (str_p("atan") >> '(' >> (termter) >> ')')[AddNamedSymbol("atan", self.rpn)] |
                  (str_p("acos") >> '(' >> (termter) >> ')')[AddNamedSymbol("acos", self.rpn)] |
                  (str_p("asin") >> '(' >> (termter) >> ')')[AddNamedSymbol("asin", self.rpn)] |

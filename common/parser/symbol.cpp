@@ -51,6 +51,7 @@ static double mtmabs            (double x) { return abs(x); }
 static double mtacos            (double x) { return acos(x); }
 static double mtasin            (double x) { return asin(x); }
 static double mtatan            (double x) { return atan(x); }
+static double mtatan2           (double y, double x) { return atan2(y, x); }
 static double mtround           (double x) { return double(convert<Int64, double>( x )); }
 static double mtclip            (double x, double y, double z) { return clip<double, double>( x, y, z ); }
 static double mtmin             (double x, double y) { return min<double>( x, y ); }
@@ -58,6 +59,7 @@ static double mtmax             (double x, double y) { return max<double>( x, y 
 static double mtfloor           (double x) { return floor(x); }
 static double mtceil            (double x) { return ceil(x); }
 static double mttrunc           (double x) { return double(Int64(x)); }
+
 // bit depth conversion helpers. x:value on 8 bit scale y: target bit depth 8-32 z:base bit depth
 static double do_upscaleByShift(double x, int y, int z, bool chroma, bool shift_float)
 {
@@ -236,6 +238,7 @@ Symbol Symbol::Log            ("log", FUNCTION, mtlog);
 Symbol Symbol::Exp            ("exp", FUNCTION, mtexp);
 Symbol Symbol::Abs            ("abs", FUNCTION, mtmabs);
 Symbol Symbol::Atan           ("atan", FUNCTION, mtatan);
+Symbol Symbol::Atan2          ("atan2", FUNCTION, mtatan2);
 Symbol Symbol::Acos           ("acos", FUNCTION, mtacos);
 Symbol Symbol::Asin           ("asin", FUNCTION, mtasin);
 Symbol Symbol::Round          ("round", FUNCTION, mtround);

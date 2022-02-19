@@ -165,6 +165,7 @@ public:
    static Symbol Exp;
    static Symbol Acos;
    static Symbol Atan;
+   static Symbol Atan2;
    static Symbol Asin;
    static Symbol Round;
    static Symbol Clip;
