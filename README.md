@@ -2,7 +2,7 @@
 
 (20201229: can be built under linux/gcc)
 
-**Masktools2 v2.2.29 (20211116)**
+**Masktools2 v2.2.30 (20220219)**
 
 mod by pinterf
 
@@ -355,6 +355,22 @@ Original version: tp7's MaskTools 2 repository.
 https://github.com/tp7/masktools/
 
 Changelog
+**v2.2.30 (20220218)
+- mt_hysteresis new parameter: 
+    bool corners (default true)
+  When set to false, mask expanding is ignoring corner-only connections.
+  corners = true (default, old working mode):
+    + + +
+    + O +
+    + + +
+  false:
+    - + -
+    + O +
+    - + -
+  Where the '+' pixels indicate neighbors of the central 'O'
+  (See https://github.com/pinterf/masktools/issues/23 )
+- Add atan2 two operand function to lut expression evaluation. Calls atan2(y,x) math library function.
+
 **v2.2.29 (20211116)
 - floating point number formats are local independent again. Regression since 2.2.26
 - mt_merge accept "top_left" chroma placement ("topleft" is still valid)
